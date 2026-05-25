@@ -943,12 +943,12 @@ function SyncGuardNotice({ configured, onlineReady, onlineStatus, realtimeStatus
   const message = !configured
     ? "この画面はローカル確認用です。公開版ではSupabaseに保存されます。"
     : onlineReady
-      ? "入力内容はオンラインに保存され、ほかの端末にも反映されています。"
+      ? "入力内容はオンラインに保存され、他の端末にも反映されます。"
       : "接続が完了するまで保存操作を止めています。";
   const statusText = !configured
     ? "Supabase未設定 / ローカル表示"
     : onlineReady
-      ? "オンラインデータを読み込みました。 / 現在、リアルタイム同期中"
+      ? "オンラインデータを読み込み完了 / 現在、リアルタイム同期中"
       : `${onlineStatus} / ${realtimeStatus}`;
   return (
     <section className={`syncGuard ${tone}`} aria-live="polite">
