@@ -454,6 +454,7 @@ function App() {
   const [onlineReady, setOnlineReady] = useState(false);
   const [realtimeStatus, setRealtimeStatus] = useState("未接続です。");
   const applyingRemoteRef = useRef(false);
+  const initialOnlineLoadRef = useRef(false);
   const [selectedRehearsalId, setSelectedRehearsalId] = useState(rehearsalList[0]?.id ?? "");
   const [tab, setTab] = useState("dashboard");
   const [teamFilter, setTeamFilter] = useState<TeamFilter>("全員");
@@ -517,6 +518,33 @@ function App() {
       attendances,
     };
   }
+
+  useEffect(() => {
+    if (initialOnlineLoadRef.current) return;
+    if (!supabaseConfig.url || !supabaseConfig.anonKey || !supabaseConfig.roomId) return;
+    initialOnlineLoadRef.current = true;
+
+    async function initializeOnlineState() {
+      setOnlineStatus("オンラインデータを確認中です...");
+      try {
+        const data = await loadSupabaseState(supabaseConfig);
+        const isEmpty = !data.members.length && !data.rehearsals.length && !data.scenes.length && !data.attendances.length;
+        if (isEmpty) {
+          await seedSupabaseState(supabaseConfig, actorName || "初期設定", getCurrentState());
+          setOnlineStatus("初期データをオンラインに保存しました。");
+        } else {
+          applyAppState(data);
+          setOnlineStatus("オンラインデータを読み込みました。");
+        }
+        setOnlineReady(true);
+      } catch (error) {
+        console.error(error);
+        setOnlineStatus("オンライン接続に失敗しました。");
+      }
+    }
+
+    initializeOnlineState();
+  }, [supabaseConfig.anonKey, supabaseConfig.roomId, supabaseConfig.url]);
 
   async function saveInitialOnline() {
     if (!supabaseConfig.url || !supabaseConfig.anonKey || !supabaseConfig.roomId) {
@@ -743,16 +771,6 @@ function App() {
         ))}
       </nav>
       <TeamSwitch value={teamFilter} onChange={setTeamFilter} />
-      <OnlineSyncPanel
-        config={supabaseConfig}
-        onChange={setSupabaseConfig}
-        actorName={actorName}
-        onActorNameChange={setActorName}
-        onSave={saveInitialOnline}
-        onLoad={loadOnline}
-        status={onlineStatus}
-        realtimeStatus={realtimeStatus}
-      />
       {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} sceneResults={sceneResults} />}
       {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onDelete={deleteRehearsal} allowDelete={!onlineReady} openAdmin={() => setTab("admin")} />}
       {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} />}
