@@ -19,6 +19,8 @@ export type Rehearsal = {
   place: string;
   memo?: string;
   eventType?: "稽古日" | "MTG・打ち合わせ";
+  rehearsalTeam?: "Aチーム" | "Bチーム" | "共通";
+  selectedSceneIds?: string[];
 };
 
 export type Attendance = {
