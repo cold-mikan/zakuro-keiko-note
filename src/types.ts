@@ -18,6 +18,7 @@ export type Rehearsal = {
   endTime: string;
   place: string;
   memo?: string;
+  eventType?: "稽古日" | "MTG・打ち合わせ";
 };
 
 export type Attendance = {
