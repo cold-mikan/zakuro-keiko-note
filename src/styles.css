@@ -1,0 +1,806 @@
+:root {
+  color: #352725;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 188, 199, 0.22), transparent 24%),
+    linear-gradient(90deg, #fffdfb 0%, #fdf4ea 12%, #fffaf5 50%, #fdf4ea 88%, #fffdfb 100%);
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "Hiragino Sans", "Yu Gothic UI", Meiryo, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: max(18px, calc((100vw - 820px) / 2));
+  background: rgba(249, 226, 211, 0.42);
+  pointer-events: none;
+}
+
+body::after {
+  inset: 0 0 0 auto;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  border-radius: 12px;
+  background: #fffaf4;
+  color: #3d302e;
+  cursor: pointer;
+  padding: 12px 16px;
+}
+
+.primary,
+.tabs .active {
+  background: linear-gradient(135deg, #f77b9e, #e75f89);
+  color: #fff;
+}
+
+.shell {
+  width: min(720px, calc(100% - 22px));
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 24px 34px 36px;
+  position: relative;
+  background:
+    radial-gradient(circle at 100% 9%, rgba(255, 217, 225, 0.3), transparent 22%),
+    rgba(255, 251, 246, 0.92);
+  box-shadow:
+    0 0 0 1px rgba(235, 219, 204, 0.8),
+    0 18px 48px rgba(121, 87, 63, 0.14);
+}
+
+.appHeader {
+  align-items: flex-start;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 8px 0 28px;
+  position: relative;
+  text-align: center;
+}
+
+.appHeader > div:not(.fruit):not(.cutlery)::after {
+  content: none;
+}
+
+.titleLine {
+  display: block;
+  width: min(520px, 72vw);
+  height: 48px;
+  margin: -1px auto -4px;
+  object-fit: contain;
+  opacity: 0.92;
+  pointer-events: none;
+}
+
+.fruit {
+  position: absolute;
+  left: -6px;
+  top: -10px;
+  width: 118px;
+  height: 94px;
+}
+
+.fruit::before,
+.fruit::after {
+  content: "✦";
+  position: absolute;
+  color: #f48aa0;
+  font-size: 16px;
+}
+
+.fruit::before {
+  left: 4px;
+  top: 22px;
+}
+
+.fruit::after {
+  right: -6px;
+  top: 26px;
+}
+
+.fruit img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 10px rgba(206, 105, 112, 0.13));
+}
+
+.cutlery {
+  position: absolute;
+  right: 8px;
+  top: -6px;
+  width: 78px;
+  height: 118px;
+  pointer-events: none;
+}
+
+.cutlery img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.86;
+  filter: drop-shadow(0 8px 10px rgba(206, 105, 112, 0.1));
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1 {
+  color: #54372f;
+  font-size: 35px;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+h2 {
+  font-size: 20px;
+  line-height: 1.4;
+}
+
+h3 {
+  font-size: 16px;
+}
+
+.eyebrow {
+  color: #6f4f49;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 26px;
+  margin-bottom: 18px;
+}
+
+.tabs button {
+  align-items: center;
+  border: 1px solid #ead8cc;
+  box-shadow: 0 8px 20px rgba(130, 82, 53, 0.12);
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  min-height: 58px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.tabIcon {
+  color: #9b6b50;
+  font-family: "Yu Gothic UI", Meiryo, sans-serif;
+  font-size: 25px;
+  min-width: 32px;
+}
+
+.tabImageIcon {
+  width: 24px;
+  height: 40px;
+  object-fit: contain;
+  opacity: 0.95;
+  filter: drop-shadow(0 1px 1px rgba(126, 66, 55, 0.18));
+}
+
+.tabs .active .tabIcon {
+  color: #fff;
+}
+
+.tabs .active .tabImageIcon {
+  opacity: 1;
+}
+
+.memberGlyph {
+  position: relative;
+  width: 34px;
+  height: 28px;
+  min-width: 34px;
+  color: #9b6b50;
+  display: inline-block;
+}
+
+.memberGlyphPerson {
+  position: absolute;
+  display: block;
+}
+
+.memberGlyphPerson::before,
+.memberGlyphPerson::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 2px solid currentColor;
+  box-sizing: border-box;
+}
+
+.memberGlyphPerson::before {
+  top: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255, 247, 240, 0.75);
+}
+
+.memberGlyphPerson::after {
+  top: 12px;
+  width: 17px;
+  height: 10px;
+  border-radius: 12px 12px 4px 4px;
+  border-bottom-width: 0;
+}
+
+.memberGlyphPerson.main {
+  left: 11px;
+  top: 0;
+  width: 12px;
+  height: 24px;
+  color: #ef6c92;
+  z-index: 2;
+}
+
+.memberGlyphPerson.main::before {
+  width: 11px;
+  height: 11px;
+}
+
+.memberGlyphPerson.main::after {
+  top: 15px;
+  width: 21px;
+  height: 12px;
+}
+
+.memberGlyphPerson.left {
+  left: 1px;
+  top: 7px;
+}
+
+.memberGlyphPerson.right {
+  right: 1px;
+  top: 7px;
+}
+
+.tabs .active .memberGlyph,
+.tabs .active .memberGlyphPerson.main {
+  color: #fff;
+}
+
+.tabs .active .memberGlyphPerson::before {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.teamSwitch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: -2px 0 18px;
+  padding: 7px;
+  border: 1px solid #efd9ce;
+  border-radius: 999px;
+  background: rgba(255, 250, 244, 0.82);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78), 0 8px 18px rgba(121, 84, 58, 0.08);
+}
+
+.teamSwitch button {
+  min-height: 38px;
+  border-radius: 999px;
+  background: transparent;
+  color: #8b695c;
+  font-family: "Yu Gothic UI", Meiryo, sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 8px 10px;
+}
+
+.teamSwitch button.active {
+  background: #f37498;
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(229, 95, 137, 0.26);
+}
+
+.onlinePanel {
+  margin: -4px 0 18px;
+}
+
+.onlineToggle {
+  align-items: center;
+  background: rgba(255, 253, 250, 0.9);
+  border: 1px solid #ead8cc;
+  border-radius: 12px;
+  box-shadow: 0 8px 18px rgba(121, 84, 58, 0.08);
+  color: #7d5748;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 12px 16px;
+  width: 100%;
+}
+
+.onlineToggle span {
+  color: #9a8177;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.onlineBody {
+  background: rgba(255, 250, 246, 0.94);
+  border: 1px solid #ead8cc;
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(121, 84, 58, 0.1);
+  display: grid;
+  gap: 14px;
+  margin-top: 8px;
+  padding: 16px;
+}
+
+.toggleField {
+  align-items: center;
+  color: #5f4942;
+  display: flex;
+  font-size: 14px;
+  font-weight: 800;
+  gap: 10px;
+}
+
+.toggleField input {
+  box-shadow: none;
+  width: 18px;
+}
+
+.stack {
+  display: grid;
+  gap: 18px;
+}
+
+.grid {
+  display: grid;
+  gap: 14px;
+}
+
+.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.panel {
+  background: rgba(255, 253, 250, 0.86);
+  border: 1px solid #ead8cc;
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(121, 84, 58, 0.1);
+  padding: 18px;
+}
+
+.highlight {
+  border-color: #f3a9b7;
+  background:
+    radial-gradient(circle at 95% 0%, rgba(255, 225, 232, 0.8), transparent 32%),
+    linear-gradient(135deg, #fffaf7, #fff1f5);
+}
+
+.sparkTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 22px;
+}
+
+.sparkTitle span {
+  color: #f1789a;
+}
+
+.panelTitle {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  color: #332625;
+  position: relative;
+}
+
+.panelTitle::after {
+  content: "";
+  flex: 1;
+  border-bottom: 2px dashed rgba(240, 128, 152, 0.38);
+}
+
+.panelTitle span {
+  align-items: center;
+  border: 2px solid #f486a0;
+  border-radius: 50%;
+  color: #f06f8f;
+  display: inline-flex;
+  font-family: "Yu Gothic UI", Meiryo, sans-serif;
+  height: 34px;
+  justify-content: center;
+  min-width: 34px;
+}
+
+.panelImageIcon {
+  width: 22px;
+  height: 32px;
+  object-fit: contain;
+  opacity: 0.9;
+}
+
+.panelTitle.green span {
+  border-color: #89bf8a;
+  color: #70ad72;
+}
+
+.note {
+  color: #7c6960;
+  font-size: 13px;
+  margin-top: 7px;
+}
+
+.rehearsalCard,
+.memberCard,
+.rateRow {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.exportPanel {
+  display: grid;
+  gap: 16px;
+}
+
+.exportActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.exportActions button {
+  min-height: 44px;
+}
+
+.monthExportList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.monthExportButton {
+  align-items: center;
+  background: linear-gradient(135deg, #f37498, #f7a2b4);
+  color: #fff;
+  display: flex;
+  font-size: 16px;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 12px 14px;
+}
+
+.monthExportButton span {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.dangerButton {
+  border: 1px solid #f0a4b4;
+  background: #fff4f6;
+  color: #d95e79;
+}
+
+.emptyState {
+  color: #7c6960;
+  text-align: center;
+}
+
+.rehearsalCard.selected {
+  border-color: #f186a0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chips span {
+  border-radius: 999px;
+  background: #fff1f4;
+  color: #ca5574;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 7px 10px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  color: #5f4942;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+select,
+input,
+textarea {
+  width: 100%;
+  border: 1px solid #f1b9c4;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 6px 15px rgba(229, 123, 145, 0.12);
+  color: #3a2c2a;
+  padding: 14px 15px;
+}
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+}
+
+.formActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.formActions .primary {
+  flex: 1 1 220px;
+}
+
+.people ul {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+
+.people li {
+  align-items: center;
+  border: 1px solid #efdfd4;
+  border-radius: 999px;
+  background: #fff8f3;
+  display: flex;
+  min-height: 36px;
+  padding: 8px 13px;
+}
+
+.people li::before,
+.rateRow::before {
+  content: "";
+  width: 11px;
+  height: 11px;
+  margin-right: 16px;
+  border-radius: 50%;
+  background: #f4a2ad;
+  box-shadow: 0 0 0 4px rgba(244, 162, 173, 0.16);
+}
+
+.warn {
+  border-color: #f2a6b8;
+  background: linear-gradient(135deg, #fffdfb, #fff1f5);
+}
+
+.muted {
+  background: #fffaf5;
+}
+
+.sceneList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.sceneEditor {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px dashed #b7d9b8;
+  border-radius: 10px;
+  background: rgba(240, 251, 241, 0.58);
+}
+
+.scene {
+  align-items: stretch;
+  border-radius: 10px;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.scene h3::before {
+  content: "▣";
+  color: #4d814f;
+  margin-right: 8px;
+}
+
+.scene.ok {
+  background: #f0fbf1;
+  border: 1px solid #b7d9b8;
+}
+
+.scene.ng {
+  background: #fff1f4;
+  border: 1px solid #efbdc8;
+}
+
+.scene strong {
+  align-items: center;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: #4f9d55;
+  display: inline-flex;
+  font-size: 14px;
+  justify-content: center;
+  padding: 7px 12px;
+}
+
+.scene.ng strong {
+  color: #d75d79;
+}
+
+.sceneActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.rateList {
+  display: grid;
+  gap: 0;
+  margin-top: 14px;
+}
+
+.rateRow {
+  border-bottom: 1px dashed #ead4c5;
+  padding: 10px 2px;
+}
+
+.rateRow strong {
+  color: #ee6b8e;
+  font-family: "Yu Gothic UI", Meiryo, sans-serif;
+  font-size: 22px;
+}
+
+.memberCard strong {
+  color: #ee6b8e;
+  font-size: 20px;
+}
+
+@media (max-width: 720px) {
+  .shell {
+    width: min(100%, calc(100% - 12px));
+    padding: 18px 16px 30px;
+  }
+
+  .appHeader {
+    min-height: 164px;
+    padding: 82px 0 22px;
+    overflow: hidden;
+  }
+
+  .fruit {
+    left: 16px;
+    top: 4px;
+    width: 92px;
+    height: 76px;
+    transform: none;
+  }
+
+  .fruit::before {
+    left: -2px;
+    top: 18px;
+  }
+
+  .fruit::after {
+    right: -4px;
+    top: 22px;
+  }
+
+  .cutlery {
+    right: 16px;
+    top: 4px;
+    width: 50px;
+    height: 78px;
+    transform: none;
+    opacity: 0.88;
+  }
+
+  h1 {
+    font-size: 29px;
+    line-height: 1.15;
+  }
+
+  .eyebrow {
+    font-size: 13px;
+  }
+
+  .titleLine {
+    width: min(340px, 86vw);
+    height: 36px;
+    margin-top: 2px;
+  }
+
+  .tabs {
+    gap: 12px;
+  }
+
+  .tabs button {
+    min-height: 56px;
+    font-size: 15px;
+    gap: 10px;
+    padding: 11px;
+  }
+
+  .tabIcon {
+    font-size: 21px;
+    min-width: 22px;
+  }
+
+  .tabImageIcon {
+    width: 20px;
+    height: 34px;
+  }
+
+  .teamSwitch {
+    border-radius: 18px;
+  }
+
+  .two,
+  .sceneList {
+    grid-template-columns: 1fr;
+  }
+
+  .exportActions {
+    grid-template-columns: 1fr;
+  }
+
+  .monthExportList {
+    grid-template-columns: 1fr;
+  }
+
+  .rehearsalCard,
+  .memberCard {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
