@@ -30,6 +30,9 @@ create table if not exists public.rehearsals (
   created_at timestamptz not null default now()
 );
 
+alter table public.rehearsals
+  add column if not exists event_type text not null default '稽古日';
+
 create table if not exists public.scenes (
   id text primary key,
   room_id text not null references public.rooms(id) on delete cascade,
