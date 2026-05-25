@@ -455,6 +455,28 @@ async function upsertSupabaseRow(config, actorName, tableName, row, beforeData, 
   return { ok: true, message: "オンラインへ保存しました。" };
 }
 
+async function deleteSupabaseRehearsal(config, actorName, rehearsal, attendanceRows) {
+  const client = getSupabaseClient(config);
+  if (!client) return { ok: false, message: "Supabase未接続のため、この端末内だけで削除しました。" };
+  await logEdit(client, config, actorName, "rehearsals", rehearsal.id, "delete", {
+    rehearsal,
+    attendances: attendanceRows,
+  }, null);
+  const { error: attendanceError } = await client
+    .from("attendances")
+    .delete()
+    .eq("room_id", config.roomId)
+    .eq("rehearsal_id", rehearsal.id);
+  if (attendanceError) throw attendanceError;
+  const { error: rehearsalError } = await client
+    .from("rehearsals")
+    .delete()
+    .eq("room_id", config.roomId)
+    .eq("id", rehearsal.id);
+  if (rehearsalError) throw rehearsalError;
+  return { ok: true, message: "稽古日をオンラインから削除しました。" };
+}
+
 async function loadSupabaseState(config) {
   const client = getSupabaseClient(config);
   if (!client) throw new Error("Supabaseライブラリを読み込めませんでした。");
@@ -835,9 +857,24 @@ function App() {
     }
   }
 
-  function deleteRehearsal(rehearsalId: string) {
+  async function deleteRehearsal(rehearsalId: string) {
     if (!guardOnlineWrite()) return;
-    if (!confirm("この稽古日を削除しますか？")) return;
+    const target = rehearsalList.find((rehearsal) => rehearsal.id === rehearsalId);
+    if (!target) return;
+    if (!confirm(`${target.date} ${target.startTime}-${target.endTime} の稽古日を削除しますか？\nこの日の出欠データも一緒に削除されます。`)) return;
+    const typed = prompt("誤削除防止のため「削除」と入力してください。");
+    if (typed !== "削除") return;
+    const relatedAttendances = attendances.filter((attendance) => attendance.rehearsalId === rehearsalId);
+    if (onlineReady) {
+      try {
+        setOnlineStatus("稽古日をオンラインから削除中です...");
+        const result = await deleteSupabaseRehearsal(supabaseConfig, actorName, target, relatedAttendances);
+        setOnlineStatus(result.message);
+      } catch (error) {
+        await reportOnlineError(error);
+        return;
+      }
+    }
     setRehearsalList((current) => current.filter((rehearsal) => rehearsal.id !== rehearsalId));
     setAttendances((current) => current.filter((attendance) => attendance.rehearsalId !== rehearsalId));
   }
@@ -917,7 +954,7 @@ function App() {
         realtimeStatus={realtimeStatus}
       />
       {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} sceneResults={sceneResults} />}
-      {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} scenes={sceneList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onDelete={deleteRehearsal} allowDelete={!onlineReady} openAdmin={() => setTab("admin")} />}
+      {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} scenes={sceneList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onDelete={deleteRehearsal} allowDelete={true} openAdmin={() => setTab("admin")} />}
       {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} onSaveBatch={saveAttendanceBatch} />}
       {tab === "admin" && (
         <AdminView
