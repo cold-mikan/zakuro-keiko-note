@@ -474,9 +474,34 @@ async function loadSupabaseState(config) {
   };
 }
 
-async function seedSupabaseState(config, actorName, state) {
+function getStateCounts(state) {
+  return {
+    members: state.members?.length ?? 0,
+    rehearsals: state.rehearsals?.length ?? 0,
+    scenes: state.scenes?.length ?? 0,
+    attendances: state.attendances?.length ?? 0,
+  };
+}
+
+function hasStateData(state) {
+  const counts = getStateCounts(state);
+  return counts.members > 0 || counts.rehearsals > 0 || counts.scenes > 0 || counts.attendances > 0;
+}
+
+function describeStateCounts(state) {
+  const counts = getStateCounts(state);
+  return `メンバー${counts.members}件、稽古日${counts.rehearsals}件、シーン${counts.scenes}件、出欠${counts.attendances}件`;
+}
+
+async function seedSupabaseState(config, actorName, state, options = { requireEmpty: true }) {
   const client = getSupabaseClient(config);
   if (!client) throw new Error("Supabaseライブラリを読み込めませんでした。");
+  if (options.requireEmpty) {
+    const remoteState = await loadSupabaseState(config);
+    if (hasStateData(remoteState)) {
+      throw new Error(`本番データ保護: Supabaseに既存データがあります（${describeStateCounts(remoteState)}）。初期データでの上書きを中止しました。`);
+    }
+  }
   const rows = [
     ["members", state.members.map((member) => memberToRow(config, member, actorName))],
     ["rehearsals", state.rehearsals.map((rehearsal) => rehearsalToRow(config, rehearsal, actorName))],
@@ -578,6 +603,18 @@ function App() {
     };
   }
 
+  function isOnlineConfigured() {
+    return Boolean(supabaseConfig.url && supabaseConfig.anonKey && supabaseConfig.roomId);
+  }
+
+  function guardOnlineWrite() {
+    if (!isOnlineConfigured()) return true;
+    if (onlineReady) return true;
+    alert("オンライン同期の接続がまだ完了していないため、保存を中止しました。少し待ってからもう一度試すか、ページを再読み込みしてください。");
+    setOnlineStatus("オンライン接続が完了するまで保存を止めています。");
+    return false;
+  }
+
   useEffect(() => {
     if (initialOnlineLoadRef.current) return;
     if (!supabaseConfig.url || !supabaseConfig.anonKey || !supabaseConfig.roomId) return;
@@ -587,7 +624,7 @@ function App() {
       setOnlineStatus("オンラインデータを確認中です...");
       try {
         const data = await loadSupabaseState(supabaseConfig);
-        const isEmpty = !data.members.length && !data.rehearsals.length && !data.scenes.length && !data.attendances.length;
+        const isEmpty = !hasStateData(data);
         if (isEmpty) {
           await seedSupabaseState(supabaseConfig, actorName || "初期設定", getCurrentState());
           setOnlineStatus("初期データをオンラインに保存しました。");
@@ -616,6 +653,14 @@ function App() {
     }
     setOnlineStatus("現在のデータをSupabaseへ送信中です...");
     try {
+      const remoteState = await loadSupabaseState(supabaseConfig);
+      if (hasStateData(remoteState)) {
+        alert(`Supabaseに既存データがあります。上書きを防ぐため送信を中止しました。\n現在のオンラインデータ：${describeStateCounts(remoteState)}`);
+        applyAppState(remoteState);
+        setOnlineReady(true);
+        setOnlineStatus("本番データ保護のため、オンライン上の既存データを残しました。");
+        return;
+      }
       await seedSupabaseState(supabaseConfig, actorName, getCurrentState());
       setOnlineReady(true);
       setOnlineStatus(`Supabaseへ保存しました：${new Date().toLocaleString("ja-JP")}`);
@@ -703,12 +748,24 @@ function App() {
     };
   }, [supabaseConfig.anonKey, supabaseConfig.roomId, supabaseConfig.url]);
 
-  function reportOnlineError(error) {
+  async function reportOnlineError(error) {
     console.error(error);
-    setOnlineStatus("オンライン保存でエラーが出ました。画面上の変更はこの端末には残っています。");
+    setOnlineStatus("オンライン保存でエラーが出ました。オンラインデータを読み直しています...");
+    try {
+      const data = await loadSupabaseState(supabaseConfig);
+      applyAppState(data);
+      setOnlineReady(true);
+      setOnlineStatus("保存に失敗したため、オンライン上の最新データへ戻しました。");
+    } catch (loadError) {
+      console.error(loadError);
+      setOnlineReady(false);
+      setOnlineStatus("オンライン保存と再読み込みに失敗しました。ページを再読み込みしてください。");
+    }
+    alert("オンライン保存に失敗しました。ほかの人に反映されない変更を残さないため、オンライン上の最新データを読み直しました。もう一度入力してください。");
   }
 
   function addMember(input: Omit<Member, "id">) {
+    if (!guardOnlineWrite()) return;
     const next = { ...input, id: `m${Date.now()}`, updatedBy: actorName, updatedAt: new Date().toISOString() };
     setMemberList((current) => [...current, next]);
     if (onlineReady) {
@@ -719,6 +776,7 @@ function App() {
   }
 
   function updateMember(input: Member) {
+    if (!guardOnlineWrite()) return;
     const next = { ...input, updatedBy: actorName, updatedAt: new Date().toISOString() };
     const before = memberList.find((member) => member.id === input.id);
     setMemberList((current) => current.map((member) => (member.id === input.id ? next : member)));
@@ -730,6 +788,7 @@ function App() {
   }
 
   function addScene(input: Omit<Scene, "id">) {
+    if (!guardOnlineWrite()) return;
     const next = { ...input, id: `s${Date.now()}`, updatedBy: actorName, updatedAt: new Date().toISOString() };
     setSceneList((current) => [...current, next]);
     if (onlineReady) {
@@ -740,6 +799,7 @@ function App() {
   }
 
   function updateScene(input: Scene) {
+    if (!guardOnlineWrite()) return;
     const next = { ...input, updatedBy: actorName, updatedAt: new Date().toISOString() };
     const before = sceneList.find((scene) => scene.id === input.id);
     setSceneList((current) => current.map((scene) => (scene.id === input.id ? next : scene)));
@@ -751,17 +811,20 @@ function App() {
   }
 
   function deleteScene(sceneId: string) {
+    if (!guardOnlineWrite()) return;
     if (!confirm("このシーンを削除しますか？")) return;
     setSceneList((current) => current.filter((scene) => scene.id !== sceneId));
   }
 
   function deleteMember(memberId: string) {
+    if (!guardOnlineWrite()) return;
     if (!confirm("このメンバーを削除しますか？")) return;
     setMemberList((current) => current.filter((member) => member.id !== memberId));
     setAttendances((current) => current.filter((attendance) => attendance.memberId !== memberId));
   }
 
   function addRehearsal(input: Omit<Rehearsal, "id">) {
+    if (!guardOnlineWrite()) return;
     const next = { ...input, id: `r${Date.now()}`, createdAt: new Date().toISOString(), updatedBy: actorName, updatedAt: new Date().toISOString() };
     setRehearsalList((current) => [...current, next].sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`)));
     setSelectedRehearsalId(next.id);
@@ -773,12 +836,14 @@ function App() {
   }
 
   function deleteRehearsal(rehearsalId: string) {
+    if (!guardOnlineWrite()) return;
     if (!confirm("この稽古日を削除しますか？")) return;
     setRehearsalList((current) => current.filter((rehearsal) => rehearsal.id !== rehearsalId));
     setAttendances((current) => current.filter((attendance) => attendance.rehearsalId !== rehearsalId));
   }
 
   function saveAttendance(input: Omit<Attendance, "id">) {
+    if (!guardOnlineWrite()) return;
     let savedRow;
     let beforeRow;
     setAttendances((current) => {
@@ -830,6 +895,12 @@ function App() {
         ))}
       </nav>
       <TeamSwitch value={teamFilter} onChange={setTeamFilter} />
+      <SyncGuardNotice
+        configured={isOnlineConfigured()}
+        onlineReady={onlineReady}
+        onlineStatus={onlineStatus}
+        realtimeStatus={realtimeStatus}
+      />
       {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} sceneResults={sceneResults} />}
       {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} scenes={sceneList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onDelete={deleteRehearsal} allowDelete={!onlineReady} openAdmin={() => setTab("admin")} />}
       {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} />}
@@ -848,6 +919,20 @@ function App() {
       {tab === "members" && <MemberView rehearsals={rehearsalList} attendances={attendances} visibleMembers={visibleMembers} onAdd={addMember} onUpdate={updateMember} onDelete={deleteMember} allowDelete={!onlineReady} />}
       {tab === "scenes" && <ScenePage sceneResults={sceneResults} rehearsals={rehearsalList} onAdd={addScene} onUpdate={updateScene} onDelete={deleteScene} allowDelete={!onlineReady} />}
     </main>
+  );
+}
+
+function SyncGuardNotice({ configured, onlineReady, onlineStatus, realtimeStatus }) {
+  if (!configured) return null;
+  const tone = onlineReady ? "ok" : "warn";
+  return (
+    <section className={`syncGuard ${tone}`} aria-live="polite">
+      <div>
+        <strong>{onlineReady ? "オンライン保存中" : "オンライン接続を確認中"}</strong>
+        <p>{onlineReady ? "入力内容はSupabaseに保存され、ほかの端末にも反映されます。" : "接続が完了するまで保存操作を止めています。"}</p>
+      </div>
+      <span>{onlineStatus} / {realtimeStatus}</span>
+    </section>
   );
 }
 
