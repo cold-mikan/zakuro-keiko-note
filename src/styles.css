@@ -389,6 +389,10 @@ h3 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .panel {
   background: rgba(255, 253, 250, 0.86);
   border: 1px solid #ead8cc;
@@ -768,6 +772,53 @@ textarea {
   background: rgba(240, 251, 241, 0.58);
 }
 
+.checkboxGroup {
+  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.checkboxGroup legend {
+  color: #5f4942;
+  flex-basis: 100%;
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+
+.checkboxPill {
+  align-items: center;
+  background: #fffaf7;
+  border: 1px solid #efdfd4;
+  border-radius: 999px;
+  color: #5f4942;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 800;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 12px;
+}
+
+.checkboxPill input {
+  box-shadow: none;
+  width: auto;
+}
+
+.checkboxPill:has(input:checked) {
+  background: #fff1f5;
+  border-color: #f29aaf;
+  color: #bc526c;
+}
+
+.sceneSelectPill {
+  border-radius: 10px;
+}
+
 .scene {
   align-items: stretch;
   border-radius: 10px;
@@ -805,6 +856,13 @@ textarea {
 
 .scene.ng strong {
   color: #d75d79;
+}
+
+.sceneCountLine {
+  color: #8b6657;
+  font-size: 12px;
+  font-weight: 800;
+  margin-top: 8px;
 }
 
 .sceneActions {
@@ -915,6 +973,7 @@ textarea {
   }
 
   .two,
+  .three,
   .sceneList {
     grid-template-columns: 1fr;
   }
