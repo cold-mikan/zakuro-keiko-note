@@ -1,4 +1,4 @@
-const CACHE_NAME = "keiko-note-v2";
+const CACHE_NAME = "keiko-note-v3";
 const APP_SHELL = [
   "/manifest.webmanifest",
   "/assets/app-icon-192.png",
@@ -39,5 +39,40 @@ self.addEventListener("fetch", (event) => {
         return response;
       })
       .catch(() => caches.match(event.request)),
+  );
+});
+
+self.addEventListener("push", (event) => {
+  const fallback = {
+    title: "ザクロ稽古ノート",
+    body: "今日はザクロの稽古日だよ！がんばろうね！",
+  };
+  let data = fallback;
+  try {
+    data = event.data ? event.data.json() : fallback;
+  } catch (error) {
+    data = fallback;
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? fallback.title, {
+      body: data.body ?? fallback.body,
+      icon: "/assets/app-icon-192.png",
+      badge: "/assets/favicon.png",
+      data: {
+        url: data.url ?? "/",
+      },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const targetUrl = event.notification.data?.url ?? "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      const existing = clients.find((client) => client.url.includes(self.location.origin));
+      if (existing) return existing.focus();
+      return self.clients.openWindow(targetUrl);
+    }),
   );
 });

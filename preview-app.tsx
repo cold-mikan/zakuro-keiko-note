@@ -1,8 +1,4 @@
-// @ts-nocheck
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { createRoot } from "react-dom/client";
-import { createClient } from "@supabase/supabase-js";
-import "./styles.css";
+const { useEffect, useMemo, useRef, useState } = React;
 
 type AttendanceStatus = "出席" | "欠席" | "遅刻" | "早退" | "未定";
 
@@ -292,274 +288,23 @@ function getRehearsalMonths(rehearsalSource: Rehearsal[]) {
 }
 
 function getSupabaseConfig() {
-  return readStorage("keiko.supabaseConfig", {
-    url: import.meta.env.VITE_SUPABASE_URL ?? "",
-    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY ?? "",
-    roomId: import.meta.env.VITE_DEFAULT_ROOM_ID ?? "zakuro-keiko",
-  });
+  return readStorage("keiko.supabaseConfig", { url: "", anonKey: "", roomId: "zakuro-keiko" });
 }
 
 function saveSupabaseConfig(config) {
   localStorage.setItem("keiko.supabaseConfig", JSON.stringify(config));
 }
 
-function getActorName() {
-  return readStorage("keiko.actorName", "");
+function supabaseEndpoint(config, query = "") {
+  return `${config.url.replace(/\/$/, "")}/rest/v1/keiko_app_state${query}`;
 }
 
-function saveActorName(name) {
-  localStorage.setItem("keiko.actorName", JSON.stringify(name));
-}
-
-function getNotificationMemberId() {
-  return readStorage("keiko.notificationMemberId", "");
-}
-
-function saveNotificationMemberId(memberId) {
-  localStorage.setItem("keiko.notificationMemberId", JSON.stringify(memberId));
-}
-
-function getVapidPublicKey() {
-  return import.meta.env.VITE_VAPID_PUBLIC_KEY ?? "";
-}
-
-function urlBase64ToUint8Array(value) {
-  const padding = "=".repeat((4 - (value.length % 4)) % 4);
-  const base64 = `${value}${padding}`.replace(/-/g, "+").replace(/_/g, "/");
-  const rawData = window.atob(base64);
-  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
-}
-
-function getSupabaseClient(config) {
-  if (!config.url || !config.anonKey) return null;
-  return createClient(config.url, config.anonKey);
-}
-
-function withRoom(config, row) {
+function supabaseHeaders(config) {
   return {
-    ...row,
-    room_id: config.roomId,
+    apikey: config.anonKey,
+    Authorization: `Bearer ${config.anonKey}`,
+    "Content-Type": "application/json",
   };
-}
-
-function memberToRow(config, member, actorName) {
-  return withRoom(config, {
-    id: member.id,
-    name: member.name,
-    role: member.role,
-    character: member.character ?? "",
-    team: member.team,
-    memo: member.memo ?? "",
-    updated_by: actorName,
-    updated_at: new Date().toISOString(),
-  });
-}
-
-function memberFromRow(row) {
-  return {
-    id: row.id,
-    name: row.name,
-    role: row.role,
-    character: row.character ?? "",
-    team: row.team,
-    memo: row.memo ?? "",
-    updatedBy: row.updated_by,
-    updatedAt: row.updated_at,
-  };
-}
-
-function rehearsalToRow(config, rehearsal, actorName) {
-  return withRoom(config, {
-    id: rehearsal.id,
-    date: rehearsal.date,
-    start_time: rehearsal.startTime,
-    end_time: rehearsal.endTime,
-    place: rehearsal.place,
-    memo: rehearsal.memo ?? "",
-    event_type: rehearsal.eventType ?? "稽古日",
-    rehearsal_team: rehearsal.rehearsalTeam ?? "共通",
-    selected_scene_ids: rehearsal.selectedSceneIds ?? [],
-    created_at: rehearsal.createdAt ?? new Date().toISOString(),
-    updated_by: actorName,
-    updated_at: new Date().toISOString(),
-  });
-}
-
-function rehearsalFromRow(row) {
-  return {
-    id: row.id,
-    date: row.date,
-    startTime: row.start_time,
-    endTime: row.end_time,
-    place: row.place,
-    memo: row.memo ?? "",
-    eventType: row.event_type ?? "稽古日",
-    rehearsalTeam: row.rehearsal_team ?? "共通",
-    selectedSceneIds: Array.isArray(row.selected_scene_ids) ? row.selected_scene_ids : [],
-    createdAt: row.created_at,
-    updatedBy: row.updated_by,
-    updatedAt: row.updated_at,
-  };
-}
-
-function sceneToRow(config, scene, actorName) {
-  return withRoom(config, {
-    id: scene.id,
-    title: scene.title,
-    required_characters: scene.requiredCharacters,
-    memo: scene.memo ?? "",
-    updated_by: actorName,
-    updated_at: new Date().toISOString(),
-  });
-}
-
-function sceneFromRow(row) {
-  return {
-    id: row.id,
-    title: row.title,
-    requiredCharacters: Array.isArray(row.required_characters) ? row.required_characters : [],
-    memo: row.memo ?? "",
-    updatedBy: row.updated_by,
-    updatedAt: row.updated_at,
-  };
-}
-
-function attendanceToRow(config, attendance, actorName) {
-  return withRoom(config, {
-    id: attendance.id,
-    rehearsal_id: attendance.rehearsalId,
-    member_id: attendance.memberId,
-    status: attendance.status,
-    arrival_time: attendance.arrivalTime ?? "",
-    leave_time: attendance.leaveTime ?? "",
-    note: attendance.note ?? "",
-    updated_by: actorName,
-    updated_at: new Date().toISOString(),
-  });
-}
-
-function attendanceFromRow(row) {
-  return {
-    id: row.id,
-    rehearsalId: row.rehearsal_id,
-    memberId: row.member_id,
-    status: row.status,
-    arrivalTime: row.arrival_time ?? "",
-    leaveTime: row.leave_time ?? "",
-    note: row.note ?? "",
-    updatedBy: row.updated_by,
-    updatedAt: row.updated_at,
-  };
-}
-
-async function logEdit(client, config, actorName, tableName, recordId, action, beforeData, afterData) {
-  await client.from("edit_logs").insert({
-    room_id: config.roomId,
-    table_name: tableName,
-    record_id: recordId,
-    action,
-    changed_by: actorName || "未入力",
-    before_data: beforeData ?? null,
-    after_data: afterData ?? null,
-  });
-}
-
-async function upsertSupabaseRow(config, actorName, tableName, row, beforeData, afterData) {
-  const client = getSupabaseClient(config);
-  if (!client) return { ok: false, message: "Supabase未接続のため、この端末内だけに保存しました。" };
-  const onConflict = tableName === "attendances" ? "room_id,rehearsal_id,member_id" : "id";
-  const { error } = await client.from(tableName).upsert(row, { onConflict });
-  if (error) throw error;
-  await logEdit(client, config, actorName, tableName, row.id, beforeData ? "update" : "insert", beforeData, afterData);
-  return { ok: true, message: "オンラインへ保存しました。" };
-}
-
-async function deleteSupabaseRehearsal(config, actorName, rehearsal, attendanceRows) {
-  const client = getSupabaseClient(config);
-  if (!client) return { ok: false, message: "Supabase未接続のため、この端末内だけで削除しました。" };
-  await logEdit(client, config, actorName, "rehearsals", rehearsal.id, "delete", {
-    rehearsal,
-    attendances: attendanceRows,
-  }, null);
-  const { error: attendanceError } = await client
-    .from("attendances")
-    .delete()
-    .eq("room_id", config.roomId)
-    .eq("rehearsal_id", rehearsal.id);
-  if (attendanceError) throw attendanceError;
-  const { error: rehearsalError } = await client
-    .from("rehearsals")
-    .delete()
-    .eq("room_id", config.roomId)
-    .eq("id", rehearsal.id);
-  if (rehearsalError) throw rehearsalError;
-  return { ok: true, message: "稽古日をオンラインから削除しました。" };
-}
-
-async function loadSupabaseState(config) {
-  const client = getSupabaseClient(config);
-  if (!client) throw new Error("Supabaseライブラリを読み込めませんでした。");
-  const [memberRows, rehearsalRows, sceneRows, attendanceRows] = await Promise.all([
-    client.from("members").select("*").eq("room_id", config.roomId).order("name"),
-    client.from("rehearsals").select("*").eq("room_id", config.roomId).order("date").order("start_time"),
-    client.from("scenes").select("*").eq("room_id", config.roomId).order("title"),
-    client.from("attendances").select("*").eq("room_id", config.roomId).order("updated_at", { ascending: false }),
-  ]);
-  const failed = [memberRows, rehearsalRows, sceneRows, attendanceRows].find((result) => result.error);
-  if (failed?.error) throw failed.error;
-  return {
-    members: memberRows.data.map(memberFromRow),
-    rehearsals: rehearsalRows.data.map(rehearsalFromRow),
-    scenes: sceneRows.data.map(sceneFromRow),
-    attendances: attendanceRows.data.map(attendanceFromRow),
-  };
-}
-
-function getStateCounts(state) {
-  return {
-    members: state.members?.length ?? 0,
-    rehearsals: state.rehearsals?.length ?? 0,
-    scenes: state.scenes?.length ?? 0,
-    attendances: state.attendances?.length ?? 0,
-  };
-}
-
-function hasStateData(state) {
-  const counts = getStateCounts(state);
-  return counts.members > 0 || counts.rehearsals > 0 || counts.scenes > 0 || counts.attendances > 0;
-}
-
-function describeStateCounts(state) {
-  const counts = getStateCounts(state);
-  return `メンバー${counts.members}件、稽古日${counts.rehearsals}件、シーン${counts.scenes}件、出欠${counts.attendances}件`;
-}
-
-async function seedSupabaseState(config, actorName, state, options = { requireEmpty: true }) {
-  const client = getSupabaseClient(config);
-  if (!client) throw new Error("Supabaseライブラリを読み込めませんでした。");
-  if (options.requireEmpty) {
-    const remoteState = await loadSupabaseState(config);
-    if (hasStateData(remoteState)) {
-      throw new Error(`本番データ保護: Supabaseに既存データがあります（${describeStateCounts(remoteState)}）。初期データでの上書きを中止しました。`);
-    }
-  }
-  const rows = [
-    ["members", state.members.map((member) => memberToRow(config, member, actorName))],
-    ["rehearsals", state.rehearsals.map((rehearsal) => rehearsalToRow(config, rehearsal, actorName))],
-    ["scenes", state.scenes.map((scene) => sceneToRow(config, scene, actorName))],
-    ["attendances", state.attendances.map((attendance) => attendanceToRow(config, attendance, actorName))],
-  ];
-  for (const [tableName, tableRows] of rows) {
-    if (!tableRows.length) continue;
-    const { error } = await client.from(tableName).upsert(tableRows, { onConflict: "id" });
-    if (error) throw error;
-  }
-  await logEdit(client, config, actorName, "app_state", config.roomId, "seed", null, {
-    members: state.members.length,
-    rehearsals: state.rehearsals.length,
-    scenes: state.scenes.length,
-    attendances: state.attendances.length,
-  });
 }
 
 function App() {
@@ -574,13 +319,11 @@ function App() {
   });
   const [attendances, setAttendances] = useState<Attendance[]>(() => readStorage("keiko.attendances", seedAttendances));
   const [supabaseConfig, setSupabaseConfig] = useState(() => getSupabaseConfig());
-  const [actorName, setActorName] = useState(() => getActorName());
-  const [notificationMemberId, setNotificationMemberId] = useState(() => getNotificationMemberId());
   const [onlineStatus, setOnlineStatus] = useState("未設定です。");
+  const [autoOnlineSave, setAutoOnlineSave] = useState(() => readStorage("keiko.autoOnlineSave", true));
   const [onlineReady, setOnlineReady] = useState(false);
   const [realtimeStatus, setRealtimeStatus] = useState("未接続です。");
   const applyingRemoteRef = useRef(false);
-  const initialOnlineLoadRef = useRef(false);
   const [selectedRehearsalId, setSelectedRehearsalId] = useState(rehearsalList[0]?.id ?? "");
   const [tab, setTab] = useState("dashboard");
   const [teamFilter, setTeamFilter] = useState<TeamFilter>("全員");
@@ -615,12 +358,23 @@ function App() {
   }, [supabaseConfig]);
 
   useEffect(() => {
-    saveActorName(actorName);
-  }, [actorName]);
+    localStorage.setItem("keiko.autoOnlineSave", JSON.stringify(autoOnlineSave));
+  }, [autoOnlineSave]);
 
-  useEffect(() => {
-    saveNotificationMemberId(notificationMemberId);
-  }, [notificationMemberId]);
+  function getAppState() {
+    return {
+      version: 1,
+      savedAt: new Date().toISOString(),
+      members: memberList,
+      rehearsals: rehearsalList,
+      scenes: sceneList,
+      attendances,
+    };
+  }
+
+  function isOnlineConfigured() {
+    return Boolean(supabaseConfig.url && supabaseConfig.anonKey && supabaseConfig.roomId);
+  }
 
   function applyAppState(data, source = "manual") {
     if (!data?.members || !data?.rehearsals || !data?.scenes || !data?.attendances) {
@@ -640,80 +394,25 @@ function App() {
     setSelectedRehearsalId(data.rehearsals[0]?.id ?? "");
   }
 
-  function getCurrentState() {
-    return {
-      members: memberList,
-      rehearsals: rehearsalList,
-      scenes: sceneList,
-      attendances,
-    };
-  }
-
-  function isOnlineConfigured() {
-    return Boolean(supabaseConfig.url && supabaseConfig.anonKey && supabaseConfig.roomId);
-  }
-
-  function guardOnlineWrite() {
-    if (!isOnlineConfigured()) return true;
-    if (onlineReady) return true;
-    alert("オンライン同期の接続がまだ完了していないため、保存を中止しました。少し待ってからもう一度試すか、ページを再読み込みしてください。");
-    setOnlineStatus("オンライン接続が完了するまで保存を止めています。");
-    return false;
-  }
-
-  useEffect(() => {
-    if (initialOnlineLoadRef.current) return;
-    if (!supabaseConfig.url || !supabaseConfig.anonKey || !supabaseConfig.roomId) return;
-    initialOnlineLoadRef.current = true;
-
-    async function initializeOnlineState() {
-      setOnlineStatus("オンラインデータを確認中です...");
-      try {
-        const data = await loadSupabaseState(supabaseConfig);
-        const isEmpty = !hasStateData(data);
-        if (isEmpty) {
-          await seedSupabaseState(supabaseConfig, actorName || "初期設定", getCurrentState());
-          setOnlineStatus("初期データをオンラインに保存しました。");
-        } else {
-          applyAppState(data);
-          setOnlineStatus("オンラインデータを読み込みました。");
-        }
-        setOnlineReady(true);
-      } catch (error) {
-        console.error(error);
-        setOnlineStatus("オンライン接続に失敗しました。");
-      }
-    }
-
-    initializeOnlineState();
-  }, [supabaseConfig.anonKey, supabaseConfig.roomId, supabaseConfig.url]);
-
-  async function saveInitialOnline() {
+  async function saveOnline({ silent = false } = {}) {
     if (!supabaseConfig.url || !supabaseConfig.anonKey || !supabaseConfig.roomId) {
-      alert("Supabase URL、anon key、部屋IDを入力してください。");
+      if (!silent) alert("Supabase URL、anon key、部屋IDを入力してください。");
       return;
     }
-    if (!actorName.trim()) {
-      alert("先に入力者名を入れてください。誰が変更したかを履歴に残すためです。");
-      return;
-    }
-    setOnlineStatus("現在のデータをSupabaseへ送信中です...");
+    setOnlineStatus(silent ? "自動保存中です..." : "オンラインへ保存中です...");
     try {
-      const remoteState = await loadSupabaseState(supabaseConfig);
-      if (hasStateData(remoteState)) {
-        alert(`Supabaseに既存データがあります。上書きを防ぐため送信を中止しました。\n現在のオンラインデータ：${describeStateCounts(remoteState)}`);
-        applyAppState(remoteState);
-        setOnlineReady(true);
-        setOnlineStatus("本番データ保護のため、オンライン上の既存データを残しました。");
-        return;
-      }
-      await seedSupabaseState(supabaseConfig, actorName, getCurrentState());
+      const response = await fetch(supabaseEndpoint(supabaseConfig), {
+        method: "POST",
+        headers: { ...supabaseHeaders(supabaseConfig), Prefer: "resolution=merge-duplicates" },
+        body: JSON.stringify([{ id: supabaseConfig.roomId, data: getAppState(), updated_at: new Date().toISOString() }]),
+      });
+      if (!response.ok) throw new Error(await response.text());
       setOnlineReady(true);
-      setOnlineStatus(`Supabaseへ保存しました：${new Date().toLocaleString("ja-JP")}`);
+      setOnlineStatus(`${silent ? "自動保存しました" : "保存しました"}：${new Date().toLocaleString("ja-JP")}`);
     } catch (error) {
       console.error(error);
       setOnlineStatus("保存できませんでした。Supabase設定とテーブル作成を確認してください。");
-      alert("オンライン保存に失敗しました。READMEのSupabase設定を確認してください。");
+      if (!silent) alert("オンライン保存に失敗しました。READMEのSupabase設定を確認してください。");
     }
   }
 
@@ -722,17 +421,20 @@ function App() {
       alert("Supabase URL、anon key、部屋IDを入力してください。");
       return;
     }
-    if (!confirm("Supabase上のデータで、このブラウザのデータを置き換えます。よろしいですか？")) return;
+    if (!confirm("オンライン上のデータで、このブラウザのデータを置き換えます。よろしいですか？")) return;
     setOnlineStatus("オンラインから読み込み中です...");
     try {
-      const data = await loadSupabaseState(supabaseConfig);
-      if (!data.members.length && !data.rehearsals.length && !data.scenes.length && !data.attendances.length) {
+      const query = `?id=eq.${encodeURIComponent(supabaseConfig.roomId)}&select=data,updated_at`;
+      const response = await fetch(supabaseEndpoint(supabaseConfig, query), { headers: supabaseHeaders(supabaseConfig) });
+      if (!response.ok) throw new Error(await response.text());
+      const rows = await response.json();
+      if (!rows.length) {
         setOnlineStatus("オンラインデータがまだありません。先に保存してください。");
         return;
       }
-      applyAppState(data);
+      applyAppState(rows[0].data);
       setOnlineReady(true);
-      setOnlineStatus(`Supabaseから読み込みました：${new Date().toLocaleString("ja-JP")}`);
+      setOnlineStatus(`読み込みました：${new Date(rows[0].updated_at).toLocaleString("ja-JP")}`);
     } catch (error) {
       console.error(error);
       setOnlineStatus("読み込めませんでした。Supabase設定とテーブル作成を確認してください。");
@@ -741,43 +443,43 @@ function App() {
   }
 
   useEffect(() => {
+    if (!autoOnlineSave || !onlineReady) return;
+    if (!supabaseConfig.url || !supabaseConfig.anonKey || !supabaseConfig.roomId) return;
+    if (applyingRemoteRef.current) return;
+    const timerId = window.setTimeout(() => {
+      saveOnline({ silent: true });
+    }, 1200);
+    return () => window.clearTimeout(timerId);
+  }, [attendances, autoOnlineSave, memberList, onlineReady, rehearsalList, sceneList, supabaseConfig]);
+
+  useEffect(() => {
     if (!supabaseConfig.url || !supabaseConfig.anonKey || !supabaseConfig.roomId) {
       setRealtimeStatus("未接続です。");
       return;
     }
-    const client = getSupabaseClient(supabaseConfig);
-    if (!client) return;
+    if (!window.supabase?.createClient) {
+      setRealtimeStatus("Supabaseライブラリを読み込めませんでした。");
+      return;
+    }
+    const client = window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
     setRealtimeStatus("リアルタイム接続中です...");
     const channel = client
-      .channel(`keiko-room:${supabaseConfig.roomId}`);
-
-    const onRemoteChange = async () => {
-      if (applyingRemoteRef.current) return;
-      try {
-        const data = await loadSupabaseState(supabaseConfig);
-        applyAppState(data, "remote");
-        setOnlineReady(true);
-        setOnlineStatus(`自動反映しました：${new Date().toLocaleString("ja-JP")}`);
-      } catch (error) {
-        console.error(error);
-        setRealtimeStatus("同期データの取得でエラーが出ています。");
-      }
-    };
-
-    ["members", "rehearsals", "scenes", "attendances"].forEach((table) => {
-      channel.on(
+      .channel(`keiko_app_state:${supabaseConfig.roomId}`)
+      .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
-          table,
-          filter: `room_id=eq.${supabaseConfig.roomId}`,
+          table: "keiko_app_state",
+          filter: `id=eq.${supabaseConfig.roomId}`,
         },
-        onRemoteChange,
-      );
-    });
-
-    channel
+        (payload) => {
+          if (!payload.new?.data) return;
+          applyAppState(payload.new.data, "remote");
+          setOnlineReady(true);
+          setOnlineStatus(`自動反映しました：${new Date().toLocaleString("ja-JP")}`);
+        },
+      )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
           setRealtimeStatus("リアルタイム同期中です。");
@@ -794,145 +496,54 @@ function App() {
     };
   }, [supabaseConfig.anonKey, supabaseConfig.roomId, supabaseConfig.url]);
 
-  async function reportOnlineError(error) {
-    console.error(error);
-    setOnlineStatus("オンライン保存でエラーが出ました。オンラインデータを読み直しています...");
-    try {
-      const data = await loadSupabaseState(supabaseConfig);
-      applyAppState(data);
-      setOnlineReady(true);
-      setOnlineStatus("保存に失敗したため、オンライン上の最新データへ戻しました。");
-    } catch (loadError) {
-      console.error(loadError);
-      setOnlineReady(false);
-      setOnlineStatus("オンライン保存と再読み込みに失敗しました。ページを再読み込みしてください。");
-    }
-    alert("オンライン保存に失敗しました。ほかの人に反映されない変更を残さないため、オンライン上の最新データを読み直しました。もう一度入力してください。");
-  }
-
   function addMember(input: Omit<Member, "id">) {
-    if (!guardOnlineWrite()) return;
-    const next = { ...input, id: `m${Date.now()}`, updatedBy: actorName, updatedAt: new Date().toISOString() };
-    setMemberList((current) => [...current, next]);
-    if (onlineReady) {
-      upsertSupabaseRow(supabaseConfig, actorName, "members", memberToRow(supabaseConfig, next, actorName), null, next)
-        .then((result) => setOnlineStatus(result.message))
-        .catch(reportOnlineError);
-    }
+    setMemberList((current) => [...current, { ...input, id: `m${Date.now()}` }]);
   }
 
   function updateMember(input: Member) {
-    if (!guardOnlineWrite()) return;
-    const next = { ...input, updatedBy: actorName, updatedAt: new Date().toISOString() };
-    const before = memberList.find((member) => member.id === input.id);
-    setMemberList((current) => current.map((member) => (member.id === input.id ? next : member)));
-    if (onlineReady) {
-      upsertSupabaseRow(supabaseConfig, actorName, "members", memberToRow(supabaseConfig, next, actorName), before, next)
-        .then((result) => setOnlineStatus(result.message))
-        .catch(reportOnlineError);
-    }
+    setMemberList((current) => current.map((member) => (member.id === input.id ? input : member)));
   }
 
   function addScene(input: Omit<Scene, "id">) {
-    if (!guardOnlineWrite()) return;
-    const next = { ...input, id: `s${Date.now()}`, updatedBy: actorName, updatedAt: new Date().toISOString() };
-    setSceneList((current) => [...current, next]);
-    if (onlineReady) {
-      upsertSupabaseRow(supabaseConfig, actorName, "scenes", sceneToRow(supabaseConfig, next, actorName), null, next)
-        .then((result) => setOnlineStatus(result.message))
-        .catch(reportOnlineError);
-    }
+    setSceneList((current) => [...current, { ...input, id: `s${Date.now()}` }]);
   }
 
   function updateScene(input: Scene) {
-    if (!guardOnlineWrite()) return;
-    const next = { ...input, updatedBy: actorName, updatedAt: new Date().toISOString() };
-    const before = sceneList.find((scene) => scene.id === input.id);
-    setSceneList((current) => current.map((scene) => (scene.id === input.id ? next : scene)));
-    if (onlineReady) {
-      upsertSupabaseRow(supabaseConfig, actorName, "scenes", sceneToRow(supabaseConfig, next, actorName), before, next)
-        .then((result) => setOnlineStatus(result.message))
-        .catch(reportOnlineError);
-    }
+    setSceneList((current) => current.map((scene) => (scene.id === input.id ? input : scene)));
   }
 
   function deleteScene(sceneId: string) {
-    if (!guardOnlineWrite()) return;
     if (!confirm("このシーンを削除しますか？")) return;
     setSceneList((current) => current.filter((scene) => scene.id !== sceneId));
   }
 
   function deleteMember(memberId: string) {
-    if (!guardOnlineWrite()) return;
     if (!confirm("このメンバーを削除しますか？")) return;
     setMemberList((current) => current.filter((member) => member.id !== memberId));
     setAttendances((current) => current.filter((attendance) => attendance.memberId !== memberId));
   }
 
   function addRehearsal(input: Omit<Rehearsal, "id">) {
-    if (!guardOnlineWrite()) return;
-    const next = { ...input, id: `r${Date.now()}`, createdAt: new Date().toISOString(), updatedBy: actorName, updatedAt: new Date().toISOString() };
+    const next = { ...input, id: `r${Date.now()}`, createdAt: new Date().toISOString() };
     setRehearsalList((current) => [...current, next].sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`)));
     setSelectedRehearsalId(next.id);
-    if (onlineReady) {
-      upsertSupabaseRow(supabaseConfig, actorName, "rehearsals", rehearsalToRow(supabaseConfig, next, actorName), null, next)
-        .then((result) => setOnlineStatus(result.message))
-        .catch(reportOnlineError);
-    }
   }
 
-  async function deleteRehearsal(rehearsalId: string) {
-    if (!guardOnlineWrite()) return;
-    const target = rehearsalList.find((rehearsal) => rehearsal.id === rehearsalId);
-    if (!target) return;
-    if (!confirm(`${target.date} ${target.startTime}-${target.endTime} の稽古日を削除しますか？\nこの日の出欠データも一緒に削除されます。`)) return;
-    const typed = prompt("誤削除防止のため「削除」と入力してください。");
-    if (typed !== "削除") return;
-    const relatedAttendances = attendances.filter((attendance) => attendance.rehearsalId === rehearsalId);
-    if (onlineReady) {
-      try {
-        setOnlineStatus("稽古日をオンラインから削除中です...");
-        const result = await deleteSupabaseRehearsal(supabaseConfig, actorName, target, relatedAttendances);
-        setOnlineStatus(result.message);
-      } catch (error) {
-        await reportOnlineError(error);
-        return;
-      }
-    }
+  function deleteRehearsal(rehearsalId: string) {
+    if (!confirm("この稽古日を削除しますか？")) return;
     setRehearsalList((current) => current.filter((rehearsal) => rehearsal.id !== rehearsalId));
     setAttendances((current) => current.filter((attendance) => attendance.rehearsalId !== rehearsalId));
   }
 
   function saveAttendanceBatch(inputs: Omit<Attendance, "id">[]) {
-    if (!guardOnlineWrite()) return;
-    const savedRows = [];
-    const beforeRows = [];
     let nextRows = [...attendances];
     const timestamp = Date.now();
     inputs.forEach((input, index) => {
       const existing = nextRows.find((row) => row.rehearsalId === input.rehearsalId && row.memberId === input.memberId);
-      const savedRow = existing
-        ? { ...existing, ...input, updatedBy: actorName, updatedAt: new Date().toISOString() }
-        : { id: `a${timestamp}-${index}`, ...input, updatedBy: actorName, updatedAt: new Date().toISOString() };
-      if (existing) {
-        beforeRows.push(existing);
-        nextRows = nextRows.map((row) => (row.id === existing.id ? savedRow : row));
-      } else {
-        beforeRows.push(null);
-        nextRows.push(savedRow);
-      }
-      savedRows.push(savedRow);
+      const savedRow = existing ? { ...existing, ...input } : { id: `a${timestamp}-${index}`, ...input };
+      nextRows = existing ? nextRows.map((row) => (row.id === existing.id ? savedRow : row)) : [...nextRows, savedRow];
     });
     setAttendances(nextRows);
-    if (onlineReady && savedRows.length) {
-      Promise.all(
-        savedRows.map((savedRow, index) =>
-          upsertSupabaseRow(supabaseConfig, actorName, "attendances", attendanceToRow(supabaseConfig, savedRow, actorName), beforeRows[index], savedRow),
-        ),
-      )
-        .then(() => setOnlineStatus(`${savedRows.length}件をオンラインへ保存しました。`))
-        .catch(reportOnlineError);
-    }
     setSelectedRehearsalId(inputs[0]?.rehearsalId ?? selectedRehearsalId);
     setTab("admin");
   }
@@ -977,14 +588,9 @@ function App() {
         onlineStatus={onlineStatus}
         realtimeStatus={realtimeStatus}
       />
-      <NotificationGuide
-        members={memberList}
-        roomId={supabaseConfig.roomId}
-        memberId={notificationMemberId}
-        onMemberChange={setNotificationMemberId}
-      />
+      <NotificationGuidePreview />
       {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} sceneResults={sceneResults} />}
-      {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} scenes={sceneList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onDelete={deleteRehearsal} allowDelete={true} openAdmin={() => setTab("admin")} />}
+      {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} scenes={sceneList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onDelete={deleteRehearsal} openAdmin={() => setTab("admin")} />}
       {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} onSaveBatch={saveAttendanceBatch} />}
       {tab === "admin" && (
         <AdminView
@@ -998,8 +604,8 @@ function App() {
           allRehearsals={rehearsalList}
         />
       )}
-      {tab === "members" && <MemberView rehearsals={rehearsalList} attendances={attendances} visibleMembers={visibleMembers} onAdd={addMember} onUpdate={updateMember} onDelete={deleteMember} allowDelete={!onlineReady} />}
-      {tab === "scenes" && <ScenePage sceneResults={sceneResults} rehearsals={rehearsalList} onAdd={addScene} onUpdate={updateScene} onDelete={deleteScene} allowDelete={!onlineReady} />}
+      {tab === "members" && <MemberView rehearsals={rehearsalList} attendances={attendances} visibleMembers={visibleMembers} onAdd={addMember} onUpdate={updateMember} onDelete={deleteMember} />}
+      {tab === "scenes" && <ScenePage sceneResults={sceneResults} rehearsals={rehearsalList} onAdd={addScene} onUpdate={updateScene} onDelete={deleteScene} />}
     </main>
   );
 }
@@ -1028,77 +634,16 @@ function SyncGuardNotice({ configured, onlineReady, onlineStatus, realtimeStatus
   );
 }
 
-function NotificationGuide({ members, roomId, memberId, onMemberChange }) {
-  const [status, setStatus] = useState("通知を受け取るには、この端末で一度だけ許可してください。");
-  const selectedMemberId = memberId || members[0]?.id || "";
-  const vapidPublicKey = getVapidPublicKey();
-  const canUsePush = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
-
-  useEffect(() => {
-    if (!memberId && members[0]?.id) onMemberChange(members[0].id);
-  }, [members, memberId, onMemberChange]);
-
-  async function enableNotifications() {
-    if (!canUsePush) {
-      setStatus("この端末またはブラウザは通知に対応していません。iPhoneはホーム画面に追加したアプリから試してください。");
-      return;
-    }
-    if (!vapidPublicKey) {
-      setStatus("通知用の公開キーが未設定です。Vercelの環境変数 VITE_VAPID_PUBLIC_KEY を確認してください。");
-      return;
-    }
-    if (!selectedMemberId) {
-      setStatus("通知を受け取るメンバーを選んでください。");
-      return;
-    }
-
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      setStatus("通知が許可されませんでした。端末やブラウザの通知設定を確認してください。");
-      return;
-    }
-
-    try {
-      const registration = await navigator.serviceWorker.ready;
-      const existing = await registration.pushManager.getSubscription();
-      if (existing) await existing.unsubscribe();
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-      });
-      const response = await fetch("/api/register-push", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roomId,
-          memberId: selectedMemberId,
-          subscription,
-          userAgent: navigator.userAgent,
-        }),
-      });
-      if (!response.ok) throw new Error(await response.text());
-      setStatus("通知を受け取る設定が完了しました。稽古1時間前に通知します。");
-    } catch (error) {
-      console.error(error);
-      setStatus("通知設定に失敗しました。公開版URLで開いているか、Vercelの通知設定を確認してください。");
-    }
-  }
-
+function NotificationGuidePreview() {
   return (
     <section className="notificationGuide">
       <div>
         <strong>稽古前の通知</strong>
-        <p>Windowsアプリ、iPhone / Androidのホーム画面アプリで通知を受け取れます。初回だけ下のボタンから許可してください。</p>
-        <p className="note">{status}</p>
+        <p>Windowsアプリ、iPhone / Androidのホーム画面アプリで通知を受け取れます。公開版では初回だけ「通知を受け取る」ボタンから許可します。</p>
+        <p className="note">ローカル確認版では通知送信は行いません。公開版に反映すると設定できます。</p>
       </div>
       <div className="notificationActions">
-        <label className="field">
-          通知を受け取る人
-          <select value={selectedMemberId} onChange={(event) => onMemberChange(event.target.value)}>
-            {members.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}
-          </select>
-        </label>
-        <button type="button" className="primary" onClick={enableNotifications}>通知を受け取る</button>
+        <button type="button" className="primary" disabled>通知を受け取る</button>
       </div>
     </section>
   );
@@ -1250,7 +795,7 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
   );
 }
 
-function RehearsalList({ rehearsals, scenes, selectedRehearsalId, setSelectedRehearsalId, attendances, visibleMembers, onAdd, onDelete, allowDelete, openAdmin }) {
+function RehearsalList({ rehearsals, scenes, selectedRehearsalId, setSelectedRehearsalId, attendances, visibleMembers, onAdd, onDelete, openAdmin }) {
   return (
     <section className="stack">
       <RehearsalEditor scenes={scenes} onAdd={onAdd} />
@@ -1271,7 +816,7 @@ function RehearsalList({ rehearsals, scenes, selectedRehearsalId, setSelectedReh
             </div>
             <div className="cardActions">
               <button onClick={() => { setSelectedRehearsalId(rehearsal.id); openAdmin(); }}>確認する</button>
-              {allowDelete && <button className="dangerButton" onClick={() => onDelete(rehearsal.id)}>削除</button>}
+              <button className="dangerButton" onClick={() => onDelete(rehearsal.id)}>削除</button>
             </div>
           </article>
         );
@@ -1596,7 +1141,7 @@ function SceneEditor({ editingScene, onAdd, onUpdate, onCancel }) {
   );
 }
 
-function ScenePanel({ sceneResults, rehearsals = [], onAdd, onUpdate, onDelete, allowDelete = true }) {
+function ScenePanel({ sceneResults, rehearsals = [], onAdd, onUpdate, onDelete }) {
   const [editingId, setEditingId] = useState("");
   const editingScene = sceneResults.find(({ scene }) => scene.id === editingId)?.scene;
   const editable = Boolean(onAdd && onUpdate && onDelete);
@@ -1620,7 +1165,7 @@ function ScenePanel({ sceneResults, rehearsals = [], onAdd, onUpdate, onDelete, 
             {editable && (
               <div className="sceneActions">
                 <button onClick={() => setEditingId(scene.id)}>編集</button>
-                {allowDelete && <button className="dangerButton" onClick={() => onDelete(scene.id)}>削除</button>}
+                <button className="dangerButton" onClick={() => onDelete(scene.id)}>削除</button>
               </div>
             )}
           </article>
@@ -1631,10 +1176,10 @@ function ScenePanel({ sceneResults, rehearsals = [], onAdd, onUpdate, onDelete, 
   );
 }
 
-function ScenePage({ sceneResults, rehearsals, onAdd, onUpdate, onDelete, allowDelete }) {
+function ScenePage({ sceneResults, rehearsals, onAdd, onUpdate, onDelete }) {
   return (
     <section className="stack">
-      <ScenePanel sceneResults={sceneResults} rehearsals={rehearsals} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} allowDelete={allowDelete} />
+      <ScenePanel sceneResults={sceneResults} rehearsals={rehearsals} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} />
     </section>
   );
 }
@@ -1703,7 +1248,7 @@ function MemberEditor({ editingMember, onAdd, onUpdate, onCancel }) {
   );
 }
 
-function MemberView({ rehearsals, attendances, visibleMembers, onAdd, onUpdate, onDelete, allowDelete }) {
+function MemberView({ rehearsals, attendances, visibleMembers, onAdd, onUpdate, onDelete }) {
   const [editingId, setEditingId] = useState("");
   const editingMember = visibleMembers.find((member) => member.id === editingId);
 
@@ -1720,7 +1265,7 @@ function MemberView({ rehearsals, attendances, visibleMembers, onAdd, onUpdate, 
           <div className="cardActions">
             <strong>{attendanceRate(member.id, attendances, rehearsals)}%</strong>
             <button onClick={() => setEditingId(member.id)}>編集</button>
-            {allowDelete && <button className="dangerButton" onClick={() => onDelete(member.id)}>削除</button>}
+            <button className="dangerButton" onClick={() => onDelete(member.id)}>削除</button>
           </div>
         </article>
       ))}
@@ -1728,18 +1273,4 @@ function MemberView({ rehearsals, attendances, visibleMembers, onAdd, onUpdate, 
   );
 }
 
-const rootElement = document.getElementById("root");
-
-if (!rootElement) {
-  throw new Error("root要素が見つかりません。");
-}
-
-createRoot(rootElement).render(<App />);
-
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch((error) => {
-      console.warn("Service Worker registration failed", error);
-    });
-  });
-}
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);

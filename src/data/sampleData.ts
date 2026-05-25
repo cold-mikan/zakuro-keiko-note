@@ -22,11 +22,26 @@ export const rehearsals: Rehearsal[] = [
   { id: "r-2026-06-26", date: "2026-06-26", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
 ];
 
+const allSceneRoles = ["姫", "神", "殺人鬼", "商人"];
+
 export const scenes: Scene[] = [
-  { id: "s1", title: "1場：夜のロビー", requiredCharacters: ["A", "B"], memo: "出会いの場面" },
-  { id: "s2", title: "2場：古い楽屋", requiredCharacters: ["A", "C", "D"], memo: "小道具確認あり" },
-  { id: "s3", title: "3場：終演後", requiredCharacters: ["B", "D"], memo: "感情の山場" },
-  { id: "s4", title: "4場：カーテンコール前", requiredCharacters: ["A", "B", "C", "D"], memo: "全員場面" },
+  { id: "scene-01", title: "1場：プロローグ", requiredCharacters: allSceneRoles },
+  { id: "scene-02", title: "2場：姫ライフ", requiredCharacters: ["姫"] },
+  { id: "scene-03", title: "3場：殺人鬼の溺れる黒", requiredCharacters: ["殺人鬼"] },
+  { id: "scene-04", title: "4場：神", requiredCharacters: ["神"] },
+  { id: "scene-05", title: "5場：玉座に商人", requiredCharacters: ["商人"] },
+  { id: "scene-06", title: "6場：急ぎ足のタブー", requiredCharacters: ["殺人鬼"] },
+  { id: "scene-07", title: "7場：姫と商人", requiredCharacters: ["姫", "商人"] },
+  { id: "scene-08", title: "8場：地下牢", requiredCharacters: ["神", "姫"] },
+  { id: "scene-09", title: "9場：地下牢はいつも暗く", requiredCharacters: ["殺人鬼", "神"] },
+  { id: "scene-10", title: "10場：人殺しと商売人", requiredCharacters: ["殺人鬼", "商人"] },
+  { id: "scene-11", title: "11場：インターミッション", requiredCharacters: allSceneRoles },
+  { id: "scene-12", title: "12場：天を突く塔", requiredCharacters: allSceneRoles },
+  { id: "scene-13", title: "13場：建設現場", requiredCharacters: allSceneRoles },
+  { id: "scene-14", title: "14場：栽培", requiredCharacters: allSceneRoles },
+  { id: "scene-15", title: "15場：口の中", requiredCharacters: allSceneRoles },
+  { id: "scene-16", title: "16場：宴", requiredCharacters: allSceneRoles },
+  { id: "scene-17", title: "17場：エピローグ", requiredCharacters: allSceneRoles },
 ];
 
 export const attendances: Attendance[] = [
