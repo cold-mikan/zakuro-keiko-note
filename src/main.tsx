@@ -1256,14 +1256,12 @@ function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSav
 
   useEffect(() => {
     const selectableIds = upcomingRehearsals.map((rehearsal) => rehearsal.id);
-    if (defaultRehearsalId && selectableIds.includes(defaultRehearsalId)) {
-      setRehearsalId(defaultRehearsalId);
-      return;
-    }
-    if (!selectableIds.includes(rehearsalId)) {
-      setRehearsalId(upcomingRehearsals[0]?.id ?? "");
-    }
-  }, [defaultRehearsalId, rehearsals, rehearsalId]);
+    setRehearsalId((current) => {
+      if (current && selectableIds.includes(current)) return current;
+      if (defaultRehearsalId && selectableIds.includes(defaultRehearsalId)) return defaultRehearsalId;
+      return upcomingRehearsals[0]?.id ?? "";
+    });
+  }, [defaultRehearsalId, rehearsals]);
 
   function toggleMember(memberId) {
     setSelectedMemberIds((current) => (current.includes(memberId) ? current.filter((id) => id !== memberId) : [...current, memberId]));
