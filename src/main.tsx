@@ -842,27 +842,42 @@ function App() {
     setAttendances((current) => current.filter((attendance) => attendance.rehearsalId !== rehearsalId));
   }
 
-  function saveAttendance(input: Omit<Attendance, "id">) {
+  function saveAttendanceBatch(inputs: Omit<Attendance, "id">[]) {
     if (!guardOnlineWrite()) return;
-    let savedRow;
-    let beforeRow;
-    setAttendances((current) => {
-      const existing = current.find((row) => row.rehearsalId === input.rehearsalId && row.memberId === input.memberId);
+    const savedRows = [];
+    const beforeRows = [];
+    let nextRows = [...attendances];
+    const timestamp = Date.now();
+    inputs.forEach((input, index) => {
+      const existing = nextRows.find((row) => row.rehearsalId === input.rehearsalId && row.memberId === input.memberId);
+      const savedRow = existing
+        ? { ...existing, ...input, updatedBy: actorName, updatedAt: new Date().toISOString() }
+        : { id: `a${timestamp}-${index}`, ...input, updatedBy: actorName, updatedAt: new Date().toISOString() };
       if (existing) {
-        beforeRow = existing;
-        savedRow = { ...existing, ...input, updatedBy: actorName, updatedAt: new Date().toISOString() };
-        return current.map((row) => (row.id === existing.id ? savedRow : row));
+        beforeRows.push(existing);
+        nextRows = nextRows.map((row) => (row.id === existing.id ? savedRow : row));
+      } else {
+        beforeRows.push(null);
+        nextRows.push(savedRow);
       }
-      savedRow = { id: `a${Date.now()}`, ...input, updatedBy: actorName, updatedAt: new Date().toISOString() };
-      return [...current, savedRow];
+      savedRows.push(savedRow);
     });
-    if (onlineReady && savedRow) {
-      upsertSupabaseRow(supabaseConfig, actorName, "attendances", attendanceToRow(supabaseConfig, savedRow, actorName), beforeRow, savedRow)
-        .then((result) => setOnlineStatus(result.message))
+    setAttendances(nextRows);
+    if (onlineReady && savedRows.length) {
+      Promise.all(
+        savedRows.map((savedRow, index) =>
+          upsertSupabaseRow(supabaseConfig, actorName, "attendances", attendanceToRow(supabaseConfig, savedRow, actorName), beforeRows[index], savedRow),
+        ),
+      )
+        .then(() => setOnlineStatus(`${savedRows.length}件をオンラインへ保存しました。`))
         .catch(reportOnlineError);
     }
-    setSelectedRehearsalId(input.rehearsalId);
+    setSelectedRehearsalId(inputs[0]?.rehearsalId ?? selectedRehearsalId);
     setTab("admin");
+  }
+
+  function saveAttendance(input: Omit<Attendance, "id">) {
+    saveAttendanceBatch([input]);
   }
 
   return (
@@ -903,7 +918,7 @@ function App() {
       />
       {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} sceneResults={sceneResults} />}
       {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} scenes={sceneList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onDelete={deleteRehearsal} allowDelete={!onlineReady} openAdmin={() => setTab("admin")} />}
-      {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} />}
+      {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} onSaveBatch={saveAttendanceBatch} />}
       {tab === "admin" && (
         <AdminView
           rehearsals={rehearsalList}
@@ -923,15 +938,21 @@ function App() {
 }
 
 function SyncGuardNotice({ configured, onlineReady, onlineStatus, realtimeStatus }) {
-  if (!configured) return null;
-  const tone = onlineReady ? "ok" : "warn";
+  const tone = configured && onlineReady ? "ok" : "warn";
+  const title = !configured ? "ローカル確認中" : onlineReady ? "オンライン保存中" : "オンライン接続を確認中";
+  const message = !configured
+    ? "この画面はローカル確認用です。公開版ではSupabaseに保存されます。"
+    : onlineReady
+      ? "入力内容はSupabaseに保存され、ほかの端末にも反映されます。"
+      : "接続が完了するまで保存操作を止めています。";
+  const statusText = !configured ? "Supabase未設定 / ローカル表示" : `${onlineStatus} / ${realtimeStatus}`;
   return (
     <section className={`syncGuard ${tone}`} aria-live="polite">
       <div>
-        <strong>{onlineReady ? "オンライン保存中" : "オンライン接続を確認中"}</strong>
-        <p>{onlineReady ? "入力内容はSupabaseに保存され、ほかの端末にも反映されます。" : "接続が完了するまで保存操作を止めています。"}</p>
+        <strong>{title}</strong>
+        <p>{message}</p>
       </div>
-      <span>{onlineStatus} / {realtimeStatus}</span>
+      <span>{statusText}</span>
     </section>
   );
 }
@@ -1172,26 +1193,121 @@ function RehearsalEditor({ scenes, onAdd }) {
   );
 }
 
-function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave }) {
+function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSaveBatch }) {
+  const [mode, setMode] = useState("single");
   const [memberId, setMemberId] = useState(members[0]?.id ?? "");
-  const [rehearsalId, setRehearsalId] = useState(defaultRehearsalId);
+  const [selectedMemberIds, setSelectedMemberIds] = useState([]);
+  const todayKey = new Date().toLocaleDateString("sv-SE");
+  const upcomingRehearsals = rehearsals.filter((rehearsal) => rehearsal.date >= todayKey);
+  const [rehearsalId, setRehearsalId] = useState(
+    upcomingRehearsals.some((rehearsal) => rehearsal.id === defaultRehearsalId)
+      ? defaultRehearsalId
+      : upcomingRehearsals[0]?.id ?? "",
+  );
   const [status, setStatus] = useState<AttendanceStatus>("出席");
   const [arrivalTime, setArrivalTime] = useState("");
   const [leaveTime, setLeaveTime] = useState("");
   const [note, setNote] = useState("");
 
+  useEffect(() => {
+    if (!memberId && members[0]?.id) setMemberId(members[0].id);
+  }, [members, memberId]);
+
+  useEffect(() => {
+    const selectableIds = upcomingRehearsals.map((rehearsal) => rehearsal.id);
+    if (defaultRehearsalId && selectableIds.includes(defaultRehearsalId)) {
+      setRehearsalId(defaultRehearsalId);
+      return;
+    }
+    if (!selectableIds.includes(rehearsalId)) {
+      setRehearsalId(upcomingRehearsals[0]?.id ?? "");
+    }
+  }, [defaultRehearsalId, rehearsals, rehearsalId]);
+
+  function toggleMember(memberId) {
+    setSelectedMemberIds((current) => (current.includes(memberId) ? current.filter((id) => id !== memberId) : [...current, memberId]));
+  }
+
+  function submitAttendance() {
+    if (!rehearsalId) {
+      alert("稽古日を選んでください。");
+      return;
+    }
+    if (mode === "bulk") {
+      if (!selectedMemberIds.length) {
+        alert("名前を1人以上選んでください。");
+        return;
+      }
+      onSaveBatch(
+        selectedMemberIds.map((selectedId) => ({
+          memberId: selectedId,
+          rehearsalId,
+          status,
+          arrivalTime,
+          leaveTime,
+          note,
+        })),
+      );
+      setSelectedMemberIds([]);
+      return;
+    }
+    if (!memberId) {
+      alert("名前を選んでください。");
+      return;
+    }
+    onSave({ memberId, rehearsalId, status, arrivalTime, leaveTime, note });
+  }
+
   return (
-    <form className="panel form" onSubmit={(event) => { event.preventDefault(); onSave({ memberId, rehearsalId, status, arrivalTime, leaveTime, note }); }}>
+    <form
+      className="panel form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        submitAttendance();
+      }}
+    >
       <h2>出欠登録</h2>
-      <label className="field">名前<select value={memberId} onChange={(event) => setMemberId(event.target.value)}>{members.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}</select></label>
-      <RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} />
+      <div className="formModeSwitch" aria-label="登録方法">
+        <button type="button" className={mode === "single" ? "active" : ""} onClick={() => setMode("single")}>ひとりずつ登録</button>
+        <button type="button" className={mode === "bulk" ? "active" : ""} onClick={() => setMode("bulk")}>まとめて登録</button>
+      </div>
+      <fieldset className="choiceGroup">
+        <legend>{mode === "bulk" ? "名前（複数選択できます）" : "名前"}</legend>
+        <div className="choiceGrid members">
+          {members.map((member) => (
+            <label key={member.id} className={`choiceCard ${(mode === "bulk" ? selectedMemberIds.includes(member.id) : memberId === member.id) ? "selected" : ""}`}>
+              <input
+                type={mode === "bulk" ? "checkbox" : "radio"}
+                name={mode === "bulk" ? `attendance-member-${member.id}` : "attendance-member"}
+                checked={mode === "bulk" ? selectedMemberIds.includes(member.id) : memberId === member.id}
+                onChange={() => (mode === "bulk" ? toggleMember(member.id) : setMemberId(member.id))}
+              />
+              <span>{member.name}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset className="choiceGroup">
+        <legend>稽古日</legend>
+        <div className="choiceGrid rehearsals">
+          {upcomingRehearsals.map((rehearsal) => (
+            <label key={rehearsal.id} className={`choiceCard ${rehearsalId === rehearsal.id ? "selected" : ""}`}>
+              <input type="radio" name="attendance-rehearsal" checked={rehearsalId === rehearsal.id} onChange={() => setRehearsalId(rehearsal.id)} />
+              <span>{rehearsal.date}</span>
+              <small>{rehearsal.startTime}-{rehearsal.endTime}</small>
+            </label>
+          ))}
+        </div>
+        {!upcomingRehearsals.length && <p className="note">今日以降の稽古日がありません。必要な場合は稽古日を追加してください。</p>}
+      </fieldset>
       <label className="field">出欠ステータス<select value={status} onChange={(event) => setStatus(event.target.value)}>{statusOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
       <div className="grid two">
         <label className="field">到着予定時間<input type="time" value={arrivalTime} onChange={(event) => setArrivalTime(event.target.value)} /></label>
         <label className="field">早退予定時間<input type="time" value={leaveTime} onChange={(event) => setLeaveTime(event.target.value)} /></label>
       </div>
+      {mode === "bulk" && <p className="note">まとめて登録では、選んだ全員に同じステータス・時間・連絡事項が入ります。個別の理由はあとからひとりずつ編集できます。</p>}
       <label className="field">理由・連絡事項<textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="例：仕事後に向かいます" /></label>
-      <button className="primary">登録する</button>
+      <button className="primary">{mode === "bulk" ? (selectedMemberIds.length ? `${selectedMemberIds.length}人分をまとめて登録する` : "まとめて登録する") : "登録する"}</button>
     </form>
   );
 }
