@@ -749,6 +749,32 @@ textarea {
   gap: 14px;
 }
 
+.formModeSwitch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid #efd9ce;
+  border-radius: 999px;
+  background: rgba(255, 250, 244, 0.86);
+}
+
+.formModeSwitch button {
+  min-height: 40px;
+  border-radius: 999px;
+  background: transparent;
+  color: #8b695c;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 8px 10px;
+}
+
+.formModeSwitch button.active {
+  background: #f37498;
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(229, 95, 137, 0.24);
+}
+
 .formActions {
   display: flex;
   flex-wrap: wrap;
@@ -857,6 +883,73 @@ textarea {
   color: #bc526c;
 }
 
+.choiceGroup {
+  border: 0;
+  display: grid;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+}
+
+.choiceGroup legend {
+  color: #5f4942;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.choiceGrid {
+  display: grid;
+  gap: 9px;
+}
+
+.choiceGrid.members {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.choiceGrid.rehearsals {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.choiceCard {
+  align-items: center;
+  background: #fffaf7;
+  border: 1px solid #efdfd4;
+  border-radius: 12px;
+  box-shadow: 0 6px 15px rgba(121, 84, 58, 0.06);
+  color: #5f4942;
+  cursor: pointer;
+  display: grid;
+  gap: 2px 8px;
+  grid-template-columns: auto 1fr;
+  min-height: 48px;
+  padding: 10px 12px;
+}
+
+.choiceCard input {
+  box-shadow: none;
+  grid-row: span 2;
+  width: auto;
+}
+
+.choiceCard span {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.choiceCard small {
+  color: #9a7b70;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.choiceCard.selected,
+.choiceCard:has(input:checked) {
+  background: linear-gradient(135deg, #fff1f5, #fff9f2);
+  border-color: #f29aaf;
+  color: #bc526c;
+}
+
 .sceneSelectPill {
   border-radius: 10px;
 }
@@ -924,10 +1017,18 @@ textarea {
   padding: 10px 2px;
 }
 
+.rateRow span {
+  flex: 1;
+  text-align: left;
+}
+
 .rateRow strong {
   color: #ee6b8e;
   font-family: "Yu Gothic UI", Meiryo, sans-serif;
   font-size: 22px;
+  margin-left: auto;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .memberCard strong {
