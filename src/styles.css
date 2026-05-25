@@ -1,1166 +1,1262 @@
-:root {
-  color: #352725;
-  background:
-    radial-gradient(circle at 18% 0%, rgba(255, 188, 199, 0.22), transparent 24%),
-    linear-gradient(90deg, #fffdfb 0%, #fdf4ea 12%, #fffaf5 50%, #fdf4ea 88%, #fffdfb 100%);
-  font-family: "Hiragino Mincho ProN", "Yu Mincho", "Hiragino Sans", "Yu Gothic UI", Meiryo, sans-serif;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  min-width: 320px;
-}
-
-body::before,
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0 auto 0 0;
-  width: max(18px, calc((100vw - 820px) / 2));
-  background: rgba(249, 226, 211, 0.42);
-  pointer-events: none;
-}
-
-body::after {
-  inset: 0 0 0 auto;
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-button {
-  border: 0;
-  border-radius: 12px;
-  background: #fffaf4;
-  color: #3d302e;
-  cursor: pointer;
-  padding: 12px 16px;
-}
-
-.primary,
-.tabs .active {
-  background: linear-gradient(135deg, #f77b9e, #e75f89);
-  color: #fff;
-}
-
-.shell {
-  width: min(720px, calc(100% - 22px));
-  min-height: 100vh;
-  margin: 0 auto;
-  padding: 24px 34px 36px;
-  position: relative;
-  background:
-    radial-gradient(circle at 100% 9%, rgba(255, 217, 225, 0.3), transparent 22%),
-    rgba(255, 251, 246, 0.92);
-  box-shadow:
-    0 0 0 1px rgba(235, 219, 204, 0.8),
-    0 18px 48px rgba(121, 87, 63, 0.14);
-}
-
-.appHeader {
-  align-items: flex-start;
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  padding: 8px 0 28px;
-  position: relative;
-  text-align: center;
-}
-
-.appHeader > div:not(.fruit):not(.cutlery)::after {
-  content: none;
-}
-
-.titleLine {
-  display: block;
-  width: min(520px, 72vw);
-  height: 48px;
-  margin: -1px auto -4px;
-  object-fit: contain;
-  opacity: 0.92;
-  pointer-events: none;
-}
-
-.fruit {
-  position: absolute;
-  left: -6px;
-  top: -10px;
-  width: 118px;
-  height: 94px;
-}
-
-.fruit::before,
-.fruit::after {
-  content: "✦";
-  position: absolute;
-  color: #f48aa0;
-  font-size: 16px;
-}
-
-.fruit::before {
-  left: 4px;
-  top: 22px;
-}
-
-.fruit::after {
-  right: -6px;
-  top: 26px;
-}
-
-.fruit img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  filter: drop-shadow(0 8px 10px rgba(206, 105, 112, 0.13));
-}
-
-.cutlery {
-  position: absolute;
-  right: 8px;
-  top: -6px;
-  width: 78px;
-  height: 118px;
-  pointer-events: none;
-}
-
-.cutlery img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  opacity: 0.86;
-  filter: drop-shadow(0 8px 10px rgba(206, 105, 112, 0.1));
-}
-
-h1,
-h2,
-h3,
-p {
-  margin: 0;
-}
-
-h1 {
-  color: #54372f;
-  font-size: 35px;
-  font-weight: 700;
-  line-height: 1.12;
-  letter-spacing: 0;
-}
-
-h2 {
-  font-size: 20px;
-  line-height: 1.4;
-}
-
-h3 {
-  font-size: 16px;
-}
-
-.eyebrow {
-  color: #6f4f49;
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-
-.tabs {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px 26px;
-  margin-bottom: 18px;
-}
-
-.tabs button {
-  align-items: center;
-  border: 1px solid #ead8cc;
-  box-shadow: 0 8px 20px rgba(130, 82, 53, 0.12);
-  display: flex;
-  gap: 18px;
-  justify-content: center;
-  min-height: 58px;
-  font-size: 17px;
-  font-weight: 700;
-}
-
-.tabIcon {
-  color: #9b6b50;
-  font-family: "Yu Gothic UI", Meiryo, sans-serif;
-  font-size: 25px;
-  min-width: 32px;
-}
-
-.tabImageIcon {
-  width: 24px;
-  height: 40px;
-  object-fit: contain;
-  opacity: 0.95;
-  filter: drop-shadow(0 1px 1px rgba(126, 66, 55, 0.18));
-}
-
-.tabs .active .tabIcon {
-  color: #fff;
-}
-
-.tabs .active .tabImageIcon {
-  opacity: 1;
-}
-
-.memberGlyph {
-  position: relative;
-  width: 34px;
-  height: 28px;
-  min-width: 34px;
-  color: #9b6b50;
-  display: inline-block;
-}
-
-.memberGlyphPerson {
-  position: absolute;
-  display: block;
-}
-
-.memberGlyphPerson::before,
-.memberGlyphPerson::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 2px solid currentColor;
-  box-sizing: border-box;
-}
-
-.memberGlyphPerson::before {
-  top: 0;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: rgba(255, 247, 240, 0.75);
-}
-
-.memberGlyphPerson::after {
-  top: 12px;
-  width: 17px;
-  height: 10px;
-  border-radius: 12px 12px 4px 4px;
-  border-bottom-width: 0;
-}
-
-.memberGlyphPerson.main {
-  left: 11px;
-  top: 0;
-  width: 12px;
-  height: 24px;
-  color: #ef6c92;
-  z-index: 2;
-}
-
-.memberGlyphPerson.main::before {
-  width: 11px;
-  height: 11px;
-}
-
-.memberGlyphPerson.main::after {
-  top: 15px;
-  width: 21px;
-  height: 12px;
-}
-
-.memberGlyphPerson.left {
-  left: 1px;
-  top: 7px;
-}
-
-.memberGlyphPerson.right {
-  right: 1px;
-  top: 7px;
-}
-
-.tabs .active .memberGlyph,
-.tabs .active .memberGlyphPerson.main {
-  color: #fff;
-}
-
-.tabs .active .memberGlyphPerson::before {
-  background: rgba(255, 255, 255, 0.18);
-}
-
-.teamSwitch {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin: -2px 0 18px;
-  padding: 7px;
-  border: 1px solid #efd9ce;
-  border-radius: 999px;
-  background: rgba(255, 250, 244, 0.82);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78), 0 8px 18px rgba(121, 84, 58, 0.08);
-}
-
-.teamSwitch button {
-  min-height: 38px;
-  border-radius: 999px;
-  background: transparent;
-  color: #8b695c;
-  font-family: "Yu Gothic UI", Meiryo, sans-serif;
-  font-size: 14px;
-  font-weight: 800;
-  padding: 8px 10px;
-}
-
-.teamSwitch button.active {
-  background: #f37498;
-  color: #fff;
-  box-shadow: 0 6px 14px rgba(229, 95, 137, 0.26);
-}
-
-.syncGuard {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  margin: -6px 0 18px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid #ead8cc;
-  background: rgba(255, 253, 250, 0.88);
-  box-shadow: 0 10px 22px rgba(121, 84, 58, 0.08);
-}
-
-.syncGuard.ok {
-  border-color: #b9ddbd;
-  background: rgba(244, 253, 245, 0.9);
-}
-
-.syncGuard.warn {
-  border-color: #f2b9c8;
-  background: rgba(255, 244, 248, 0.92);
-}
-
-.syncGuard strong {
-  display: block;
-  color: #694737;
-  font-size: 14px;
-}
-
-.syncGuard p,
-.syncGuard span {
-  margin: 3px 0 0;
-  color: #8a7166;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.syncGuard span {
-  text-align: right;
-  white-space: nowrap;
-}
-
-.onlinePanel {
-  margin: -4px 0 18px;
-}
-
-.onlineToggle {
-  align-items: center;
-  background: rgba(255, 253, 250, 0.9);
-  border: 1px solid #ead8cc;
-  border-radius: 12px;
-  box-shadow: 0 8px 18px rgba(121, 84, 58, 0.08);
-  color: #7d5748;
-  display: flex;
-  gap: 10px;
-  justify-content: space-between;
-  min-height: 48px;
-  padding: 12px 16px;
-  width: 100%;
-}
-
-.onlineToggle span {
-  color: #9a8177;
-  font-size: 12px;
-  font-weight: 700;
-  text-align: right;
-}
-
-.onlineBody {
-  background: rgba(255, 250, 246, 0.94);
-  border: 1px solid #ead8cc;
-  border-radius: 12px;
-  box-shadow: 0 10px 24px rgba(121, 84, 58, 0.1);
-  display: grid;
-  gap: 14px;
-  margin-top: 8px;
-  padding: 16px;
-}
-
-.toggleField {
-  align-items: center;
-  color: #5f4942;
-  display: flex;
-  font-size: 14px;
-  font-weight: 800;
-  gap: 10px;
-}
-
-.toggleField input {
-  box-shadow: none;
-  width: 18px;
-}
-
-.stack {
-  display: grid;
-  gap: 18px;
-}
-
-.grid {
-  display: grid;
-  gap: 14px;
-}
-
-.two {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.three {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.panel {
-  background: rgba(255, 253, 250, 0.86);
-  border: 1px solid #ead8cc;
-  border-radius: 12px;
-  box-shadow: 0 10px 24px rgba(121, 84, 58, 0.1);
-  padding: 18px;
-}
-
-.highlight {
-  border-color: #f3a9b7;
-  background:
-    radial-gradient(circle at 95% 0%, rgba(255, 225, 232, 0.8), transparent 32%),
-    linear-gradient(135deg, #fffaf7, #fff1f5);
-}
-
-.sparkTitle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 14px;
-  font-size: 22px;
-}
-
-.sparkTitle span {
-  color: #f1789a;
-}
-
-.calendarPanel {
-  display: grid;
-  gap: 12px;
-}
-
-.calendarHeader {
-  align-items: center;
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
-}
-
-.calendarHeader .panelTitle {
-  flex: 1;
-  margin: 0;
-}
-
-.calendarMonthControls {
-  align-items: center;
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.calendarMonthControls select {
-  min-width: 120px;
-  padding: 9px 11px;
-}
-
-.calendarWeekdays,
-.calendarGrid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.calendarWeekdays span {
-  color: #9b8176;
-  font-size: 12px;
-  font-weight: 800;
-  text-align: center;
-}
-
-.calendarDay {
-  align-items: center;
-  aspect-ratio: 1;
-  background: #fffaf7;
-  border: 1px solid #efdfd4;
-  border-radius: 50%;
-  box-shadow: none;
-  color: #5f4942;
-  display: inline-flex;
-  justify-content: center;
-  min-height: 0;
-  padding: 0;
-  position: relative;
-}
-
-.calendarDay.blank {
-  background: transparent;
-  border-color: transparent;
-}
-
-.calendarDay:disabled {
-  color: #c3aca2;
-  cursor: default;
-  opacity: 1;
-}
-
-.calendarDay.hasEvent {
-  border-color: #f29aaf;
-  background: #fff1f5;
-  color: #bc526c;
-  font-weight: 900;
-}
-
-.calendarDay.hasMtg {
-  border-color: #d7b894;
-  background: #fff8ea;
-  color: #8c6543;
-}
-
-.calendarDay.selected {
-  box-shadow: 0 0 0 3px rgba(243, 116, 152, 0.22);
-}
-
-.calendarDay i {
-  border: 2px solid currentColor;
-  border-radius: 50%;
-  inset: 5px;
-  position: absolute;
-}
-
-.calendarLegend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  color: #7c6960;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.calendarLegend span {
-  align-items: center;
-  display: inline-flex;
-  gap: 6px;
-}
-
-.calendarLegend i {
-  border-radius: 50%;
-  display: inline-block;
-  height: 10px;
-  width: 10px;
-}
-
-.rehearsalDot {
-  background: #f29aaf;
-}
-
-.mtgDot {
-  background: #d7b894;
-}
-
-.panelTitle {
-  align-items: center;
-  display: flex;
-  gap: 12px;
-  color: #332625;
-  position: relative;
-}
-
-.panelTitle::after {
-  content: "";
-  flex: 1;
-  border-bottom: 2px dashed rgba(240, 128, 152, 0.38);
-}
-
-.panelTitle span {
-  align-items: center;
-  border: 2px solid #f486a0;
-  border-radius: 50%;
-  color: #f06f8f;
-  display: inline-flex;
-  font-family: "Yu Gothic UI", Meiryo, sans-serif;
-  height: 34px;
-  justify-content: center;
-  min-width: 34px;
-}
-
-.panelImageIcon {
-  width: 22px;
-  height: 32px;
-  object-fit: contain;
-  opacity: 0.9;
-}
-
-.calendarTitleIcon {
-  height: 30px;
-  width: 30px;
-  object-fit: contain;
-}
-
-.panelTitle.green span {
-  border-color: #89bf8a;
-  color: #70ad72;
-}
-
-.note {
-  color: #7c6960;
-  font-size: 13px;
-  margin-top: 7px;
-}
-
-.rehearsalCard,
-.memberCard,
-.rateRow {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.cardActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.exportPanel {
-  display: grid;
-  gap: 16px;
-}
-
-.exportActions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.exportActions button {
-  min-height: 44px;
-}
-
-.monthExportList {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.monthExportButton {
-  align-items: center;
-  background: linear-gradient(135deg, #f37498, #f7a2b4);
-  color: #fff;
-  display: flex;
-  font-size: 16px;
-  justify-content: space-between;
-  min-height: 52px;
-  padding: 12px 14px;
-}
-
-.monthExportButton span {
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.dangerButton {
-  border: 1px solid #f0a4b4;
-  background: #fff4f6;
-  color: #d95e79;
-}
-
-.emptyState {
-  color: #7c6960;
-  text-align: center;
-}
-
-.rehearsalCard.selected {
-  border-color: #f186a0;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.chips span {
-  border-radius: 999px;
-  background: #fff1f4;
-  color: #ca5574;
-  font-size: 12px;
-  font-weight: 800;
-  padding: 7px 10px;
-}
-
-.field {
-  display: grid;
-  gap: 8px;
-  color: #5f4942;
-  font-size: 15px;
-  font-weight: 800;
-}
-
-select,
-input,
-textarea {
-  width: 100%;
-  border: 1px solid #f1b9c4;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 6px 15px rgba(229, 123, 145, 0.12);
-  color: #3a2c2a;
-  padding: 14px 15px;
-}
-
-textarea {
-  min-height: 96px;
-  resize: vertical;
-}
-
-.form {
-  display: grid;
-  gap: 14px;
-}
-
-.formModeSwitch {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding: 6px;
-  border: 1px solid #efd9ce;
-  border-radius: 999px;
-  background: rgba(255, 250, 244, 0.86);
-}
-
-.formModeSwitch button {
-  min-height: 40px;
-  border-radius: 999px;
-  background: transparent;
-  color: #8b695c;
-  font-size: 14px;
-  font-weight: 800;
-  padding: 8px 10px;
-}
-
-.formModeSwitch button.active {
-  background: #f37498;
-  color: #fff;
-  box-shadow: 0 6px 14px rgba(229, 95, 137, 0.24);
-}
-
-.formActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.formActions .primary {
-  flex: 1 1 220px;
-}
-
-.people ul {
-  display: grid;
-  gap: 8px;
-  list-style: none;
-  margin: 14px 0 0;
-  padding: 0;
-}
-
-.people li {
-  align-items: center;
-  border: 1px solid #efdfd4;
-  border-radius: 999px;
-  background: #fff8f3;
-  display: flex;
-  min-height: 36px;
-  padding: 8px 13px;
-}
-
-.people li::before,
-.rateRow::before {
-  content: "";
-  width: 11px;
-  height: 11px;
-  margin-right: 16px;
-  border-radius: 50%;
-  background: #f4a2ad;
-  box-shadow: 0 0 0 4px rgba(244, 162, 173, 0.16);
-}
-
-.warn {
-  border-color: #f2a6b8;
-  background: linear-gradient(135deg, #fffdfb, #fff1f5);
-}
-
-.muted {
-  background: #fffaf5;
-}
-
-.sceneList {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 14px;
-}
-
-.sceneEditor {
-  display: grid;
-  gap: 12px;
-  margin-top: 14px;
-  padding: 14px;
-  border: 1px dashed #b7d9b8;
-  border-radius: 10px;
-  background: rgba(240, 251, 241, 0.58);
-}
-
-.checkboxGroup {
-  border: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 0;
-  padding: 0;
-}
-
-.checkboxGroup legend {
-  color: #5f4942;
-  flex-basis: 100%;
-  font-size: 15px;
-  font-weight: 800;
-  margin-bottom: 2px;
-}
-
-.checkboxPill {
-  align-items: center;
-  background: #fffaf7;
-  border: 1px solid #efdfd4;
-  border-radius: 999px;
-  color: #5f4942;
-  cursor: pointer;
-  display: inline-flex;
-  font-size: 14px;
-  font-weight: 800;
-  gap: 8px;
-  min-height: 38px;
-  padding: 8px 12px;
-}
-
-.checkboxPill input {
-  box-shadow: none;
-  width: auto;
-}
-
-.checkboxPill:has(input:checked) {
-  background: #fff1f5;
-  border-color: #f29aaf;
-  color: #bc526c;
-}
-
-.choiceGroup {
-  border: 0;
-  display: grid;
-  gap: 9px;
-  margin: 0;
-  padding: 0;
-}
-
-.choiceGroup legend {
-  color: #5f4942;
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.choiceGrid {
-  display: grid;
-  gap: 9px;
-}
-
-.choiceGrid.members {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.choiceGrid.rehearsals {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.choiceCard {
-  align-items: center;
-  background: #fffaf7;
-  border: 1px solid #efdfd4;
-  border-radius: 12px;
-  box-shadow: 0 6px 15px rgba(121, 84, 58, 0.06);
-  color: #5f4942;
-  cursor: pointer;
-  display: grid;
-  gap: 2px 8px;
-  grid-template-columns: auto 1fr;
-  min-height: 48px;
-  padding: 10px 12px;
-}
-
-.choiceCard input {
-  box-shadow: none;
-  grid-row: span 2;
-  width: auto;
-}
-
-.choiceCard span {
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1.35;
-}
-
-.choiceCard small {
-  color: #9a7b70;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.choiceCard.selected,
-.choiceCard:has(input:checked) {
-  background: linear-gradient(135deg, #fff1f5, #fff9f2);
-  border-color: #f29aaf;
-  color: #bc526c;
-}
-
-.sceneSelectPill {
-  border-radius: 10px;
-}
-
-.scene {
-  align-items: stretch;
-  border-radius: 10px;
-  display: grid;
-  gap: 12px;
-  padding: 14px;
-}
-
-.scene h3::before {
-  content: "▣";
-  color: #4d814f;
-  margin-right: 8px;
-}
-
-.scene.ok {
-  background: #f0fbf1;
-  border: 1px solid #b7d9b8;
-}
-
-.scene.ng {
-  background: #fff1f4;
-  border: 1px solid #efbdc8;
-}
-
-.scene strong {
-  align-items: center;
-  border: 1px solid currentColor;
-  border-radius: 999px;
-  color: #4f9d55;
-  display: inline-flex;
-  font-size: 14px;
-  justify-content: center;
-  padding: 7px 12px;
-}
-
-.scene.ng strong {
-  color: #d75d79;
-}
-
-.sceneCountLine {
-  color: #8b6657;
-  font-size: 12px;
-  font-weight: 800;
-  margin-top: 8px;
-}
-
-.sceneActions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.rateList {
-  display: grid;
-  gap: 0;
-  margin-top: 14px;
-}
-
-.rateRow {
-  border-bottom: 1px dashed #ead4c5;
-  padding: 10px 2px;
-}
-
-.rateRow span {
-  flex: 1;
-  text-align: left;
-}
-
-.rateRow strong {
-  color: #ee6b8e;
-  font-family: "Yu Gothic UI", Meiryo, sans-serif;
-  font-size: 22px;
-  margin-left: auto;
-  text-align: right;
-  white-space: nowrap;
-}
-
-.memberCard strong {
-  color: #ee6b8e;
-  font-size: 20px;
-}
-
-@media (max-width: 720px) {
-  .shell {
-    width: min(100%, calc(100% - 12px));
-    padding: 18px 16px 30px;
-  }
-
-  .appHeader {
-    min-height: 164px;
-    padding: 82px 0 22px;
-    overflow: hidden;
-  }
-
-  .fruit {
-    left: 16px;
-    top: 4px;
-    width: 92px;
-    height: 76px;
-    transform: none;
-  }
-
-  .fruit::before {
-    left: -2px;
-    top: 18px;
-  }
-
-  .fruit::after {
-    right: -4px;
-    top: 22px;
-  }
-
-  .cutlery {
-    right: 16px;
-    top: 4px;
-    width: 50px;
-    height: 78px;
-    transform: none;
-    opacity: 0.88;
-  }
-
-  h1 {
-    font-size: 29px;
-    line-height: 1.15;
-  }
-
-  .eyebrow {
-    font-size: 13px;
-  }
-
-  .titleLine {
-    width: min(340px, 86vw);
-    height: 36px;
-    margin-top: 2px;
-  }
-
-  .tabs {
-    gap: 12px;
-  }
-
-  .tabs button {
-    min-height: 56px;
-    font-size: 15px;
-    gap: 10px;
-    padding: 11px;
-  }
-
-  .tabIcon {
-    font-size: 21px;
-    min-width: 22px;
-  }
-
-  .tabImageIcon {
-    width: 20px;
-    height: 34px;
-  }
-
-  .teamSwitch {
-    border-radius: 18px;
-  }
-
-  .syncGuard {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .syncGuard span {
-    max-width: 100%;
-    text-align: left;
-    white-space: normal;
-  }
-
-  .two,
-  .three,
-  .sceneList {
-    grid-template-columns: 1fr;
-  }
-
-  .exportActions {
-    grid-template-columns: 1fr;
-  }
-
-  .monthExportList {
-    grid-template-columns: 1fr;
-  }
-
-  .calendarGrid,
-  .calendarWeekdays {
-    gap: 4px;
-  }
-
-  .calendarHeader {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .calendarMonthControls {
-    justify-content: flex-end;
-  }
-
-  .calendarDay i {
-    inset: 4px;
-  }
-
-  .rehearsalCard,
-  .memberCard {
-    align-items: stretch;
-    flex-direction: column;
+const { useEffect, useMemo, useRef, useState } = React;
+
+type AttendanceStatus = "出席" | "欠席" | "遅刻" | "早退" | "未定";
+
+type Member = {
+  id: string;
+  name: string;
+  role: string;
+  character?: string;
+  team: string;
+  memo?: string;
+};
+
+type Rehearsal = {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  place: string;
+  memo?: string;
+  createdAt?: string;
+  eventType?: "稽古日" | "MTG・打ち合わせ";
+  rehearsalTeam?: "Aチーム" | "Bチーム" | "共通";
+  selectedSceneIds?: string[];
+};
+
+type Attendance = {
+  id: string;
+  rehearsalId: string;
+  memberId: string;
+  status: AttendanceStatus;
+  arrivalTime?: string;
+  leaveTime?: string;
+  note?: string;
+};
+
+type Scene = {
+  id: string;
+  title: string;
+  requiredCharacters: string[];
+  memo?: string;
+};
+
+const members: Member[] = [
+  { id: "m1", name: "おはよう真夜中", role: "キャスト", team: "共通" },
+  { id: "m2", name: "黒崎こぎん", role: "キャスト", team: "共通" },
+  { id: "m3", name: "Sion", role: "キャスト", team: "共通" },
+  { id: "m4", name: "tika.", role: "キャスト", team: "共通" },
+  { id: "m5", name: "ちょろね", role: "キャスト", team: "共通" },
+  { id: "m6", name: "七宮ソウ", role: "キャスト", team: "共通" },
+  { id: "m7", name: "U-kki", role: "キャスト", team: "共通" },
+  { id: "m8", name: "冷凍みかん", role: "キャスト", team: "共通" },
+];
+
+const rehearsals: Rehearsal[] = [
+  { id: "r-2026-06-06", date: "2026-06-06", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-10", date: "2026-06-10", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-12", date: "2026-06-12", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-17", date: "2026-06-17", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-19", date: "2026-06-19", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-20", date: "2026-06-20", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-24", date: "2026-06-24", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-26", date: "2026-06-26", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+];
+
+const allSceneRoles = ["姫", "神", "殺人鬼", "商人"];
+const scenes: Scene[] = [
+  { id: "scene-01", title: "1場：プロローグ", requiredCharacters: allSceneRoles },
+  { id: "scene-02", title: "2場：姫ライフ", requiredCharacters: ["姫"] },
+  { id: "scene-03", title: "3場：殺人鬼の溺れる黒", requiredCharacters: ["殺人鬼"] },
+  { id: "scene-04", title: "4場：神", requiredCharacters: ["神"] },
+  { id: "scene-05", title: "5場：玉座に商人", requiredCharacters: ["商人"] },
+  { id: "scene-06", title: "6場：急ぎ足のタブー", requiredCharacters: ["殺人鬼"] },
+  { id: "scene-07", title: "7場：姫と商人", requiredCharacters: ["姫", "商人"] },
+  { id: "scene-08", title: "8場：地下牢", requiredCharacters: ["神", "姫"] },
+  { id: "scene-09", title: "9場：地下牢はいつも暗く", requiredCharacters: ["殺人鬼", "神"] },
+  { id: "scene-10", title: "10場：人殺しと商売人", requiredCharacters: ["殺人鬼", "商人"] },
+  { id: "scene-11", title: "11場：インターミッション", requiredCharacters: allSceneRoles },
+  { id: "scene-12", title: "12場：天を突く塔", requiredCharacters: allSceneRoles },
+  { id: "scene-13", title: "13場：建設現場", requiredCharacters: allSceneRoles },
+  { id: "scene-14", title: "14場：栽培", requiredCharacters: allSceneRoles },
+  { id: "scene-15", title: "15場：口の中", requiredCharacters: allSceneRoles },
+  { id: "scene-16", title: "16場：宴", requiredCharacters: allSceneRoles },
+  { id: "scene-17", title: "17場：エピローグ", requiredCharacters: allSceneRoles },
+];
+
+const seedAttendances: Attendance[] = [
+  { id: "a1", rehearsalId: "r1", memberId: "m1", status: "出席" },
+  { id: "a2", rehearsalId: "r1", memberId: "m2", status: "欠席", note: "仕事" },
+  { id: "a3", rehearsalId: "r1", memberId: "m3", status: "出席" },
+  { id: "a4", rehearsalId: "r1", memberId: "m5", status: "遅刻", arrivalTime: "19:30", note: "授業後に向かいます" },
+  { id: "a5", rehearsalId: "r1", memberId: "m6", status: "出席" },
+  { id: "a6", rehearsalId: "r1", memberId: "m7", status: "出席" },
+  { id: "a7", rehearsalId: "r2", memberId: "m1", status: "出席" },
+  { id: "a8", rehearsalId: "r2", memberId: "m3", status: "早退", leaveTime: "21:00" },
+  { id: "a9", rehearsalId: "r2", memberId: "m5", status: "出席" },
+  { id: "a10", rehearsalId: "r2", memberId: "m6", status: "未定", note: "前日までに確定" },
+  { id: "a11", rehearsalId: "r3", memberId: "m2", status: "出席" },
+  { id: "a12", rehearsalId: "r3", memberId: "m4", status: "出席" },
+  { id: "a13", rehearsalId: "r3", memberId: "m5", status: "欠席", note: "本番対応" },
+  { id: "a14", rehearsalId: "r3", memberId: "m6", status: "出席" },
+];
+
+const activeStatuses: AttendanceStatus[] = ["出席", "遅刻", "早退"];
+const statusOptions: AttendanceStatus[] = ["出席", "欠席", "遅刻", "早退", "未定"];
+const roleOptions = ["キャスト", "演出", "演出助手", "制作", "音響", "照明"];
+const memberTeamOptions = ["Aチーム", "Bチーム", "共通"];
+const eventTypeOptions = ["稽古日", "MTG・打ち合わせ"];
+const rehearsalTeamOptions = ["共通", "Aチーム", "Bチーム"];
+const rehearsalSeedVersion = "2026-06-confirmed-v2";
+const sceneSeedVersion = "zakuro-scenes-v1";
+const sceneRoleOptions = allSceneRoles;
+const removedMemberNames = ["春野 いろは"];
+type TeamFilter = "全員" | "Aチーム" | "Bチーム";
+const teamFilters: TeamFilter[] = ["全員", "Aチーム", "Bチーム"];
+const tabs = [
+  { id: "dashboard", label: "ダッシュボード", icon: "⌂" },
+  { id: "rehearsals", label: "稽古日", icon: "▣" },
+  { id: "form", label: "出欠登録", icon: "＋" },
+  { id: "admin", label: "出欠一覧", icon: "☷" },
+  { id: "members", label: "メンバー", icon: "member" },
+  { id: "scenes", label: "シーン", icon: "★" },
+] as const;
+
+function getAttendanceFor(rehearsalId: string, attendances: Attendance[]) {
+  return attendances.filter((attendance) => attendance.rehearsalId === rehearsalId);
+}
+
+function getMissingMembers(rehearsalId: string, attendances: Attendance[], targetMembers = members) {
+  const answered = new Set(getAttendanceFor(rehearsalId, attendances).map((attendance) => attendance.memberId));
+  return targetMembers.filter((member) => !answered.has(member.id));
+}
+
+function summarizeRehearsal(rehearsalId: string, attendances: Attendance[], targetMembers = members) {
+  const rows = getAttendanceFor(rehearsalId, attendances);
+  return {
+    present: rows.filter((row) => activeStatuses.includes(row.status)).length,
+    absent: rows.filter((row) => row.status === "欠席").length,
+    noReply: getMissingMembers(rehearsalId, attendances, targetMembers).length,
+  };
+}
+
+function groupAttendance(rehearsalId: string, attendances: Attendance[], targetMembers = members) {
+  const byMember = new Map(targetMembers.map((member) => [member.id, member]));
+  const rows = getAttendanceFor(rehearsalId, attendances);
+  const pick = (status: AttendanceStatus) =>
+    rows
+      .filter((row) => row.status === status)
+      .map((row) => ({ attendance: row, member: byMember.get(row.memberId) }))
+      .filter((row) => Boolean(row.member));
+
+  return {
+    present: pick("出席"),
+    absent: pick("欠席"),
+    late: pick("遅刻"),
+    early: pick("早退"),
+    undecided: pick("未定"),
+    noReply: getMissingMembers(rehearsalId, attendances, targetMembers),
+  };
+}
+
+function evaluateScenes(rehearsalId: string, attendances: Attendance[], targetMembers = members, sceneSource = scenes) {
+  const rows = getAttendanceFor(rehearsalId, attendances).filter((row) => activeStatuses.includes(row.status));
+  const activeMemberIds = new Set(rows.map((row) => row.memberId));
+  const activeCharacters = new Set(
+    targetMembers
+      .filter((member) => activeMemberIds.has(member.id) && member.role === "キャスト" && member.character)
+      .map((member) => member.character as string),
+  );
+  return sceneSource.map((scene) => {
+    const missingCharacters = scene.requiredCharacters.filter((character) => !activeCharacters.has(character));
+    return { scene, canRehearse: missingCharacters.length === 0, missingCharacters };
+  });
+}
+
+function attendanceRate(memberId: string, attendances: Attendance[], rehearsalSource = rehearsals) {
+  const rows = rehearsalSource
+    .map((rehearsal) => attendances.find((attendance) => attendance.rehearsalId === rehearsal.id && attendance.memberId === memberId))
+    .filter(Boolean) as Attendance[];
+  if (rows.length === 0) return 0;
+  const attended = rows.filter((row) => activeStatuses.includes(row.status)).length;
+  return Math.round((attended / rows.length) * 100);
+}
+
+function readStorage<T>(key: string, fallback: T): T {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch {
+    return fallback;
   }
 }
+
+function readRehearsals() {
+  const savedVersion = localStorage.getItem("keiko.rehearsalSeedVersion");
+  if (savedVersion !== rehearsalSeedVersion) {
+    localStorage.setItem("keiko.rehearsalSeedVersion", rehearsalSeedVersion);
+    localStorage.setItem("keiko.rehearsals", JSON.stringify(rehearsals));
+    return rehearsals;
+  }
+  return readStorage("keiko.rehearsals", rehearsals).map((rehearsal) => ({
+    ...rehearsal,
+    eventType: rehearsal.eventType ?? "稽古日",
+  }));
+}
+
+function withoutRemovedMembers(memberSource) {
+  return memberSource.filter((member) => !removedMemberNames.includes(member.name));
+}
+
+function readScenes() {
+  const savedVersion = localStorage.getItem("keiko.sceneSeedVersion");
+  if (savedVersion !== sceneSeedVersion) {
+    localStorage.setItem("keiko.sceneSeedVersion", sceneSeedVersion);
+    localStorage.setItem("keiko.scenes", JSON.stringify(scenes));
+    return scenes;
+  }
+  return readStorage("keiko.scenes", scenes);
+}
+
+function csvCell(value?: string | number) {
+  const text = String(value ?? "");
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function buildAttendanceRows(rehearsalSource: Rehearsal[], memberSource: Member[], attendanceSource: Attendance[]) {
+  return rehearsalSource.flatMap((rehearsal) =>
+    memberSource.map((member) => {
+      const attendance = attendanceSource.find((row) => row.rehearsalId === rehearsal.id && row.memberId === member.id);
+      return {
+        稽古日: rehearsal.date,
+        開始: rehearsal.startTime,
+        終了: rehearsal.endTime,
+        場所: rehearsal.place,
+        名前: member.name,
+        役職: member.role,
+        役名: member.character ?? "",
+        チーム: member.team,
+        出欠: attendance?.status ?? "未回答",
+        到着予定: attendance?.arrivalTime ?? "",
+        早退予定: attendance?.leaveTime ?? "",
+        理由連絡事項: attendance?.note ?? "",
+        稽古メモ: rehearsal.memo ?? "",
+      };
+    }),
+  );
+}
+
+function downloadTextFile(filename: string, text: string, type = "text/plain;charset=utf-8") {
+  const blob = new Blob(["\ufeff", text], { type });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.style.display = "none";
+  document.body.appendChild(anchor);
+  anchor.click();
+  window.setTimeout(() => {
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+
+async function downloadCsv(filename: string, rows: Record<string, string | number>[]) {
+  if (!rows.length) {
+    alert("出力するデータがありません。");
+    return;
+  }
+  const headers = Object.keys(rows[0]);
+  const csv = [headers.map(csvCell).join(","), ...rows.map((row) => headers.map((header) => csvCell(row[header])).join(","))].join("\n");
+  try {
+    const response = await fetch("/save-csv", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename, csv: `\ufeff${csv}` }),
+    });
+    if (!response.ok) throw new Error("save failed");
+    const result = await response.json();
+    alert(`${filename} を保存しました。\n保存先：${result.path}`);
+  } catch {
+    downloadTextFile(filename, csv, "text/csv;charset=utf-8");
+    alert(`${filename} を作成しました。保存メッセージが出ない場合は、通常のダウンロード先を確認してください。`);
+  }
+}
+
+function getRehearsalMonths(rehearsalSource: Rehearsal[]) {
+  return [...new Set(rehearsalSource.map((rehearsal) => rehearsal.date.slice(0, 7)))].sort();
+}
+
+function getSupabaseConfig() {
+  return readStorage("keiko.supabaseConfig", { url: "", anonKey: "", roomId: "zakuro-keiko" });
+}
+
+function saveSupabaseConfig(config) {
+  localStorage.setItem("keiko.supabaseConfig", JSON.stringify(config));
+}
+
+function supabaseEndpoint(config, query = "") {
+  return `${config.url.replace(/\/$/, "")}/rest/v1/keiko_app_state${query}`;
+}
+
+function supabaseHeaders(config) {
+  return {
+    apikey: config.anonKey,
+    Authorization: `Bearer ${config.anonKey}`,
+    "Content-Type": "application/json",
+  };
+}
+
+function App() {
+  const [memberList, setMemberList] = useState<Member[]>(() => {
+    return withoutRemovedMembers(readStorage("keiko.members", members));
+  });
+  const [rehearsalList, setRehearsalList] = useState<Rehearsal[]>(() => {
+    return readRehearsals();
+  });
+  const [sceneList, setSceneList] = useState<Scene[]>(() => {
+    return readScenes();
+  });
+  const [attendances, setAttendances] = useState<Attendance[]>(() => readStorage("keiko.attendances", seedAttendances));
+  const [supabaseConfig, setSupabaseConfig] = useState(() => getSupabaseConfig());
+  const [onlineStatus, setOnlineStatus] = useState("未設定です。");
+  const [autoOnlineSave, setAutoOnlineSave] = useState(() => readStorage("keiko.autoOnlineSave", true));
+  const [onlineReady, setOnlineReady] = useState(false);
+  const [realtimeStatus, setRealtimeStatus] = useState("未接続です。");
+  const applyingRemoteRef = useRef(false);
+  const [selectedRehearsalId, setSelectedRehearsalId] = useState(rehearsalList[0]?.id ?? "");
+  const [tab, setTab] = useState("dashboard");
+  const [teamFilter, setTeamFilter] = useState<TeamFilter>("全員");
+  const visibleMembers = useMemo(
+    () => memberList.filter((member) => teamFilter === "全員" || member.team === "共通" || member.team === teamFilter),
+    [memberList, teamFilter],
+  );
+  const grouped = useMemo(() => groupAttendance(selectedRehearsalId, attendances, visibleMembers), [selectedRehearsalId, attendances, visibleMembers]);
+  const sceneResults = useMemo(() => evaluateScenes(selectedRehearsalId, attendances, visibleMembers, sceneList), [selectedRehearsalId, attendances, visibleMembers, sceneList]);
+
+  useEffect(() => {
+    localStorage.setItem("keiko.rehearsals", JSON.stringify(rehearsalList));
+    if (!rehearsalList.some((rehearsal) => rehearsal.id === selectedRehearsalId)) {
+      setSelectedRehearsalId(rehearsalList[0]?.id ?? "");
+    }
+  }, [rehearsalList, selectedRehearsalId]);
+
+  useEffect(() => {
+    localStorage.setItem("keiko.members", JSON.stringify(memberList));
+  }, [memberList]);
+
+  useEffect(() => {
+    localStorage.setItem("keiko.scenes", JSON.stringify(sceneList));
+  }, [sceneList]);
+
+  useEffect(() => {
+    localStorage.setItem("keiko.attendances", JSON.stringify(attendances));
+  }, [attendances]);
+
+  useEffect(() => {
+    saveSupabaseConfig(supabaseConfig);
+  }, [supabaseConfig]);
+
+  useEffect(() => {
+    localStorage.setItem("keiko.autoOnlineSave", JSON.stringify(autoOnlineSave));
+  }, [autoOnlineSave]);
+
+  function getAppState() {
+    return {
+      version: 1,
+      savedAt: new Date().toISOString(),
+      members: memberList,
+      rehearsals: rehearsalList,
+      scenes: sceneList,
+      attendances,
+    };
+  }
+
+  function isOnlineConfigured() {
+    return Boolean(supabaseConfig.url && supabaseConfig.anonKey && supabaseConfig.roomId);
+  }
+
+  function applyAppState(data, source = "manual") {
+    if (!data?.members || !data?.rehearsals || !data?.scenes || !data?.attendances) {
+      alert("オンラインデータの形式が違います。読み込みを中止しました。");
+      return;
+    }
+    if (source === "remote") {
+      applyingRemoteRef.current = true;
+      window.setTimeout(() => {
+        applyingRemoteRef.current = false;
+      }, 1600);
+    }
+    setMemberList(withoutRemovedMembers(data.members));
+    setRehearsalList(data.rehearsals);
+    setSceneList(data.scenes);
+    setAttendances(data.attendances);
+    setSelectedRehearsalId(data.rehearsals[0]?.id ?? "");
+  }
+
+  async function saveOnline({ silent = false } = {}) {
+    if (!supabaseConfig.url || !supabaseConfig.anonKey || !supabaseConfig.roomId) {
+      if (!silent) alert("Supabase URL、anon key、部屋IDを入力してください。");
+      return;
+    }
+    setOnlineStatus(silent ? "自動保存中です..." : "オンラインへ保存中です...");
+    try {
+      const response = await fetch(supabaseEndpoint(supabaseConfig), {
+        method: "POST",
+        headers: { ...supabaseHeaders(supabaseConfig), Prefer: "resolution=merge-duplicates" },
+        body: JSON.stringify([{ id: supabaseConfig.roomId, data: getAppState(), updated_at: new Date().toISOString() }]),
+      });
+      if (!response.ok) throw new Error(await response.text());
+      setOnlineReady(true);
+      setOnlineStatus(`${silent ? "自動保存しました" : "保存しました"}：${new Date().toLocaleString("ja-JP")}`);
+    } catch (error) {
+      console.error(error);
+      setOnlineStatus("保存できませんでした。Supabase設定とテーブル作成を確認してください。");
+      if (!silent) alert("オンライン保存に失敗しました。READMEのSupabase設定を確認してください。");
+    }
+  }
+
+  async function loadOnline() {
+    if (!supabaseConfig.url || !supabaseConfig.anonKey || !supabaseConfig.roomId) {
+      alert("Supabase URL、anon key、部屋IDを入力してください。");
+      return;
+    }
+    if (!confirm("オンライン上のデータで、このブラウザのデータを置き換えます。よろしいですか？")) return;
+    setOnlineStatus("オンラインから読み込み中です...");
+    try {
+      const query = `?id=eq.${encodeURIComponent(supabaseConfig.roomId)}&select=data,updated_at`;
+      const response = await fetch(supabaseEndpoint(supabaseConfig, query), { headers: supabaseHeaders(supabaseConfig) });
+      if (!response.ok) throw new Error(await response.text());
+      const rows = await response.json();
+      if (!rows.length) {
+        setOnlineStatus("オンラインデータがまだありません。先に保存してください。");
+        return;
+      }
+      applyAppState(rows[0].data);
+      setOnlineReady(true);
+      setOnlineStatus(`読み込みました：${new Date(rows[0].updated_at).toLocaleString("ja-JP")}`);
+    } catch (error) {
+      console.error(error);
+      setOnlineStatus("読み込めませんでした。Supabase設定とテーブル作成を確認してください。");
+      alert("オンライン読み込みに失敗しました。READMEのSupabase設定を確認してください。");
+    }
+  }
+
+  useEffect(() => {
+    if (!autoOnlineSave || !onlineReady) return;
+    if (!supabaseConfig.url || !supabaseConfig.anonKey || !supabaseConfig.roomId) return;
+    if (applyingRemoteRef.current) return;
+    const timerId = window.setTimeout(() => {
+      saveOnline({ silent: true });
+    }, 1200);
+    return () => window.clearTimeout(timerId);
+  }, [attendances, autoOnlineSave, memberList, onlineReady, rehearsalList, sceneList, supabaseConfig]);
+
+  useEffect(() => {
+    if (!supabaseConfig.url || !supabaseConfig.anonKey || !supabaseConfig.roomId) {
+      setRealtimeStatus("未接続です。");
+      return;
+    }
+    if (!window.supabase?.createClient) {
+      setRealtimeStatus("Supabaseライブラリを読み込めませんでした。");
+      return;
+    }
+    const client = window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey);
+    setRealtimeStatus("リアルタイム接続中です...");
+    const channel = client
+      .channel(`keiko_app_state:${supabaseConfig.roomId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "keiko_app_state",
+          filter: `id=eq.${supabaseConfig.roomId}`,
+        },
+        (payload) => {
+          if (!payload.new?.data) return;
+          applyAppState(payload.new.data, "remote");
+          setOnlineReady(true);
+          setOnlineStatus(`自動反映しました：${new Date().toLocaleString("ja-JP")}`);
+        },
+      )
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          setRealtimeStatus("リアルタイム同期中です。");
+        } else if (status === "CHANNEL_ERROR") {
+          setRealtimeStatus("リアルタイム接続でエラーが出ています。");
+        } else if (status === "TIMED_OUT") {
+          setRealtimeStatus("リアルタイム接続がタイムアウトしました。");
+        } else {
+          setRealtimeStatus(`リアルタイム状態：${status}`);
+        }
+      });
+    return () => {
+      client.removeChannel(channel);
+    };
+  }, [supabaseConfig.anonKey, supabaseConfig.roomId, supabaseConfig.url]);
+
+  function addMember(input: Omit<Member, "id">) {
+    setMemberList((current) => [...current, { ...input, id: `m${Date.now()}` }]);
+  }
+
+  function updateMember(input: Member) {
+    setMemberList((current) => current.map((member) => (member.id === input.id ? input : member)));
+  }
+
+  function addScene(input: Omit<Scene, "id">) {
+    setSceneList((current) => [...current, { ...input, id: `s${Date.now()}` }]);
+  }
+
+  function updateScene(input: Scene) {
+    setSceneList((current) => current.map((scene) => (scene.id === input.id ? input : scene)));
+  }
+
+  function deleteScene(sceneId: string) {
+    if (!confirm("このシーンを削除しますか？")) return;
+    setSceneList((current) => current.filter((scene) => scene.id !== sceneId));
+  }
+
+  function deleteMember(memberId: string) {
+    if (!confirm("このメンバーを削除しますか？")) return;
+    setMemberList((current) => current.filter((member) => member.id !== memberId));
+    setAttendances((current) => current.filter((attendance) => attendance.memberId !== memberId));
+  }
+
+  function addRehearsal(input: Omit<Rehearsal, "id">) {
+    const next = { ...input, id: `r${Date.now()}`, createdAt: new Date().toISOString() };
+    setRehearsalList((current) => [...current, next].sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`)));
+    setSelectedRehearsalId(next.id);
+  }
+
+  function deleteRehearsal(rehearsalId: string) {
+    if (!confirm("この稽古日を削除しますか？")) return;
+    setRehearsalList((current) => current.filter((rehearsal) => rehearsal.id !== rehearsalId));
+    setAttendances((current) => current.filter((attendance) => attendance.rehearsalId !== rehearsalId));
+  }
+
+  function saveAttendanceBatch(inputs: Omit<Attendance, "id">[]) {
+    let nextRows = [...attendances];
+    const timestamp = Date.now();
+    inputs.forEach((input, index) => {
+      const existing = nextRows.find((row) => row.rehearsalId === input.rehearsalId && row.memberId === input.memberId);
+      const savedRow = existing ? { ...existing, ...input } : { id: `a${timestamp}-${index}`, ...input };
+      nextRows = existing ? nextRows.map((row) => (row.id === existing.id ? savedRow : row)) : [...nextRows, savedRow];
+    });
+    setAttendances(nextRows);
+    setSelectedRehearsalId(inputs[0]?.rehearsalId ?? selectedRehearsalId);
+    setTab("admin");
+  }
+
+  function saveAttendance(input: Omit<Attendance, "id">) {
+    saveAttendanceBatch([input]);
+  }
+
+  return (
+    <main className="shell">
+      <header className="appHeader">
+        <div className="fruit" aria-hidden="true">
+          <img src="./assets/pomegranate-clean.png" alt="" />
+        </div>
+        <div className="cutlery" aria-hidden="true">
+          <img src="./assets/sword-cropped.png" alt="" />
+        </div>
+        <div>
+          <p className="eyebrow">10月公演 ザクロ 稽古管理</p>
+          <h1>稽古出欠ノート</h1>
+          <img className="titleLine" src="./assets/title-line-v2-cropped.png" alt="" />
+        </div>
+      </header>
+      <nav className="tabs" aria-label="画面切り替え">
+        {tabs.map(({ id, label, icon }) => (
+          <button key={id} className={tab === id ? "active" : ""} onClick={() => setTab(id)}>
+            {icon === "member" ? (
+              <span className="memberGlyph" aria-hidden="true">
+                <span className="memberGlyphPerson main"></span>
+                <span className="memberGlyphPerson left"></span>
+                <span className="memberGlyphPerson right"></span>
+              </span>
+            ) : icon && <span className="tabIcon">{icon}</span>}
+            <span>{label}</span>
+          </button>
+        ))}
+      </nav>
+      <TeamSwitch value={teamFilter} onChange={setTeamFilter} />
+      <SyncGuardNotice
+        configured={isOnlineConfigured()}
+        onlineReady={onlineReady}
+        onlineStatus={onlineStatus}
+        realtimeStatus={realtimeStatus}
+      />
+      {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} sceneResults={sceneResults} />}
+      {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} scenes={sceneList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onDelete={deleteRehearsal} openAdmin={() => setTab("admin")} />}
+      {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} onSaveBatch={saveAttendanceBatch} />}
+      {tab === "admin" && (
+        <AdminView
+          rehearsals={rehearsalList}
+          rehearsalId={selectedRehearsalId}
+          setRehearsalId={setSelectedRehearsalId}
+          grouped={grouped}
+          sceneResults={sceneResults}
+          attendances={attendances}
+          members={visibleMembers}
+          allRehearsals={rehearsalList}
+        />
+      )}
+      {tab === "members" && <MemberView rehearsals={rehearsalList} attendances={attendances} visibleMembers={visibleMembers} onAdd={addMember} onUpdate={updateMember} onDelete={deleteMember} />}
+      {tab === "scenes" && <ScenePage sceneResults={sceneResults} rehearsals={rehearsalList} onAdd={addScene} onUpdate={updateScene} onDelete={deleteScene} />}
+    </main>
+  );
+}
+
+function SyncGuardNotice({ configured, onlineReady, onlineStatus, realtimeStatus }) {
+  const tone = configured && onlineReady ? "ok" : "warn";
+  const title = !configured ? "ローカル確認中" : onlineReady ? "オンライン保存中" : "オンライン接続を確認中";
+  const message = !configured
+    ? "この画面はローカル確認用です。公開版ではSupabaseに保存されます。"
+    : onlineReady
+      ? "入力内容はオンラインに保存され、ほかの端末にも反映されています。"
+      : "接続が完了するまで保存操作を止めています。";
+  const statusText = !configured
+    ? "Supabase未設定 / ローカル表示"
+    : onlineReady
+      ? "オンラインデータを読み込みました。 / 現在、リアルタイム同期中"
+      : `${onlineStatus} / ${realtimeStatus}`;
+  return (
+    <section className={`syncGuard ${tone}`} aria-live="polite">
+      <div>
+        <strong>{title}</strong>
+        <p>{message}</p>
+      </div>
+      <span>{statusText}</span>
+    </section>
+  );
+}
+
+function TeamSwitch({ value, onChange }) {
+  return (
+    <div className="teamSwitch" aria-label="チーム表示切り替え">
+      {teamFilters.map((filter) => (
+        <button key={filter} className={value === filter ? "active" : ""} onClick={() => onChange(filter)}>
+          {filter}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function RehearsalPicker({ rehearsals, value, onChange }) {
+  return (
+    <label className="field">
+      稽古日
+      <select value={value} onChange={(event) => onChange(event.target.value)}>
+        {rehearsals.map((rehearsal) => <option key={rehearsal.id} value={rehearsal.id}>{rehearsal.date} {rehearsal.startTime}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function getCalendarDays(monthKey) {
+  const [year, month] = monthKey.split("-").map(Number);
+  const firstDay = new Date(year, month - 1, 1);
+  const lastDate = new Date(year, month, 0).getDate();
+  const offset = firstDay.getDay();
+  return [
+    ...Array.from({ length: offset }, () => null),
+    ...Array.from({ length: lastDate }, (_, index) => {
+      const date = `${monthKey}-${String(index + 1).padStart(2, "0")}`;
+      return { day: index + 1, date };
+    }),
+  ];
+}
+
+function getEventKind(rehearsal) {
+  return rehearsal.eventType === "MTG・打ち合わせ" ? "mtg" : "rehearsal";
+}
+
+function getSceneCounts(sceneId, rehearsals) {
+  return rehearsals.reduce(
+    (counts, rehearsal) => {
+      if (!rehearsal.selectedSceneIds?.includes(sceneId)) return counts;
+      counts.total += 1;
+      if (rehearsal.rehearsalTeam === "Aチーム") counts.a += 1;
+      if (rehearsal.rehearsalTeam === "Bチーム") counts.b += 1;
+      return counts;
+    },
+    { total: 0, a: 0, b: 0 },
+  );
+}
+
+function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
+  const selected = rehearsals.find((item) => item.id === selectedRehearsalId) ?? rehearsals[0];
+  const monthOptions = [...new Set(rehearsals.map((rehearsal) => rehearsal.date.slice(0, 7)))].sort();
+  const [monthKey, setMonthKey] = useState(selected?.date.slice(0, 7) ?? monthOptions[0] ?? new Date().toISOString().slice(0, 7));
+
+  useEffect(() => {
+    const selectedMonth = selected?.date.slice(0, 7);
+    if (selectedMonth && monthOptions.includes(selectedMonth)) {
+      setMonthKey(selectedMonth);
+    }
+  }, [selectedRehearsalId]);
+
+  const days = getCalendarDays(monthKey);
+  const eventsByDate = rehearsals
+    .filter((rehearsal) => rehearsal.date.startsWith(monthKey))
+    .reduce((map, rehearsal) => {
+      const rows = map.get(rehearsal.date) ?? [];
+      rows.push(rehearsal);
+      map.set(rehearsal.date, rows);
+      return map;
+    }, new Map());
+
+  return (
+    <section className="panel calendarPanel">
+      <div className="calendarHeader">
+        <h2 className="panelTitle"><span><img className="calendarTitleIcon" src="./assets/calendar-moon-icon.png" alt="" /></span>カレンダー</h2>
+        <div className="calendarMonthControls">
+          <select value={monthKey} onChange={(event) => setMonthKey(event.target.value)} aria-label="表示する月">
+            {monthOptions.map((month) => <option key={month} value={month}>{month.replace("-", "年")}月</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="calendarWeekdays" aria-hidden="true">
+        {["日", "月", "火", "水", "木", "金", "土"].map((day) => <span key={day}>{day}</span>)}
+      </div>
+      <div className="calendarGrid">
+        {days.map((day, index) => {
+          if (!day) return <span key={`blank-${index}`} className="calendarDay blank"></span>;
+          const events = eventsByDate.get(day.date) ?? [];
+          const hasMtg = events.some((event) => getEventKind(event) === "mtg");
+          const isSelected = day.date === selected?.date;
+          return (
+            <button
+              key={day.date}
+              className={`calendarDay ${events.length ? "hasEvent" : ""} ${hasMtg ? "hasMtg" : ""} ${isSelected ? "selected" : ""}`}
+              onClick={() => events[0] && onSelect(events[0].id)}
+              disabled={!events.length}
+              title={events.map((event) => `${event.startTime} ${event.place}`).join("\n")}
+            >
+              <span>{day.day}</span>
+              {events.length > 0 && <i aria-hidden="true"></i>}
+            </button>
+          );
+        })}
+      </div>
+      <div className="calendarLegend">
+        <span><i className="rehearsalDot"></i>稽古</span>
+        <span><i className="mtgDot"></i>MTG・打ち合わせ</span>
+      </div>
+    </section>
+  );
+}
+
+function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visibleMembers, sceneResults }) {
+  const rehearsal = rehearsals.find((item) => item.id === rehearsalId) ?? rehearsals[0];
+  const grouped = groupAttendance(rehearsalId, attendances, visibleMembers);
+  if (!rehearsal) return <section className="panel emptyState">稽古日を追加してください。</section>;
+  return (
+    <section className="stack">
+      <DashboardCalendar rehearsals={rehearsals} selectedRehearsalId={rehearsalId} onSelect={setRehearsalId} />
+      <div className="panel highlight">
+        <RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} />
+        <h2 className="sparkTitle">次回稽古：{rehearsal.date}<span>✦</span></h2>
+        <p>{rehearsal.startTime}-{rehearsal.endTime} / {rehearsal.place}</p>
+        <p className="note">{rehearsal.memo}</p>
+      </div>
+      <div className="grid two">
+        <PeoplePanel title="出席予定" rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => row.member.name)} />
+        <PeoplePanel title="未回答" rows={grouped.noReply.map((member) => member.name)} tone="warn" />
+      </div>
+      <ContactNotesPanel grouped={grouped} />
+      <ScenePanel sceneResults={sceneResults} />
+      <section className="panel">
+        <h2 className="panelTitle"><span>↗</span>出席率</h2>
+        <div className="rateList">
+          {visibleMembers.map((member) => <div key={member.id} className="rateRow"><span>{member.name}</span><strong>{attendanceRate(member.id, attendances, rehearsals)}%</strong></div>)}
+        </div>
+      </section>
+    </section>
+  );
+}
+
+function RehearsalList({ rehearsals, scenes, selectedRehearsalId, setSelectedRehearsalId, attendances, visibleMembers, onAdd, onDelete, openAdmin }) {
+  return (
+    <section className="stack">
+      <RehearsalEditor scenes={scenes} onAdd={onAdd} />
+      {rehearsals.map((rehearsal) => {
+        const summary = summarizeRehearsal(rehearsal.id, attendances, visibleMembers);
+        return (
+          <article key={rehearsal.id} className={`panel rehearsalCard ${selectedRehearsalId === rehearsal.id ? "selected" : ""}`}>
+            <div>
+              <p className="eyebrow">{rehearsal.eventType ?? "稽古日"} / {rehearsal.place}</p>
+              <h2>{rehearsal.date}</h2>
+              <p>{rehearsal.startTime}-{rehearsal.endTime}</p>
+              <p className="note">{rehearsal.memo}</p>
+            </div>
+            <div className="chips">
+              <span>出席 {summary.present}</span>
+              <span>欠席 {summary.absent}</span>
+              <span>未回答 {summary.noReply}</span>
+            </div>
+            <div className="cardActions">
+              <button onClick={() => { setSelectedRehearsalId(rehearsal.id); openAdmin(); }}>確認する</button>
+              <button className="dangerButton" onClick={() => onDelete(rehearsal.id)}>削除</button>
+            </div>
+          </article>
+        );
+      })}
+    </section>
+  );
+}
+
+function RehearsalEditor({ scenes, onAdd }) {
+  const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("19:00");
+  const [endTime, setEndTime] = useState("22:00");
+  const [place, setPlace] = useState("");
+  const [memo, setMemo] = useState("");
+  const [eventType, setEventType] = useState("稽古日");
+  const [rehearsalTeam, setRehearsalTeam] = useState("共通");
+  const [selectedSceneIds, setSelectedSceneIds] = useState([]);
+
+  function toggleSelectedScene(sceneId) {
+    setSelectedSceneIds((current) => (current.includes(sceneId) ? current.filter((id) => id !== sceneId) : [...current, sceneId]));
+  }
+
+  return (
+    <form
+      className="panel form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!date || !startTime || !endTime || !place) {
+          alert("日付・開始時間・終了時間・場所を入力してください。");
+          return;
+        }
+        onAdd({ date, startTime, endTime, place, memo, eventType, rehearsalTeam, selectedSceneIds });
+        setDate("");
+        setStartTime("19:00");
+        setEndTime("22:00");
+        setPlace("");
+        setMemo("");
+        setEventType("稽古日");
+        setRehearsalTeam("共通");
+        setSelectedSceneIds([]);
+      }}
+    >
+      <h2 className="panelTitle"><span>＋</span>稽古日を追加</h2>
+      <div className="grid two">
+        <label className="field">日付<input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
+        <label className="field">予定の種類<select value={eventType} onChange={(event) => setEventType(event.target.value)}>{eventTypeOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+      </div>
+      <div className="grid two">
+        <label className="field">開始<input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} /></label>
+        <label className="field">終了<input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} /></label>
+      </div>
+      <label className="field">対象チーム<select value={rehearsalTeam} onChange={(event) => setRehearsalTeam(event.target.value)}>{rehearsalTeamOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+      <fieldset className="checkboxGroup">
+        <legend>この日にやるシーン</legend>
+        {scenes.map((scene) => (
+          <label key={scene.id} className="checkboxPill sceneSelectPill">
+            <input type="checkbox" checked={selectedSceneIds.includes(scene.id)} onChange={() => toggleSelectedScene(scene.id)} />
+            <span>{scene.title}</span>
+          </label>
+        ))}
+      </fieldset>
+      <label className="field">場所<input value={place} onChange={(event) => setPlace(event.target.value)} placeholder="例：駅前スタジオA" /></label>
+      <label className="field">メモ<input value={memo} onChange={(event) => setMemo(event.target.value)} placeholder="例：1場、2場中心" /></label>
+      <button className="primary">稽古日を追加する</button>
+    </form>
+  );
+}
+
+function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSaveBatch }) {
+  const [mode, setMode] = useState("single");
+  const [memberId, setMemberId] = useState(members[0]?.id ?? "");
+  const [selectedMemberIds, setSelectedMemberIds] = useState([]);
+  const todayKey = new Date().toLocaleDateString("sv-SE");
+  const upcomingRehearsals = rehearsals.filter((rehearsal) => rehearsal.date >= todayKey);
+  const [rehearsalId, setRehearsalId] = useState(
+    upcomingRehearsals.some((rehearsal) => rehearsal.id === defaultRehearsalId)
+      ? defaultRehearsalId
+      : upcomingRehearsals[0]?.id ?? "",
+  );
+  const [status, setStatus] = useState<AttendanceStatus>("出席");
+  const [arrivalTime, setArrivalTime] = useState("");
+  const [leaveTime, setLeaveTime] = useState("");
+  const [note, setNote] = useState("");
+
+  useEffect(() => {
+    if (!memberId && members[0]?.id) setMemberId(members[0].id);
+  }, [members, memberId]);
+
+  useEffect(() => {
+    const selectableIds = upcomingRehearsals.map((rehearsal) => rehearsal.id);
+    if (defaultRehearsalId && selectableIds.includes(defaultRehearsalId)) {
+      setRehearsalId(defaultRehearsalId);
+      return;
+    }
+    if (!selectableIds.includes(rehearsalId)) {
+      setRehearsalId(upcomingRehearsals[0]?.id ?? "");
+    }
+  }, [defaultRehearsalId, rehearsals, rehearsalId]);
+
+  function toggleMember(memberId) {
+    setSelectedMemberIds((current) => (current.includes(memberId) ? current.filter((id) => id !== memberId) : [...current, memberId]));
+  }
+
+  function submitAttendance() {
+    if (!rehearsalId) {
+      alert("稽古日を選んでください。");
+      return;
+    }
+    if (mode === "bulk") {
+      if (!selectedMemberIds.length) {
+        alert("名前を1人以上選んでください。");
+        return;
+      }
+      onSaveBatch(
+        selectedMemberIds.map((selectedId) => ({
+          memberId: selectedId,
+          rehearsalId,
+          status,
+          arrivalTime,
+          leaveTime,
+          note,
+        })),
+      );
+      setSelectedMemberIds([]);
+      return;
+    }
+    if (!memberId) {
+      alert("名前を選んでください。");
+      return;
+    }
+    onSave({ memberId, rehearsalId, status, arrivalTime, leaveTime, note });
+  }
+
+  return (
+    <form
+      className="panel form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        submitAttendance();
+      }}
+    >
+      <h2>出欠登録</h2>
+      <div className="formModeSwitch" aria-label="登録方法">
+        <button type="button" className={mode === "single" ? "active" : ""} onClick={() => setMode("single")}>ひとりずつ登録</button>
+        <button type="button" className={mode === "bulk" ? "active" : ""} onClick={() => setMode("bulk")}>まとめて登録</button>
+      </div>
+      <fieldset className="choiceGroup">
+        <legend>{mode === "bulk" ? "名前（複数選択できます）" : "名前"}</legend>
+        <div className="choiceGrid members">
+          {members.map((member) => (
+            <label key={member.id} className={`choiceCard ${(mode === "bulk" ? selectedMemberIds.includes(member.id) : memberId === member.id) ? "selected" : ""}`}>
+              <input
+                type={mode === "bulk" ? "checkbox" : "radio"}
+                name={mode === "bulk" ? `attendance-member-${member.id}` : "attendance-member"}
+                checked={mode === "bulk" ? selectedMemberIds.includes(member.id) : memberId === member.id}
+                onChange={() => (mode === "bulk" ? toggleMember(member.id) : setMemberId(member.id))}
+              />
+              <span>{member.name}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset className="choiceGroup">
+        <legend>稽古日</legend>
+        <div className="choiceGrid rehearsals">
+          {upcomingRehearsals.map((rehearsal) => (
+            <label key={rehearsal.id} className={`choiceCard ${rehearsalId === rehearsal.id ? "selected" : ""}`}>
+              <input type="radio" name="attendance-rehearsal" checked={rehearsalId === rehearsal.id} onChange={() => setRehearsalId(rehearsal.id)} />
+              <span>{rehearsal.date}</span>
+              <small>{rehearsal.startTime}-{rehearsal.endTime}</small>
+            </label>
+          ))}
+        </div>
+        {!upcomingRehearsals.length && <p className="note">今日以降の稽古日がありません。必要な場合は稽古日を追加してください。</p>}
+      </fieldset>
+      <label className="field">出欠ステータス<select value={status} onChange={(event) => setStatus(event.target.value)}>{statusOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+      <div className="grid two">
+        <label className="field">到着予定時間<input type="time" value={arrivalTime} onChange={(event) => setArrivalTime(event.target.value)} /></label>
+        <label className="field">早退予定時間<input type="time" value={leaveTime} onChange={(event) => setLeaveTime(event.target.value)} /></label>
+      </div>
+      {mode === "bulk" && <p className="note">まとめて登録では、選んだ全員に同じステータス・時間・連絡事項が入ります。個別の理由はあとからひとりずつ編集できます。</p>}
+      <label className="field">理由・連絡事項<textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="例：仕事後に向かいます" /></label>
+      <button className="primary">{mode === "bulk" ? (selectedMemberIds.length ? `${selectedMemberIds.length}人分をまとめて登録する` : "まとめて登録する") : "登録する"}</button>
+    </form>
+  );
+}
+
+function formatAttendanceLine(row) {
+  const time = row.attendance.arrivalTime || row.attendance.leaveTime;
+  const parts = [row.member.name];
+  if (time) parts.push(time);
+  if (row.attendance.note) parts.push(row.attendance.note);
+  return parts.join(" / ");
+}
+
+function ContactNotesPanel({ grouped }) {
+  const rows = [...grouped.present, ...grouped.absent, ...grouped.late, ...grouped.early, ...grouped.undecided]
+    .filter((row) => row.attendance.note || row.attendance.arrivalTime || row.attendance.leaveTime)
+    .map((row) => {
+      const time = row.attendance.arrivalTime || row.attendance.leaveTime;
+      return `${row.member.name}（${row.attendance.status}${time ? ` ${time}` : ""}）${row.attendance.note ? `：${row.attendance.note}` : ""}`;
+    });
+
+  return <PeoplePanel title="連絡事項まとめ" rows={rows} tone={rows.length ? "warn" : undefined} />;
+}
+
+function ExportTools({
+  rehearsals,
+  rehearsalId,
+  members,
+  attendances,
+}) {
+  const rehearsal = rehearsals.find((item) => item.id === rehearsalId) ?? rehearsals[0];
+  const selectedRows = rehearsal ? buildAttendanceRows([rehearsal], members, attendances) : [];
+  const allRows = buildAttendanceRows(rehearsals, members, attendances);
+  const months = getRehearsalMonths(rehearsals);
+
+  return (
+    <section className="panel exportPanel">
+      <h2 className="panelTitle"><span>↓</span>CSV出力</h2>
+      <div className="monthExportList">
+        {months.map((month) => {
+          const monthRehearsals = rehearsals.filter((item) => item.date.startsWith(month));
+          const monthRows = buildAttendanceRows(monthRehearsals, members, attendances);
+          return (
+            <button key={month} className="monthExportButton" onClick={() => downloadCsv(`keiko_${month}.csv`, monthRows)}>
+              {Number(month.slice(5, 7))}月分CSV
+              <span>{monthRehearsals.length}回分</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="exportActions">
+        <button onClick={() => downloadCsv(`keiko_${rehearsal?.date ?? "selected"}.csv`, selectedRows)}>この稽古日のCSV</button>
+        <button onClick={() => downloadCsv("keiko_all.csv", allRows)}>全稽古日のCSV</button>
+      </div>
+      <p className="note">月ごとのCSVは、各月の稽古日とメンバー全員分をまとめて出力します。</p>
+    </section>
+  );
+}
+
+function AdminView({ rehearsals, rehearsalId, setRehearsalId, grouped, sceneResults, attendances, members, allRehearsals }) {
+  return (
+    <section className="stack">
+      <div className="panel"><RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} /></div>
+      <ContactNotesPanel grouped={grouped} />
+      <div className="grid two">
+        <PeoplePanel title="出席者" rows={grouped.present.map(formatAttendanceLine)} />
+        <PeoplePanel title="欠席者" rows={grouped.absent.map(formatAttendanceLine)} tone="muted" />
+        <PeoplePanel title="遅刻者" rows={grouped.late.map(formatAttendanceLine)} />
+        <PeoplePanel title="早退者" rows={grouped.early.map(formatAttendanceLine)} />
+        <PeoplePanel title="未定" rows={grouped.undecided.map(formatAttendanceLine)} tone="warn" />
+        <PeoplePanel title="未回答者" rows={grouped.noReply.map((member) => member.name)} tone="warn" />
+      </div>
+      <ScenePanel sceneResults={sceneResults} rehearsals={allRehearsals} />
+      <ExportTools
+        rehearsals={rehearsals}
+        rehearsalId={rehearsalId}
+        members={members}
+        attendances={attendances}
+      />
+    </section>
+  );
+}
+
+function SceneEditor({ editingScene, onAdd, onUpdate, onCancel }) {
+  const [title, setTitle] = useState(editingScene?.title ?? "");
+  const [requiredCharacters, setRequiredCharacters] = useState(editingScene?.requiredCharacters ?? []);
+  const [memo, setMemo] = useState(editingScene?.memo ?? "");
+
+  useEffect(() => {
+    setTitle(editingScene?.title ?? "");
+    setRequiredCharacters(editingScene?.requiredCharacters ?? []);
+    setMemo(editingScene?.memo ?? "");
+  }, [editingScene]);
+
+  function toggleRequiredCharacter(character) {
+    setRequiredCharacters((current) =>
+      current.includes(character) ? current.filter((item) => item !== character) : [...current, character],
+    );
+  }
+
+  return (
+    <form
+      className="sceneEditor"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!title || requiredCharacters.length === 0) {
+          alert("シーン名と必要な役を入力してください。");
+          return;
+        }
+        if (editingScene) {
+          onUpdate({ ...editingScene, title, requiredCharacters, memo });
+          onCancel();
+        } else {
+          onAdd({ title, requiredCharacters, memo });
+          setTitle("");
+          setRequiredCharacters([]);
+          setMemo("");
+        }
+      }}
+    >
+      <h3>{editingScene ? "シーンを編集" : "シーンを追加"}</h3>
+      <label className="field">シーン名<input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="例：5場：ラスト" /></label>
+      <fieldset className="checkboxGroup">
+        <legend>必要な役</legend>
+        {sceneRoleOptions.map((character) => (
+          <label key={character} className="checkboxPill">
+            <input
+              type="checkbox"
+              checked={requiredCharacters.includes(character)}
+              onChange={() => toggleRequiredCharacter(character)}
+            />
+            <span>{character}</span>
+          </label>
+        ))}
+      </fieldset>
+      <label className="field">メモ<input value={memo} onChange={(event) => setMemo(event.target.value)} placeholder="例：小道具確認あり" /></label>
+      <div className="formActions">
+        <button className="primary">{editingScene ? "変更を保存する" : "シーンを追加する"}</button>
+        {editingScene && <button type="button" onClick={onCancel}>キャンセル</button>}
+      </div>
+    </form>
+  );
+}
+
+function ScenePanel({ sceneResults, rehearsals = [], onAdd, onUpdate, onDelete }) {
+  const [editingId, setEditingId] = useState("");
+  const editingScene = sceneResults.find(({ scene }) => scene.id === editingId)?.scene;
+  const editable = Boolean(onAdd && onUpdate && onDelete);
+
+  return (
+    <section className="panel">
+      <h2 className="panelTitle green"><span>★</span>シーン稽古可否</h2>
+      {editable && <SceneEditor editingScene={editingScene} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => setEditingId("")} />}
+      <div className="sceneList">
+        {sceneResults.map(({ scene, canRehearse, missingCharacters }) => {
+          const sceneCounts = getSceneCounts(scene.id, rehearsals);
+          return (
+          <article key={scene.id} className={`scene ${canRehearse ? "ok" : "ng"}`}>
+            <div>
+              <h3>{scene.title}</h3>
+              <p>必要：{scene.requiredCharacters.join("、")}</p>
+              <p className="note">{scene.memo}</p>
+              <p className="sceneCountLine">選択 {sceneCounts.total}回 / Aチーム {sceneCounts.a}回 / Bチーム {sceneCounts.b}回</p>
+            </div>
+            <strong>{canRehearse ? "✓ 稽古できます" : `不足：${missingCharacters.join("、")}`}</strong>
+            {editable && (
+              <div className="sceneActions">
+                <button onClick={() => setEditingId(scene.id)}>編集</button>
+                <button className="dangerButton" onClick={() => onDelete(scene.id)}>削除</button>
+              </div>
+            )}
+          </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function ScenePage({ sceneResults, rehearsals, onAdd, onUpdate, onDelete }) {
+  return (
+    <section className="stack">
+      <ScenePanel sceneResults={sceneResults} rehearsals={rehearsals} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} />
+    </section>
+  );
+}
+
+function PeoplePanel({ title, rows, tone }) {
+  return (
+    <section className={`panel people ${tone ?? ""}`}>
+      <h2 className="panelTitle"><span>{tone === "warn" ? "?" : "♙"}</span>{title}</h2>
+      {rows.length ? <ul>{rows.map((row) => <li key={row}>{row}</li>)}</ul> : <p className="note">該当なし</p>}
+    </section>
+  );
+}
+
+function MemberEditor({ editingMember, onAdd, onUpdate, onCancel }) {
+  const [name, setName] = useState(editingMember?.name ?? "");
+  const [role, setRole] = useState(editingMember?.role ?? "キャスト");
+  const [character, setCharacter] = useState(editingMember?.character ?? "");
+  const [team, setTeam] = useState(editingMember?.team ?? "共通");
+  const [memo, setMemo] = useState(editingMember?.memo ?? "");
+
+  useEffect(() => {
+    setName(editingMember?.name ?? "");
+    setRole(editingMember?.role ?? "キャスト");
+    setCharacter(editingMember?.character ?? "");
+    setTeam(editingMember?.team ?? "共通");
+    setMemo(editingMember?.memo ?? "");
+  }, [editingMember]);
+
+  return (
+    <form
+      className="panel form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!name || !role || !team) {
+          alert("名前・役職・所属チームを入力してください。");
+          return;
+        }
+        if (editingMember) {
+          onUpdate({ ...editingMember, name, role, character, team, memo });
+          onCancel();
+        } else {
+          onAdd({ name, role, character, team, memo });
+          setName("");
+          setRole("キャスト");
+          setCharacter("");
+          setTeam("共通");
+          setMemo("");
+        }
+      }}
+    >
+      <h2 className="panelTitle"><span>{editingMember ? "✎" : "＋"}</span>{editingMember ? "メンバーを編集" : "メンバーを追加"}</h2>
+      <div className="grid two">
+        <label className="field">名前<input value={name} onChange={(event) => setName(event.target.value)} placeholder="例：山田 はな" /></label>
+        <label className="field">担当役名<input value={character} onChange={(event) => setCharacter(event.target.value)} placeholder="例：A" /></label>
+      </div>
+      <div className="grid two">
+        <label className="field">役職<select value={role} onChange={(event) => setRole(event.target.value)}>{roleOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+        <label className="field">所属チーム<select value={team} onChange={(event) => setTeam(event.target.value)}>{memberTeamOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+      </div>
+      <label className="field">メモ<input value={memo} onChange={(event) => setMemo(event.target.value)} placeholder="例：6月後半から参加" /></label>
+      <div className="formActions">
+        <button className="primary">{editingMember ? "変更を保存する" : "メンバーを追加する"}</button>
+        {editingMember && <button type="button" onClick={onCancel}>キャンセル</button>}
+      </div>
+    </form>
+  );
+}
+
+function MemberView({ rehearsals, attendances, visibleMembers, onAdd, onUpdate, onDelete }) {
+  const [editingId, setEditingId] = useState("");
+  const editingMember = visibleMembers.find((member) => member.id === editingId);
+
+  return (
+    <section className="stack">
+      <MemberEditor editingMember={editingMember} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => setEditingId("")} />
+      {visibleMembers.map((member) => (
+        <article key={member.id} className="panel memberCard">
+          <div>
+            <h2>{member.name}</h2>
+            <p>{member.role} / {member.team}{member.character ? ` / 役：${member.character}` : ""}</p>
+            <p className="note">{member.memo}</p>
+          </div>
+          <div className="cardActions">
+            <strong>{attendanceRate(member.id, attendances, rehearsals)}%</strong>
+            <button onClick={() => setEditingId(member.id)}>編集</button>
+            <button className="dangerButton" onClick={() => onDelete(member.id)}>削除</button>
+          </div>
+        </article>
+      ))}
+    </section>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
