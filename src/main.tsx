@@ -24,6 +24,8 @@ type Rehearsal = {
   memo?: string;
   createdAt?: string;
   eventType?: "稽古日" | "MTG・打ち合わせ";
+  rehearsalTeam?: "Aチーム" | "Bチーム" | "共通";
+  selectedSceneIds?: string[];
 };
 
 type Attendance = {
@@ -65,11 +67,25 @@ const rehearsals: Rehearsal[] = [
   { id: "r-2026-06-26", date: "2026-06-26", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
 ];
 
+const allSceneRoles = ["姫", "神", "殺人鬼", "商人"];
 const scenes: Scene[] = [
-  { id: "s1", title: "1場：夜のロビー", requiredCharacters: ["A", "B"], memo: "出会いの場面" },
-  { id: "s2", title: "2場：古い楽屋", requiredCharacters: ["A", "C", "D"], memo: "小道具確認あり" },
-  { id: "s3", title: "3場：終演後", requiredCharacters: ["B", "D"], memo: "感情の山場" },
-  { id: "s4", title: "4場：カーテンコール前", requiredCharacters: ["A", "B", "C", "D"], memo: "全員場面" },
+  { id: "scene-01", title: "1場：プロローグ", requiredCharacters: allSceneRoles },
+  { id: "scene-02", title: "2場：姫ライフ", requiredCharacters: ["姫"] },
+  { id: "scene-03", title: "3場：殺人鬼の溺れる黒", requiredCharacters: ["殺人鬼"] },
+  { id: "scene-04", title: "4場：神", requiredCharacters: ["神"] },
+  { id: "scene-05", title: "5場：玉座に商人", requiredCharacters: ["商人"] },
+  { id: "scene-06", title: "6場：急ぎ足のタブー", requiredCharacters: ["殺人鬼"] },
+  { id: "scene-07", title: "7場：姫と商人", requiredCharacters: ["姫", "商人"] },
+  { id: "scene-08", title: "8場：地下牢", requiredCharacters: ["神", "姫"] },
+  { id: "scene-09", title: "9場：地下牢はいつも暗く", requiredCharacters: ["殺人鬼", "神"] },
+  { id: "scene-10", title: "10場：人殺しと商売人", requiredCharacters: ["殺人鬼", "商人"] },
+  { id: "scene-11", title: "11場：インターミッション", requiredCharacters: allSceneRoles },
+  { id: "scene-12", title: "12場：天を突く塔", requiredCharacters: allSceneRoles },
+  { id: "scene-13", title: "13場：建設現場", requiredCharacters: allSceneRoles },
+  { id: "scene-14", title: "14場：栽培", requiredCharacters: allSceneRoles },
+  { id: "scene-15", title: "15場：口の中", requiredCharacters: allSceneRoles },
+  { id: "scene-16", title: "16場：宴", requiredCharacters: allSceneRoles },
+  { id: "scene-17", title: "17場：エピローグ", requiredCharacters: allSceneRoles },
 ];
 
 const seedAttendances: Attendance[] = [
@@ -94,7 +110,10 @@ const statusOptions: AttendanceStatus[] = ["出席", "欠席", "遅刻", "早退
 const roleOptions = ["キャスト", "演出", "演出助手", "制作", "音響", "照明"];
 const memberTeamOptions = ["Aチーム", "Bチーム", "共通"];
 const eventTypeOptions = ["稽古日", "MTG・打ち合わせ"];
+const rehearsalTeamOptions = ["共通", "Aチーム", "Bチーム"];
 const rehearsalSeedVersion = "2026-06-confirmed-v2";
+const sceneSeedVersion = "zakuro-scenes-v1";
+const sceneRoleOptions = allSceneRoles;
 const removedMemberNames = ["春野 いろは"];
 type TeamFilter = "全員" | "Aチーム" | "Bチーム";
 const teamFilters: TeamFilter[] = ["全員", "Aチーム", "Bチーム"];
@@ -191,6 +210,16 @@ function readRehearsals() {
 
 function withoutRemovedMembers(memberSource) {
   return memberSource.filter((member) => !removedMemberNames.includes(member.name));
+}
+
+function readScenes() {
+  const savedVersion = localStorage.getItem("keiko.sceneSeedVersion");
+  if (savedVersion !== sceneSeedVersion) {
+    localStorage.setItem("keiko.sceneSeedVersion", sceneSeedVersion);
+    localStorage.setItem("keiko.scenes", JSON.stringify(scenes));
+    return scenes;
+  }
+  return readStorage("keiko.scenes", scenes);
 }
 
 function csvCell(value?: string | number) {
@@ -329,6 +358,8 @@ function rehearsalToRow(config, rehearsal, actorName) {
     place: rehearsal.place,
     memo: rehearsal.memo ?? "",
     event_type: rehearsal.eventType ?? "稽古日",
+    rehearsal_team: rehearsal.rehearsalTeam ?? "共通",
+    selected_scene_ids: rehearsal.selectedSceneIds ?? [],
     created_at: rehearsal.createdAt ?? new Date().toISOString(),
     updated_by: actorName,
     updated_at: new Date().toISOString(),
@@ -344,6 +375,8 @@ function rehearsalFromRow(row) {
     place: row.place,
     memo: row.memo ?? "",
     eventType: row.event_type ?? "稽古日",
+    rehearsalTeam: row.rehearsal_team ?? "共通",
+    selectedSceneIds: Array.isArray(row.selected_scene_ids) ? row.selected_scene_ids : [],
     createdAt: row.created_at,
     updatedBy: row.updated_by,
     updatedAt: row.updated_at,
@@ -471,7 +504,7 @@ function App() {
     return readRehearsals();
   });
   const [sceneList, setSceneList] = useState<Scene[]>(() => {
-    return readStorage("keiko.scenes", scenes);
+    return readScenes();
   });
   const [attendances, setAttendances] = useState<Attendance[]>(() => readStorage("keiko.attendances", seedAttendances));
   const [supabaseConfig, setSupabaseConfig] = useState(() => getSupabaseConfig());
@@ -798,7 +831,7 @@ function App() {
       </nav>
       <TeamSwitch value={teamFilter} onChange={setTeamFilter} />
       {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} sceneResults={sceneResults} />}
-      {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onDelete={deleteRehearsal} allowDelete={!onlineReady} openAdmin={() => setTab("admin")} />}
+      {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} scenes={sceneList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onDelete={deleteRehearsal} allowDelete={!onlineReady} openAdmin={() => setTab("admin")} />}
       {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} />}
       {tab === "admin" && (
         <AdminView
@@ -809,10 +842,11 @@ function App() {
           sceneResults={sceneResults}
           attendances={attendances}
           members={visibleMembers}
+          allRehearsals={rehearsalList}
         />
       )}
       {tab === "members" && <MemberView rehearsals={rehearsalList} attendances={attendances} visibleMembers={visibleMembers} onAdd={addMember} onUpdate={updateMember} onDelete={deleteMember} allowDelete={!onlineReady} />}
-      {tab === "scenes" && <ScenePage sceneResults={sceneResults} onAdd={addScene} onUpdate={updateScene} onDelete={deleteScene} allowDelete={!onlineReady} />}
+      {tab === "scenes" && <ScenePage sceneResults={sceneResults} rehearsals={rehearsalList} onAdd={addScene} onUpdate={updateScene} onDelete={deleteScene} allowDelete={!onlineReady} />}
     </main>
   );
 }
@@ -856,6 +890,19 @@ function getCalendarDays(monthKey) {
 
 function getEventKind(rehearsal) {
   return rehearsal.eventType === "MTG・打ち合わせ" ? "mtg" : "rehearsal";
+}
+
+function getSceneCounts(sceneId, rehearsals) {
+  return rehearsals.reduce(
+    (counts, rehearsal) => {
+      if (!rehearsal.selectedSceneIds?.includes(sceneId)) return counts;
+      counts.total += 1;
+      if (rehearsal.rehearsalTeam === "Aチーム") counts.a += 1;
+      if (rehearsal.rehearsalTeam === "Bチーム") counts.b += 1;
+      return counts;
+    },
+    { total: 0, a: 0, b: 0 },
+  );
 }
 
 function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
@@ -950,10 +997,10 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
   );
 }
 
-function RehearsalList({ rehearsals, selectedRehearsalId, setSelectedRehearsalId, attendances, visibleMembers, onAdd, onDelete, allowDelete, openAdmin }) {
+function RehearsalList({ rehearsals, scenes, selectedRehearsalId, setSelectedRehearsalId, attendances, visibleMembers, onAdd, onDelete, allowDelete, openAdmin }) {
   return (
     <section className="stack">
-      <RehearsalEditor onAdd={onAdd} />
+      <RehearsalEditor scenes={scenes} onAdd={onAdd} />
       {rehearsals.map((rehearsal) => {
         const summary = summarizeRehearsal(rehearsal.id, attendances, visibleMembers);
         return (
@@ -980,13 +1027,19 @@ function RehearsalList({ rehearsals, selectedRehearsalId, setSelectedRehearsalId
   );
 }
 
-function RehearsalEditor({ onAdd }) {
+function RehearsalEditor({ scenes, onAdd }) {
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("19:00");
   const [endTime, setEndTime] = useState("22:00");
   const [place, setPlace] = useState("");
   const [memo, setMemo] = useState("");
   const [eventType, setEventType] = useState("稽古日");
+  const [rehearsalTeam, setRehearsalTeam] = useState("共通");
+  const [selectedSceneIds, setSelectedSceneIds] = useState([]);
+
+  function toggleSelectedScene(sceneId) {
+    setSelectedSceneIds((current) => (current.includes(sceneId) ? current.filter((id) => id !== sceneId) : [...current, sceneId]));
+  }
 
   return (
     <form
@@ -997,13 +1050,15 @@ function RehearsalEditor({ onAdd }) {
           alert("日付・開始時間・終了時間・場所を入力してください。");
           return;
         }
-        onAdd({ date, startTime, endTime, place, memo, eventType });
+        onAdd({ date, startTime, endTime, place, memo, eventType, rehearsalTeam, selectedSceneIds });
         setDate("");
         setStartTime("19:00");
         setEndTime("22:00");
         setPlace("");
         setMemo("");
         setEventType("稽古日");
+        setRehearsalTeam("共通");
+        setSelectedSceneIds([]);
       }}
     >
       <h2 className="panelTitle"><span>＋</span>稽古日を追加</h2>
@@ -1015,6 +1070,16 @@ function RehearsalEditor({ onAdd }) {
         <label className="field">開始<input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} /></label>
         <label className="field">終了<input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} /></label>
       </div>
+      <label className="field">対象チーム<select value={rehearsalTeam} onChange={(event) => setRehearsalTeam(event.target.value)}>{rehearsalTeamOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+      <fieldset className="checkboxGroup">
+        <legend>この日にやるシーン</legend>
+        {scenes.map((scene) => (
+          <label key={scene.id} className="checkboxPill sceneSelectPill">
+            <input type="checkbox" checked={selectedSceneIds.includes(scene.id)} onChange={() => toggleSelectedScene(scene.id)} />
+            <span>{scene.title}</span>
+          </label>
+        ))}
+      </fieldset>
       <label className="field">場所<input value={place} onChange={(event) => setPlace(event.target.value)} placeholder="例：駅前スタジオA" /></label>
       <label className="field">メモ<input value={memo} onChange={(event) => setMemo(event.target.value)} placeholder="例：1場、2場中心" /></label>
       <button className="primary">稽古日を追加する</button>
@@ -1100,7 +1165,7 @@ function ExportTools({
   );
 }
 
-function AdminView({ rehearsals, rehearsalId, setRehearsalId, grouped, sceneResults, attendances, members }) {
+function AdminView({ rehearsals, rehearsalId, setRehearsalId, grouped, sceneResults, attendances, members, allRehearsals }) {
   return (
     <section className="stack">
       <div className="panel"><RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} /></div>
@@ -1113,7 +1178,7 @@ function AdminView({ rehearsals, rehearsalId, setRehearsalId, grouped, sceneResu
         <PeoplePanel title="未定" rows={grouped.undecided.map(formatAttendanceLine)} tone="warn" />
         <PeoplePanel title="未回答者" rows={grouped.noReply.map((member) => member.name)} tone="warn" />
       </div>
-      <ScenePanel sceneResults={sceneResults} />
+      <ScenePanel sceneResults={sceneResults} rehearsals={allRehearsals} />
       <ExportTools
         rehearsals={rehearsals}
         rehearsalId={rehearsalId}
@@ -1126,24 +1191,26 @@ function AdminView({ rehearsals, rehearsalId, setRehearsalId, grouped, sceneResu
 
 function SceneEditor({ editingScene, onAdd, onUpdate, onCancel }) {
   const [title, setTitle] = useState(editingScene?.title ?? "");
-  const [requiredCharactersText, setRequiredCharactersText] = useState(editingScene?.requiredCharacters?.join(",") ?? "");
+  const [requiredCharacters, setRequiredCharacters] = useState(editingScene?.requiredCharacters ?? []);
   const [memo, setMemo] = useState(editingScene?.memo ?? "");
 
   useEffect(() => {
     setTitle(editingScene?.title ?? "");
-    setRequiredCharactersText(editingScene?.requiredCharacters?.join(",") ?? "");
+    setRequiredCharacters(editingScene?.requiredCharacters ?? []);
     setMemo(editingScene?.memo ?? "");
   }, [editingScene]);
+
+  function toggleRequiredCharacter(character) {
+    setRequiredCharacters((current) =>
+      current.includes(character) ? current.filter((item) => item !== character) : [...current, character],
+    );
+  }
 
   return (
     <form
       className="sceneEditor"
       onSubmit={(event) => {
         event.preventDefault();
-        const requiredCharacters = requiredCharactersText
-          .split(/[、,]/)
-          .map((item) => item.trim())
-          .filter(Boolean);
         if (!title || requiredCharacters.length === 0) {
           alert("シーン名と必要な役を入力してください。");
           return;
@@ -1154,16 +1221,26 @@ function SceneEditor({ editingScene, onAdd, onUpdate, onCancel }) {
         } else {
           onAdd({ title, requiredCharacters, memo });
           setTitle("");
-          setRequiredCharactersText("");
+          setRequiredCharacters([]);
           setMemo("");
         }
       }}
     >
       <h3>{editingScene ? "シーンを編集" : "シーンを追加"}</h3>
-      <div className="grid two">
-        <label className="field">シーン名<input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="例：5場：ラスト" /></label>
-        <label className="field">必要な役<input value={requiredCharactersText} onChange={(event) => setRequiredCharactersText(event.target.value)} placeholder="例：A,B,D" /></label>
-      </div>
+      <label className="field">シーン名<input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="例：5場：ラスト" /></label>
+      <fieldset className="checkboxGroup">
+        <legend>必要な役</legend>
+        {sceneRoleOptions.map((character) => (
+          <label key={character} className="checkboxPill">
+            <input
+              type="checkbox"
+              checked={requiredCharacters.includes(character)}
+              onChange={() => toggleRequiredCharacter(character)}
+            />
+            <span>{character}</span>
+          </label>
+        ))}
+      </fieldset>
       <label className="field">メモ<input value={memo} onChange={(event) => setMemo(event.target.value)} placeholder="例：小道具確認あり" /></label>
       <div className="formActions">
         <button className="primary">{editingScene ? "変更を保存する" : "シーンを追加する"}</button>
@@ -1173,7 +1250,7 @@ function SceneEditor({ editingScene, onAdd, onUpdate, onCancel }) {
   );
 }
 
-function ScenePanel({ sceneResults, onAdd, onUpdate, onDelete, allowDelete = true }) {
+function ScenePanel({ sceneResults, rehearsals = [], onAdd, onUpdate, onDelete, allowDelete = true }) {
   const [editingId, setEditingId] = useState("");
   const editingScene = sceneResults.find(({ scene }) => scene.id === editingId)?.scene;
   const editable = Boolean(onAdd && onUpdate && onDelete);
@@ -1183,12 +1260,15 @@ function ScenePanel({ sceneResults, onAdd, onUpdate, onDelete, allowDelete = tru
       <h2 className="panelTitle green"><span>★</span>シーン稽古可否</h2>
       {editable && <SceneEditor editingScene={editingScene} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => setEditingId("")} />}
       <div className="sceneList">
-        {sceneResults.map(({ scene, canRehearse, missingCharacters }) => (
+        {sceneResults.map(({ scene, canRehearse, missingCharacters }) => {
+          const sceneCounts = getSceneCounts(scene.id, rehearsals);
+          return (
           <article key={scene.id} className={`scene ${canRehearse ? "ok" : "ng"}`}>
             <div>
               <h3>{scene.title}</h3>
               <p>必要：{scene.requiredCharacters.join("、")}</p>
               <p className="note">{scene.memo}</p>
+              <p className="sceneCountLine">選択 {sceneCounts.total}回 / Aチーム {sceneCounts.a}回 / Bチーム {sceneCounts.b}回</p>
             </div>
             <strong>{canRehearse ? "✓ 稽古できます" : `不足：${missingCharacters.join("、")}`}</strong>
             {editable && (
@@ -1198,16 +1278,17 @@ function ScenePanel({ sceneResults, onAdd, onUpdate, onDelete, allowDelete = tru
               </div>
             )}
           </article>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
 }
 
-function ScenePage({ sceneResults, onAdd, onUpdate, onDelete, allowDelete }) {
+function ScenePage({ sceneResults, rehearsals, onAdd, onUpdate, onDelete, allowDelete }) {
   return (
     <section className="stack">
-      <ScenePanel sceneResults={sceneResults} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} allowDelete={allowDelete} />
+      <ScenePanel sceneResults={sceneResults} rehearsals={rehearsals} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} allowDelete={allowDelete} />
     </section>
   );
 }
