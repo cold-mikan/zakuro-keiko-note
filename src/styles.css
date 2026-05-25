@@ -326,9 +326,7 @@ h3 {
 
 .syncGuard {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 14px;
+  gap: 6px;
   margin: -6px 0 18px;
   padding: 12px 14px;
   border-radius: 16px;
@@ -362,8 +360,8 @@ h3 {
 }
 
 .syncGuard span {
-  min-width: 260px;
-  text-align: right;
+  display: block;
+  text-align: left;
   white-space: normal;
 }
 
