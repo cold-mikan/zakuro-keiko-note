@@ -1,22 +1,25 @@
 import type { Attendance, Member, Rehearsal, Scene } from "../types";
 
 export const members: Member[] = [
-  { id: "m1", name: "春野 いろは", role: "キャスト", character: "A", team: "Aチーム", memo: "ダブルキャストA" },
-  { id: "m2", name: "森 つむぎ", role: "キャスト", character: "A", team: "Bチーム", memo: "ダブルキャストB" },
-  { id: "m3", name: "佐倉 りん", role: "キャスト", character: "B", team: "Aチーム" },
-  { id: "m4", name: "水野 こはる", role: "キャスト", character: "B", team: "Bチーム" },
-  { id: "m5", name: "高瀬 凪", role: "キャスト", character: "C", team: "共通" },
-  { id: "m6", name: "北川 灯", role: "キャスト", character: "D", team: "共通" },
-  { id: "m7", name: "藤井 まこと", role: "演出", team: "共通" },
-  { id: "m8", name: "桐谷 すず", role: "制作", team: "共通" },
+  { id: "m1", name: "おはよう真夜中", role: "キャスト", team: "共通" },
+  { id: "m2", name: "黒崎こぎん", role: "キャスト", team: "共通" },
+  { id: "m3", name: "Sion", role: "キャスト", team: "共通" },
+  { id: "m4", name: "tika.", role: "キャスト", team: "共通" },
+  { id: "m5", name: "ちょろね", role: "キャスト", team: "共通" },
+  { id: "m6", name: "七宮ソウ", role: "キャスト", team: "共通" },
+  { id: "m7", name: "U-kki", role: "キャスト", team: "共通" },
+  { id: "m8", name: "冷凍みかん", role: "キャスト", team: "共通" },
 ];
 
 export const rehearsals: Rehearsal[] = [
-  { id: "r1", date: "2026-06-06", startTime: "18:30", endTime: "21:30", place: "駅前スタジオA", memo: "顔合わせ、読み合わせ" },
-  { id: "r2", date: "2026-06-10", startTime: "19:00", endTime: "22:00", place: "区民センター第2和室", memo: "1場、2場中心" },
-  { id: "r3", date: "2026-06-14", startTime: "13:00", endTime: "17:00", place: "小劇場 稽古場", memo: "立ち稽古開始" },
-  { id: "r4", date: "2026-06-18", startTime: "19:00", endTime: "22:00", place: "駅前スタジオB", memo: "Bチーム多め" },
-  { id: "r5", date: "2026-06-21", startTime: "13:00", endTime: "18:00", place: "小劇場 稽古場", memo: "通しの前段取り確認" },
+  { id: "r-2026-06-06", date: "2026-06-06", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-10", date: "2026-06-10", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-12", date: "2026-06-12", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-17", date: "2026-06-17", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-19", date: "2026-06-19", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-20", date: "2026-06-20", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-24", date: "2026-06-24", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-26", date: "2026-06-26", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
 ];
 
 export const scenes: Scene[] = [
