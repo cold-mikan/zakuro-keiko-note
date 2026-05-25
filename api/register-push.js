@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import webpush from "web-push";
 
 function json(res, status, body) {
   res.status(status).setHeader("Content-Type", "application/json; charset=utf-8");
@@ -17,6 +18,15 @@ function getSupabaseAdmin() {
       autoRefreshToken: false,
     },
   });
+}
+
+function setupWebPush() {
+  const publicKey = process.env.VITE_VAPID_PUBLIC_KEY;
+  const privateKey = process.env.VAPID_PRIVATE_KEY;
+  const subject = process.env.VAPID_SUBJECT || "mailto:notify@example.com";
+  if (!publicKey || !privateKey) return false;
+  webpush.setVapidDetails(subject, publicKey, privateKey);
+  return true;
 }
 
 export default async function handler(req, res) {
@@ -48,6 +58,22 @@ export default async function handler(req, res) {
       );
 
     if (error) throw error;
+
+    if (setupWebPush()) {
+      try {
+        await webpush.sendNotification(
+          subscription,
+          JSON.stringify({
+            title: "ザクロ稽古ノート",
+            body: "通知設定ができました。稽古前のお知らせを受け取れます。",
+            url: "/",
+          }),
+        );
+      } catch (pushError) {
+        console.warn("Test notification failed", pushError);
+      }
+    }
+
     return json(res, 200, { ok: true });
   } catch (error) {
     console.error(error);
