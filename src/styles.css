@@ -416,6 +416,129 @@ h3 {
   color: #f1789a;
 }
 
+.calendarPanel {
+  display: grid;
+  gap: 12px;
+}
+
+.calendarHeader {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.calendarHeader .panelTitle {
+  flex: 1;
+  margin: 0;
+}
+
+.calendarMonthControls {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.calendarMonthControls select {
+  min-width: 120px;
+  padding: 9px 11px;
+}
+
+.calendarWeekdays,
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.calendarWeekdays span {
+  color: #9b8176;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.calendarDay {
+  align-items: center;
+  aspect-ratio: 1;
+  background: #fffaf7;
+  border: 1px solid #efdfd4;
+  border-radius: 50%;
+  box-shadow: none;
+  color: #5f4942;
+  display: inline-flex;
+  justify-content: center;
+  min-height: 0;
+  padding: 0;
+  position: relative;
+}
+
+.calendarDay.blank {
+  background: transparent;
+  border-color: transparent;
+}
+
+.calendarDay:disabled {
+  color: #c3aca2;
+  cursor: default;
+  opacity: 1;
+}
+
+.calendarDay.hasEvent {
+  border-color: #f29aaf;
+  background: #fff1f5;
+  color: #bc526c;
+  font-weight: 900;
+}
+
+.calendarDay.hasMtg {
+  border-color: #d7b894;
+  background: #fff8ea;
+  color: #8c6543;
+}
+
+.calendarDay.selected {
+  box-shadow: 0 0 0 3px rgba(243, 116, 152, 0.22);
+}
+
+.calendarDay i {
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  inset: 5px;
+  position: absolute;
+}
+
+.calendarLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: #7c6960;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.calendarLegend span {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.calendarLegend i {
+  border-radius: 50%;
+  display: inline-block;
+  height: 10px;
+  width: 10px;
+}
+
+.rehearsalDot {
+  background: #f29aaf;
+}
+
+.mtgDot {
+  background: #d7b894;
+}
+
 .panelTitle {
   align-items: center;
   display: flex;
@@ -447,6 +570,12 @@ h3 {
   height: 32px;
   object-fit: contain;
   opacity: 0.9;
+}
+
+.calendarTitleIcon {
+  height: 30px;
+  width: 30px;
+  object-fit: contain;
 }
 
 .panelTitle.green span {
@@ -796,6 +925,24 @@ textarea {
 
   .monthExportList {
     grid-template-columns: 1fr;
+  }
+
+  .calendarGrid,
+  .calendarWeekdays {
+    gap: 4px;
+  }
+
+  .calendarHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .calendarMonthControls {
+    justify-content: flex-end;
+  }
+
+  .calendarDay i {
+    inset: 4px;
   }
 
   .rehearsalCard,
