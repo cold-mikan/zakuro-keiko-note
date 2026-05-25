@@ -23,6 +23,7 @@ type Rehearsal = {
   place: string;
   memo?: string;
   createdAt?: string;
+  eventType?: "稽古日" | "MTG・打ち合わせ";
 };
 
 type Attendance = {
@@ -43,22 +44,25 @@ type Scene = {
 };
 
 const members: Member[] = [
-  { id: "m1", name: "春野 いろは", role: "キャスト", character: "A", team: "Aチーム", memo: "ダブルキャストA" },
-  { id: "m2", name: "森 つむぎ", role: "キャスト", character: "A", team: "Bチーム", memo: "ダブルキャストB" },
-  { id: "m3", name: "佐倉 りん", role: "キャスト", character: "B", team: "Aチーム" },
-  { id: "m4", name: "水野 こはる", role: "キャスト", character: "B", team: "Bチーム" },
-  { id: "m5", name: "高瀬 凪", role: "キャスト", character: "C", team: "共通" },
-  { id: "m6", name: "北川 灯", role: "キャスト", character: "D", team: "共通" },
-  { id: "m7", name: "藤井 まこと", role: "演出", team: "共通" },
-  { id: "m8", name: "桐谷 すず", role: "制作", team: "共通" },
+  { id: "m1", name: "おはよう真夜中", role: "キャスト", team: "共通" },
+  { id: "m2", name: "黒崎こぎん", role: "キャスト", team: "共通" },
+  { id: "m3", name: "Sion", role: "キャスト", team: "共通" },
+  { id: "m4", name: "tika.", role: "キャスト", team: "共通" },
+  { id: "m5", name: "ちょろね", role: "キャスト", team: "共通" },
+  { id: "m6", name: "七宮ソウ", role: "キャスト", team: "共通" },
+  { id: "m7", name: "U-kki", role: "キャスト", team: "共通" },
+  { id: "m8", name: "冷凍みかん", role: "キャスト", team: "共通" },
 ];
 
 const rehearsals: Rehearsal[] = [
-  { id: "r1", date: "2026-06-06", startTime: "18:30", endTime: "21:30", place: "駅前スタジオA", memo: "顔合わせ、読み合わせ" },
-  { id: "r2", date: "2026-06-10", startTime: "19:00", endTime: "22:00", place: "区民センター第2和室", memo: "1場、2場中心" },
-  { id: "r3", date: "2026-06-14", startTime: "13:00", endTime: "17:00", place: "小劇場 稽古場", memo: "立ち稽古開始" },
-  { id: "r4", date: "2026-06-18", startTime: "19:00", endTime: "22:00", place: "駅前スタジオB", memo: "Bチーム多め" },
-  { id: "r5", date: "2026-06-21", startTime: "13:00", endTime: "18:00", place: "小劇場 稽古場", memo: "通しの前段取り確認" },
+  { id: "r-2026-06-06", date: "2026-06-06", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-10", date: "2026-06-10", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-12", date: "2026-06-12", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-17", date: "2026-06-17", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-19", date: "2026-06-19", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-20", date: "2026-06-20", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-24", date: "2026-06-24", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
+  { id: "r-2026-06-26", date: "2026-06-26", startTime: "22:00", endTime: "00:30", place: "場所未定", memo: "確定稽古日", eventType: "稽古日" },
 ];
 
 const scenes: Scene[] = [
@@ -89,6 +93,9 @@ const activeStatuses: AttendanceStatus[] = ["出席", "遅刻", "早退"];
 const statusOptions: AttendanceStatus[] = ["出席", "欠席", "遅刻", "早退", "未定"];
 const roleOptions = ["キャスト", "演出", "演出助手", "制作", "音響", "照明"];
 const memberTeamOptions = ["Aチーム", "Bチーム", "共通"];
+const eventTypeOptions = ["稽古日", "MTG・打ち合わせ"];
+const rehearsalSeedVersion = "2026-06-confirmed-v2";
+const removedMemberNames = ["春野 いろは"];
 type TeamFilter = "全員" | "Aチーム" | "Bチーム";
 const teamFilters: TeamFilter[] = ["全員", "Aチーム", "Bチーム"];
 const tabs = [
@@ -167,6 +174,23 @@ function readStorage<T>(key: string, fallback: T): T {
   } catch {
     return fallback;
   }
+}
+
+function readRehearsals() {
+  const savedVersion = localStorage.getItem("keiko.rehearsalSeedVersion");
+  if (savedVersion !== rehearsalSeedVersion) {
+    localStorage.setItem("keiko.rehearsalSeedVersion", rehearsalSeedVersion);
+    localStorage.setItem("keiko.rehearsals", JSON.stringify(rehearsals));
+    return rehearsals;
+  }
+  return readStorage("keiko.rehearsals", rehearsals).map((rehearsal) => ({
+    ...rehearsal,
+    eventType: rehearsal.eventType ?? "稽古日",
+  }));
+}
+
+function withoutRemovedMembers(memberSource) {
+  return memberSource.filter((member) => !removedMemberNames.includes(member.name));
 }
 
 function csvCell(value?: string | number) {
@@ -304,6 +328,7 @@ function rehearsalToRow(config, rehearsal, actorName) {
     end_time: rehearsal.endTime,
     place: rehearsal.place,
     memo: rehearsal.memo ?? "",
+    event_type: rehearsal.eventType ?? "稽古日",
     created_at: rehearsal.createdAt ?? new Date().toISOString(),
     updated_by: actorName,
     updated_at: new Date().toISOString(),
@@ -318,6 +343,7 @@ function rehearsalFromRow(row) {
     endTime: row.end_time,
     place: row.place,
     memo: row.memo ?? "",
+    eventType: row.event_type ?? "稽古日",
     createdAt: row.created_at,
     updatedBy: row.updated_by,
     updatedAt: row.updated_at,
@@ -439,10 +465,10 @@ async function seedSupabaseState(config, actorName, state) {
 
 function App() {
   const [memberList, setMemberList] = useState<Member[]>(() => {
-    return readStorage("keiko.members", members);
+    return withoutRemovedMembers(readStorage("keiko.members", members));
   });
   const [rehearsalList, setRehearsalList] = useState<Rehearsal[]>(() => {
-    return readStorage("keiko.rehearsals", rehearsals);
+    return readRehearsals();
   });
   const [sceneList, setSceneList] = useState<Scene[]>(() => {
     return readStorage("keiko.scenes", scenes);
@@ -503,7 +529,7 @@ function App() {
         applyingRemoteRef.current = false;
       }, 1600);
     }
-    setMemberList(data.members);
+    setMemberList(withoutRemovedMembers(data.members));
     setRehearsalList(data.rehearsals);
     setSceneList(data.scenes);
     setAttendances(data.attendances);
@@ -803,53 +829,6 @@ function TeamSwitch({ value, onChange }) {
   );
 }
 
-function OnlineSyncPanel({ config, onChange, actorName, onActorNameChange, onSave, onLoad, status, realtimeStatus }) {
-  const [open, setOpen] = useState(false);
-  const hasEnvConfig = Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY && import.meta.env.VITE_DEFAULT_ROOM_ID);
-  return (
-    <section className="onlinePanel">
-      <button className="onlineToggle" onClick={() => setOpen((value) => !value)}>
-        オンライン同期
-        <span>{status}</span>
-      </button>
-      {open && (
-        <div className="onlineBody">
-          <label className="field">
-            入力者名
-            <input value={actorName} onChange={(event) => onActorNameChange(event.target.value)} placeholder="例：香野 いろは" />
-          </label>
-          {!hasEnvConfig && (
-            <>
-              <div className="grid two">
-                <label className="field">
-                  Supabase URL
-                  <input value={config.url} onChange={(event) => onChange({ ...config, url: event.target.value })} placeholder="https://xxxx.supabase.co" />
-                </label>
-                <label className="field">
-                  anon public key
-                  <input value={config.anonKey} onChange={(event) => onChange({ ...config, anonKey: event.target.value })} placeholder="eyJhbGci..." />
-                </label>
-              </div>
-              <label className="field">
-                部屋ID
-                <input value={config.roomId} onChange={(event) => onChange({ ...config, roomId: event.target.value })} placeholder="zakuro-keiko" />
-              </label>
-            </>
-          )}
-          <div className="formActions">
-            <button className="primary" onClick={onSave}>現在のデータをSupabaseへ送る</button>
-            <button onClick={onLoad}>オンラインから読み込み</button>
-          </div>
-          <p className="note">読み込み後は、出欠登録や編集をした瞬間にSupabaseへ保存し、ほかの端末にもリアルタイムで反映します。</p>
-          <p className="note">入力者名は「誰が変更したか」を履歴に残すために使います。</p>
-          <p className="note">状態：{status}</p>
-          <p className="note">リアルタイム：{realtimeStatus}</p>
-        </div>
-      )}
-    </section>
-  );
-}
-
 function RehearsalPicker({ rehearsals, value, onChange }) {
   return (
     <label className="field">
@@ -861,12 +840,94 @@ function RehearsalPicker({ rehearsals, value, onChange }) {
   );
 }
 
+function getCalendarDays(monthKey) {
+  const [year, month] = monthKey.split("-").map(Number);
+  const firstDay = new Date(year, month - 1, 1);
+  const lastDate = new Date(year, month, 0).getDate();
+  const offset = firstDay.getDay();
+  return [
+    ...Array.from({ length: offset }, () => null),
+    ...Array.from({ length: lastDate }, (_, index) => {
+      const date = `${monthKey}-${String(index + 1).padStart(2, "0")}`;
+      return { day: index + 1, date };
+    }),
+  ];
+}
+
+function getEventKind(rehearsal) {
+  return rehearsal.eventType === "MTG・打ち合わせ" ? "mtg" : "rehearsal";
+}
+
+function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
+  const selected = rehearsals.find((item) => item.id === selectedRehearsalId) ?? rehearsals[0];
+  const monthOptions = [...new Set(rehearsals.map((rehearsal) => rehearsal.date.slice(0, 7)))].sort();
+  const [monthKey, setMonthKey] = useState(selected?.date.slice(0, 7) ?? monthOptions[0] ?? new Date().toISOString().slice(0, 7));
+
+  useEffect(() => {
+    const selectedMonth = selected?.date.slice(0, 7);
+    if (selectedMonth && monthOptions.includes(selectedMonth)) {
+      setMonthKey(selectedMonth);
+    }
+  }, [selectedRehearsalId]);
+
+  const days = getCalendarDays(monthKey);
+  const eventsByDate = rehearsals
+    .filter((rehearsal) => rehearsal.date.startsWith(monthKey))
+    .reduce((map, rehearsal) => {
+      const rows = map.get(rehearsal.date) ?? [];
+      rows.push(rehearsal);
+      map.set(rehearsal.date, rows);
+      return map;
+    }, new Map());
+
+  return (
+    <section className="panel calendarPanel">
+      <div className="calendarHeader">
+        <h2 className="panelTitle"><span><img className="calendarTitleIcon" src="./assets/calendar-moon-icon.png" alt="" /></span>カレンダー</h2>
+        <div className="calendarMonthControls">
+          <select value={monthKey} onChange={(event) => setMonthKey(event.target.value)} aria-label="表示する月">
+            {monthOptions.map((month) => <option key={month} value={month}>{month.replace("-", "年")}月</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="calendarWeekdays" aria-hidden="true">
+        {["日", "月", "火", "水", "木", "金", "土"].map((day) => <span key={day}>{day}</span>)}
+      </div>
+      <div className="calendarGrid">
+        {days.map((day, index) => {
+          if (!day) return <span key={`blank-${index}`} className="calendarDay blank"></span>;
+          const events = eventsByDate.get(day.date) ?? [];
+          const hasMtg = events.some((event) => getEventKind(event) === "mtg");
+          const isSelected = day.date === selected?.date;
+          return (
+            <button
+              key={day.date}
+              className={`calendarDay ${events.length ? "hasEvent" : ""} ${hasMtg ? "hasMtg" : ""} ${isSelected ? "selected" : ""}`}
+              onClick={() => events[0] && onSelect(events[0].id)}
+              disabled={!events.length}
+              title={events.map((event) => `${event.startTime} ${event.place}`).join("\n")}
+            >
+              <span>{day.day}</span>
+              {events.length > 0 && <i aria-hidden="true"></i>}
+            </button>
+          );
+        })}
+      </div>
+      <div className="calendarLegend">
+        <span><i className="rehearsalDot"></i>稽古</span>
+        <span><i className="mtgDot"></i>MTG・打ち合わせ</span>
+      </div>
+    </section>
+  );
+}
+
 function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visibleMembers, sceneResults }) {
   const rehearsal = rehearsals.find((item) => item.id === rehearsalId) ?? rehearsals[0];
   const grouped = groupAttendance(rehearsalId, attendances, visibleMembers);
   if (!rehearsal) return <section className="panel emptyState">稽古日を追加してください。</section>;
   return (
     <section className="stack">
+      <DashboardCalendar rehearsals={rehearsals} selectedRehearsalId={rehearsalId} onSelect={setRehearsalId} />
       <div className="panel highlight">
         <RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} />
         <h2 className="sparkTitle">次回稽古：{rehearsal.date}<span>✦</span></h2>
@@ -898,7 +959,7 @@ function RehearsalList({ rehearsals, selectedRehearsalId, setSelectedRehearsalId
         return (
           <article key={rehearsal.id} className={`panel rehearsalCard ${selectedRehearsalId === rehearsal.id ? "selected" : ""}`}>
             <div>
-              <p className="eyebrow">{rehearsal.place}</p>
+              <p className="eyebrow">{rehearsal.eventType ?? "稽古日"} / {rehearsal.place}</p>
               <h2>{rehearsal.date}</h2>
               <p>{rehearsal.startTime}-{rehearsal.endTime}</p>
               <p className="note">{rehearsal.memo}</p>
@@ -925,6 +986,7 @@ function RehearsalEditor({ onAdd }) {
   const [endTime, setEndTime] = useState("22:00");
   const [place, setPlace] = useState("");
   const [memo, setMemo] = useState("");
+  const [eventType, setEventType] = useState("稽古日");
 
   return (
     <form
@@ -935,23 +997,25 @@ function RehearsalEditor({ onAdd }) {
           alert("日付・開始時間・終了時間・場所を入力してください。");
           return;
         }
-        onAdd({ date, startTime, endTime, place, memo });
+        onAdd({ date, startTime, endTime, place, memo, eventType });
         setDate("");
         setStartTime("19:00");
         setEndTime("22:00");
         setPlace("");
         setMemo("");
+        setEventType("稽古日");
       }}
     >
       <h2 className="panelTitle"><span>＋</span>稽古日を追加</h2>
       <div className="grid two">
         <label className="field">日付<input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
-        <label className="field">場所<input value={place} onChange={(event) => setPlace(event.target.value)} placeholder="例：駅前スタジオA" /></label>
+        <label className="field">予定の種類<select value={eventType} onChange={(event) => setEventType(event.target.value)}>{eventTypeOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
       </div>
       <div className="grid two">
         <label className="field">開始<input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} /></label>
         <label className="field">終了<input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} /></label>
       </div>
+      <label className="field">場所<input value={place} onChange={(event) => setPlace(event.target.value)} placeholder="例：駅前スタジオA" /></label>
       <label className="field">メモ<input value={memo} onChange={(event) => setMemo(event.target.value)} placeholder="例：1場、2場中心" /></label>
       <button className="primary">稽古日を追加する</button>
     </form>
