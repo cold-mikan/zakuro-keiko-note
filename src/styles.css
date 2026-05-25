@@ -324,6 +324,48 @@ h3 {
   box-shadow: 0 6px 14px rgba(229, 95, 137, 0.26);
 }
 
+.syncGuard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: -6px 0 18px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid #ead8cc;
+  background: rgba(255, 253, 250, 0.88);
+  box-shadow: 0 10px 22px rgba(121, 84, 58, 0.08);
+}
+
+.syncGuard.ok {
+  border-color: #b9ddbd;
+  background: rgba(244, 253, 245, 0.9);
+}
+
+.syncGuard.warn {
+  border-color: #f2b9c8;
+  background: rgba(255, 244, 248, 0.92);
+}
+
+.syncGuard strong {
+  display: block;
+  color: #694737;
+  font-size: 14px;
+}
+
+.syncGuard p,
+.syncGuard span {
+  margin: 3px 0 0;
+  color: #8a7166;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.syncGuard span {
+  text-align: right;
+  white-space: nowrap;
+}
+
 .onlinePanel {
   margin: -4px 0 18px;
 }
@@ -970,6 +1012,17 @@ textarea {
 
   .teamSwitch {
     border-radius: 18px;
+  }
+
+  .syncGuard {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .syncGuard span {
+    max-width: 100%;
+    text-align: left;
+    white-space: normal;
   }
 
   .two,
