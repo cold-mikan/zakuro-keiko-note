@@ -418,11 +418,6 @@ async function loadSupabaseState(config) {
 async function seedSupabaseState(config, actorName, state) {
   const client = getSupabaseClient(config);
   if (!client) throw new Error("Supabaseライブラリを読み込めませんでした。");
-  const { error: roomError } = await client.from("rooms").upsert({
-    id: config.roomId,
-    name: "10月公演 ザクロ 稽古管理",
-  });
-  if (roomError) throw roomError;
   const rows = [
     ["members", state.members.map((member) => memberToRow(config, member, actorName))],
     ["rehearsals", state.rehearsals.map((rehearsal) => rehearsalToRow(config, rehearsal, actorName))],
@@ -792,34 +787,37 @@ function TeamSwitch({ value, onChange }) {
 
 function OnlineSyncPanel({ config, onChange, actorName, onActorNameChange, onSave, onLoad, status, realtimeStatus }) {
   const [open, setOpen] = useState(false);
+  const hasEnvConfig = Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY && import.meta.env.VITE_DEFAULT_ROOM_ID);
   return (
     <section className="onlinePanel">
       <button className="onlineToggle" onClick={() => setOpen((value) => !value)}>
-        オンライン保存
+        オンライン同期
         <span>{status}</span>
       </button>
       {open && (
         <div className="onlineBody">
-          <div className="grid two">
-            <label className="field">
-              入力者名
-              <input value={actorName} onChange={(event) => onActorNameChange(event.target.value)} placeholder="例：香野 いろは" />
-            </label>
-            <label className="field">
-              Supabase URL
-              <input value={config.url} onChange={(event) => onChange({ ...config, url: event.target.value })} placeholder="https://xxxx.supabase.co" />
-            </label>
-          </div>
-          <div className="grid two">
-            <label className="field">
-              anon public key
-              <input value={config.anonKey} onChange={(event) => onChange({ ...config, anonKey: event.target.value })} placeholder="eyJhbGci..." />
-            </label>
-            <label className="field">
-              部屋ID
-              <input value={config.roomId} onChange={(event) => onChange({ ...config, roomId: event.target.value })} placeholder="zakuro-keiko" />
-            </label>
-          </div>
+          <label className="field">
+            入力者名
+            <input value={actorName} onChange={(event) => onActorNameChange(event.target.value)} placeholder="例：香野 いろは" />
+          </label>
+          {!hasEnvConfig && (
+            <>
+              <div className="grid two">
+                <label className="field">
+                  Supabase URL
+                  <input value={config.url} onChange={(event) => onChange({ ...config, url: event.target.value })} placeholder="https://xxxx.supabase.co" />
+                </label>
+                <label className="field">
+                  anon public key
+                  <input value={config.anonKey} onChange={(event) => onChange({ ...config, anonKey: event.target.value })} placeholder="eyJhbGci..." />
+                </label>
+              </div>
+              <label className="field">
+                部屋ID
+                <input value={config.roomId} onChange={(event) => onChange({ ...config, roomId: event.target.value })} placeholder="zakuro-keiko" />
+              </label>
+            </>
+          )}
           <div className="formActions">
             <button className="primary" onClick={onSave}>現在のデータをSupabaseへ送る</button>
             <button onClick={onLoad}>オンラインから読み込み</button>
