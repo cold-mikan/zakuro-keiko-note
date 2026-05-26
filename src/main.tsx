@@ -1107,18 +1107,20 @@ function App() {
         ))}
       </nav>
       <TeamSwitch value={teamFilter} onChange={setTeamFilter} />
-      <SyncGuardNotice
-        configured={isOnlineConfigured()}
-        onlineReady={onlineReady}
-        onlineStatus={onlineStatus}
-        realtimeStatus={realtimeStatus}
-      />
-      <NotificationGuide
-        members={memberList}
-        roomId={supabaseConfig.roomId}
-        memberId={notificationMemberId}
-        onMemberChange={setNotificationMemberId}
-      />
+      <div className="statusCards">
+        <SyncGuardNotice
+          configured={isOnlineConfigured()}
+          onlineReady={onlineReady}
+          onlineStatus={onlineStatus}
+          realtimeStatus={realtimeStatus}
+        />
+        <NotificationGuide
+          members={memberList}
+          roomId={supabaseConfig.roomId}
+          memberId={notificationMemberId}
+          onMemberChange={setNotificationMemberId}
+        />
+      </div>
       {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} sceneResults={sceneResults} />}
       {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} scenes={sceneList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onUpdate={updateRehearsal} onDelete={deleteRehearsal} allowDelete={true} openAdmin={() => setTab("admin")} />}
       {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} onSaveBatch={saveAttendanceBatch} />}
