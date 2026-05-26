@@ -1326,9 +1326,14 @@ textarea {
 }
 
 @media (max-width: 430px) {
+  body::before,
+  body::after {
+    display: none;
+  }
+
   .shell {
-    width: 100dvw;
-    max-width: 100dvw;
+    width: 100%;
+    max-width: 100%;
     padding-left: max(12px, env(safe-area-inset-left, 0px));
     padding-right: max(12px, env(safe-area-inset-right, 0px));
   }
