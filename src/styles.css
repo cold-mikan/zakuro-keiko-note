@@ -369,6 +369,41 @@ h3 {
   white-space: normal;
 }
 
+.statusCards {
+  display: grid;
+  gap: 12px;
+  margin: -6px 0 18px;
+}
+
+.statusCards:has(.notificationGuide.compact) {
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.86fr);
+}
+
+.statusCards .syncGuard,
+.statusCards .notificationGuide {
+  margin: 0;
+}
+
+.statusCards .syncGuard {
+  min-height: 74px;
+  padding: 12px 14px;
+}
+
+.statusCards .syncGuard strong,
+.statusCards .notificationGuide strong {
+  font-size: 14px;
+}
+
+.statusCards .syncGuard p,
+.statusCards .notificationGuide p {
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.statusCards .syncGuard span {
+  font-size: 11px;
+}
+
 .notificationGuide {
   display: grid;
   gap: 14px;
@@ -378,6 +413,13 @@ h3 {
   border-radius: 16px;
   background: rgba(255, 247, 250, 0.92);
   box-shadow: 0 10px 22px rgba(121, 84, 58, 0.08);
+}
+
+.notificationGuide.compact {
+  align-items: center;
+  grid-template-columns: 1fr auto;
+  min-height: 74px;
+  padding: 12px 14px;
 }
 
 .notificationGuide strong {
@@ -409,6 +451,15 @@ h3 {
 
 .notificationActions button {
   width: 100%;
+}
+
+.ghostButton {
+  border: 1px solid #efc7d2;
+  background: rgba(255, 255, 255, 0.72);
+  color: #a55770;
+  min-height: 38px;
+  padding: 9px 12px;
+  white-space: nowrap;
 }
 
 .onlinePanel {
@@ -1350,6 +1401,15 @@ textarea {
 
   .notificationGuide {
     padding: 12px;
+  }
+
+  .notificationGuide.compact {
+    grid-template-columns: 1fr;
+  }
+
+  .statusCards,
+  .statusCards:has(.notificationGuide.compact) {
+    grid-template-columns: 1fr;
   }
 
   .choiceGrid.members,
