@@ -208,6 +208,12 @@ grant delete on public.rehearsals to anon;
 grant delete on public.attendances to anon;
 grant select, insert on public.edit_logs to anon;
 grant usage, select on sequence public.edit_logs_id_seq to anon;
+grant usage, select on sequence public.push_subscriptions_id_seq to service_role;
+grant usage, select on sequence public.notification_logs_id_seq to service_role;
+grant select, insert, update on public.push_subscriptions to service_role;
+grant select, insert on public.notification_logs to service_role;
+
+notify pgrst, 'reload schema';
 
 do $$
 begin

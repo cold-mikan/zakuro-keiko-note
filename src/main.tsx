@@ -1136,7 +1136,7 @@ function RehearsalPicker({ rehearsals, value, onChange }) {
     <label className="field">
       稽古日
       <select value={value} onChange={(event) => onChange(event.target.value)}>
-        {rehearsals.map((rehearsal) => <option key={rehearsal.id} value={rehearsal.id}>{rehearsal.date} {rehearsal.startTime}</option>)}
+        {rehearsals.map((rehearsal) => <option key={rehearsal.id} value={rehearsal.id}>{rehearsal.date} {formatTime(rehearsal.startTime)}</option>)}
       </select>
     </label>
   );
@@ -1158,6 +1158,10 @@ function getCalendarDays(monthKey) {
 
 function getEventKind(rehearsal) {
   return rehearsal.eventType === "MTG・打ち合わせ" ? "mtg" : "rehearsal";
+}
+
+function formatTime(time) {
+  return String(time ?? "").slice(0, 5);
 }
 
 function getSceneCounts(sceneId, rehearsals) {
@@ -1220,7 +1224,7 @@ function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
               className={`calendarDay ${events.length ? "hasEvent" : ""} ${hasMtg ? "hasMtg" : ""} ${isSelected ? "selected" : ""}`}
               onClick={() => events[0] && onSelect(events[0].id)}
               disabled={!events.length}
-              title={events.map((event) => `${event.startTime} ${event.place}`).join("\n")}
+              title={events.map((event) => `${formatTime(event.startTime)} ${event.place}`).join("\n")}
             >
               <span>{day.day}</span>
               {events.length > 0 && <i aria-hidden="true"></i>}
@@ -1246,7 +1250,7 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
       <div className="panel highlight">
         <RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} />
         <h2 className="sparkTitle">次回稽古：{rehearsal.date}<span>✦</span></h2>
-        <p>{rehearsal.startTime}-{rehearsal.endTime} / {rehearsal.place}</p>
+        <p>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)} / {rehearsal.place}</p>
         <p className="note">{rehearsal.memo}</p>
       </div>
       <div className="grid two">
@@ -1276,7 +1280,7 @@ function RehearsalList({ rehearsals, scenes, selectedRehearsalId, setSelectedReh
             <div>
               <p className="eyebrow">{rehearsal.eventType ?? "稽古日"} / {rehearsal.place}</p>
               <h2>{rehearsal.date}</h2>
-              <p>{rehearsal.startTime}-{rehearsal.endTime}</p>
+              <p>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</p>
               <p className="note">{rehearsal.memo}</p>
             </div>
             <div className="chips">
@@ -1454,7 +1458,7 @@ function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSav
             <label key={rehearsal.id} className={`choiceCard ${rehearsalId === rehearsal.id ? "selected" : ""}`}>
               <input type="radio" name="attendance-rehearsal" checked={rehearsalId === rehearsal.id} onChange={() => setRehearsalId(rehearsal.id)} />
               <span>{rehearsal.date}</span>
-              <small>{rehearsal.startTime}-{rehearsal.endTime}</small>
+              <small>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</small>
             </label>
           ))}
         </div>
