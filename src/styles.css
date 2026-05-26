@@ -1204,4 +1204,53 @@ textarea {
     align-items: stretch;
     flex-direction: column;
   }
+
+  .rehearsalCard {
+    gap: 14px;
+  }
+
+  .rehearsalCard > div {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .rehearsalCard h2,
+  .rehearsalCard p {
+    overflow-wrap: anywhere;
+  }
+
+  .rehearsalCard .chips {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .rehearsalCard .chips span {
+    justify-content: center;
+    min-width: 0;
+    padding: 7px 6px;
+    text-align: center;
+  }
+
+  .rehearsalCard .cardActions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+    width: 100%;
+  }
+
+  .rehearsalCard .cardActions button {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .checkboxPill {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .checkboxPill span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 }

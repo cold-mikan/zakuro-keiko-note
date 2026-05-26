@@ -1030,6 +1030,7 @@ function SyncGuardNotice({ configured, onlineReady, onlineStatus, realtimeStatus
 
 function NotificationGuide({ members, roomId, memberId, onMemberChange }) {
   const [status, setStatus] = useState("通知を受け取るには、この端末で一度だけ許可してください。");
+  const [isSettingNotification, setIsSettingNotification] = useState(false);
   const selectedMemberId = memberId || members[0]?.id || "";
   const vapidPublicKey = getVapidPublicKey();
   const canUsePush = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
@@ -1059,6 +1060,8 @@ function NotificationGuide({ members, roomId, memberId, onMemberChange }) {
     }
 
     try {
+      setIsSettingNotification(true);
+      setStatus("通知設定を保存しています...");
       const registration = await navigator.serviceWorker.ready;
       const existing = await registration.pushManager.getSubscription();
       if (existing) await existing.unsubscribe();
@@ -1076,11 +1079,21 @@ function NotificationGuide({ members, roomId, memberId, onMemberChange }) {
           userAgent: navigator.userAgent,
         }),
       });
-      if (!response.ok) throw new Error(await response.text());
+      if (!response.ok) {
+        let payload = null;
+        try {
+          payload = await response.json();
+        } catch (parseError) {
+          payload = { message: await response.text() };
+        }
+        throw new Error(payload?.message || payload?.error || "通知登録APIでエラーが発生しました。");
+      }
       setStatus("通知を受け取る設定が完了しました。稽古1時間前に通知します。");
     } catch (error) {
       console.error(error);
-      setStatus("通知設定に失敗しました。公開版URLで開いているか、Vercelの通知設定を確認してください。");
+      setStatus(error?.message || "通知設定に失敗しました。公開版URLで開いているか、Vercelの通知設定を確認してください。");
+    } finally {
+      setIsSettingNotification(false);
     }
   }
 
@@ -1098,7 +1111,9 @@ function NotificationGuide({ members, roomId, memberId, onMemberChange }) {
             {members.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}
           </select>
         </label>
-        <button type="button" className="primary" onClick={enableNotifications}>通知を受け取る</button>
+        <button type="button" className="primary" onClick={enableNotifications} disabled={isSettingNotification}>
+          {isSettingNotification ? "設定中..." : "通知を受け取る"}
+        </button>
       </div>
     </section>
   );
