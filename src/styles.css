@@ -1403,13 +1403,46 @@ textarea {
     padding: 12px;
   }
 
-  .notificationGuide.compact {
+  .statusCards:has(.notificationGuide.compact) {
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .statusCards:not(:has(.notificationGuide.compact)) {
     grid-template-columns: 1fr;
   }
 
-  .statusCards,
-  .statusCards:has(.notificationGuide.compact) {
+  .statusCards:has(.notificationGuide.compact) .syncGuard,
+  .statusCards:has(.notificationGuide.compact) .notificationGuide.compact {
+    min-height: 60px;
+    padding: 9px 10px;
+  }
+
+  .statusCards:has(.notificationGuide.compact) .syncGuard p,
+  .statusCards:has(.notificationGuide.compact) .syncGuard span {
+    display: none;
+  }
+
+  .statusCards:has(.notificationGuide.compact) .syncGuard strong,
+  .statusCards:has(.notificationGuide.compact) .notificationGuide strong {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .statusCards:has(.notificationGuide.compact) .notificationGuide p {
+    font-size: 10px;
+    line-height: 1.35;
+  }
+
+  .notificationGuide.compact {
+    gap: 7px;
     grid-template-columns: 1fr;
+  }
+
+  .notificationGuide.compact .ghostButton {
+    min-height: 32px;
+    padding: 6px 8px;
+    width: 100%;
   }
 
   .choiceGrid.members,
