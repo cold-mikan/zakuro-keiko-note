@@ -246,6 +246,123 @@ function buildAttendanceRows(rehearsalSource: Rehearsal[], memberSource: Member[
   );
 }
 
+function buildDetailRows(rehearsalSource: Rehearsal[], memberSource: Member[], attendanceSource: Attendance[]) {
+  return rehearsalSource.flatMap((rehearsal) =>
+    memberSource.map((member) => {
+      const attendance = attendanceSource.find((row) => row.rehearsalId === rehearsal.id && row.memberId === member.id);
+      return {
+        稽古日: rehearsal.date,
+        開始: formatTime(rehearsal.startTime),
+        終了: formatTime(rehearsal.endTime),
+        場所: rehearsal.place,
+        名前: member.name,
+        役職: member.role,
+        役名: member.character ?? "",
+        チーム: member.team,
+        出欠ステータス: attendance?.status ?? "未回答",
+        到着予定時間: attendance?.arrivalTime ?? "",
+        早退予定時間: attendance?.leaveTime ?? "",
+        理由・連絡事項: attendance?.note ?? "",
+        稽古メモ: rehearsal.memo ?? "",
+      };
+    }),
+  );
+}
+
+function getAttendanceSummary(rehearsal, memberSource, attendanceSource) {
+  const rows = memberSource.map((member) => ({
+    member,
+    attendance: attendanceSource.find((row) => row.rehearsalId === rehearsal.id && row.memberId === member.id),
+  }));
+  const byStatus = (status) => rows.filter((row) => row.attendance?.status === status);
+  const noReply = rows.filter((row) => !row.attendance);
+  return {
+    present: byStatus("出席"),
+    absent: byStatus("欠席"),
+    late: byStatus("遅刻"),
+    early: byStatus("早退"),
+    undecided: byStatus("未定"),
+    noReply,
+  };
+}
+
+function buildRehearsalSummaryRows(rehearsalSource, memberSource, attendanceSource) {
+  return rehearsalSource.map((rehearsal) => {
+    const summary = getAttendanceSummary(rehearsal, memberSource, attendanceSource);
+    return {
+      稽古日: rehearsal.date,
+      開始: formatTime(rehearsal.startTime),
+      終了: formatTime(rehearsal.endTime),
+      場所: rehearsal.place,
+      出席数: summary.present.length,
+      欠席数: summary.absent.length,
+      遅刻数: summary.late.length,
+      早退数: summary.early.length,
+      未回答数: summary.noReply.length,
+      未回答者: summary.noReply.map((row) => row.member.name).join("、"),
+      欠席者: summary.absent.map((row) => row.member.name).join("、"),
+      遅刻者: summary.late.map((row) => row.member.name).join("、"),
+      早退者: summary.early.map((row) => row.member.name).join("、"),
+      稽古メモ: rehearsal.memo ?? "",
+    };
+  });
+}
+
+function buildMemberSummaryRows(rehearsalSource, memberSource, attendanceSource) {
+  return memberSource.map((member) => {
+    const rows = rehearsalSource.map((rehearsal) =>
+      attendanceSource.find((attendance) => attendance.rehearsalId === rehearsal.id && attendance.memberId === member.id),
+    );
+    const count = (status) => rows.filter((row) => row?.status === status).length;
+    const present = count("出席");
+    const absent = count("欠席");
+    const late = count("遅刻");
+    const early = count("早退");
+    const noReply = rows.filter((row) => !row).length;
+    const answered = rows.filter(Boolean).length;
+    const total = rehearsalSource.length;
+    const participation = present + late + early;
+    return {
+      名前: member.name,
+      役職: member.role,
+      役名: member.character ?? "",
+      チーム: member.team,
+      出席数: present,
+      欠席数: absent,
+      遅刻数: late,
+      早退数: early,
+      未回答数: noReply,
+      回答済み数: answered,
+      全稽古数: total,
+      出席率: total ? `${Math.round((participation / total) * 100)}%` : "0%",
+    };
+  });
+}
+
+function formatMatrixStatus(attendance) {
+  if (!attendance) return "未回答";
+  if (attendance.status === "遅刻" && attendance.arrivalTime) return `遅刻 ${attendance.arrivalTime}到着`;
+  if (attendance.status === "早退" && attendance.leaveTime) return `早退 ${attendance.leaveTime}早退`;
+  return attendance.status;
+}
+
+function buildMatrixRows(rehearsalSource, memberSource, attendanceSource) {
+  const headers = rehearsalSource.map((rehearsal) => `${rehearsal.date} ${formatTime(rehearsal.startTime)}`);
+  return memberSource.map((member) => {
+    const row = {
+      名前: member.name,
+      役職: member.role,
+      役名: member.character ?? "",
+      チーム: member.team,
+    };
+    rehearsalSource.forEach((rehearsal, index) => {
+      const attendance = attendanceSource.find((item) => item.rehearsalId === rehearsal.id && item.memberId === member.id);
+      row[headers[index]] = formatMatrixStatus(attendance);
+    });
+    return row;
+  });
+}
+
 function downloadTextFile(filename: string, text: string, type = "text/plain;charset=utf-8") {
   const blob = new Blob(["\ufeff", text], { type });
   const url = URL.createObjectURL(blob);
@@ -598,7 +715,7 @@ function App() {
         onlineStatus={onlineStatus}
         realtimeStatus={realtimeStatus}
       />
-      <NotificationGuidePreview />
+      <NotificationGuidePreview members={memberList} />
       {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} sceneResults={sceneResults} />}
       {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} scenes={sceneList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onUpdate={updateRehearsal} onDelete={deleteRehearsal} openAdmin={() => setTab("admin")} />}
       {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} onSaveBatch={saveAttendanceBatch} />}
@@ -644,15 +761,28 @@ function SyncGuardNotice({ configured, onlineReady, onlineStatus, realtimeStatus
   );
 }
 
-function NotificationGuidePreview() {
+function NotificationGuidePreview({ members }) {
+  const [selectedMemberId, setSelectedMemberId] = useState(members[0]?.id ?? "");
+
+  useEffect(() => {
+    if (!selectedMemberId && members[0]?.id) setSelectedMemberId(members[0].id);
+  }, [members, selectedMemberId]);
+
   return (
     <section className="notificationGuide">
       <div>
-        <strong>稽古前の通知</strong>
-        <p>Windowsアプリ、iPhone / Androidのホーム画面アプリで通知を受け取れます。公開版では初回だけ「通知を受け取る」ボタンから許可します。</p>
-        <p className="note">ローカル確認版では通知送信は行いません。公開版に反映すると設定できます。</p>
+        <strong>♥稽古前お知らせ機能♥</strong>
+        <p>稽古のだいたい1時間前に通知でおしらせするよ〜！</p>
+        <p>このページはWebでも見られるけど、通知を受け取るにはちょっと準備が必要です。<br />♦スマホ：ホーム画面に追加 　　♦PC：アプリとしてインストール</p>
+        <p className="note">最初だけ下のボタンから、通知を許可してね♡</p>
       </div>
       <div className="notificationActions">
+        <label className="field">
+          あなたのお名前を選んでね
+          <select value={selectedMemberId} onChange={(event) => setSelectedMemberId(event.target.value)}>
+            {members.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}
+          </select>
+        </label>
         <button type="button" className="primary" disabled>通知を受け取る</button>
       </div>
     </section>
@@ -1061,35 +1191,41 @@ function ContactNotesPanel({ grouped }) {
 
 function ExportTools({
   rehearsals,
-  rehearsalId,
   members,
   attendances,
 }) {
-  const rehearsal = rehearsals.find((item) => item.id === rehearsalId) ?? rehearsals[0];
-  const selectedRows = rehearsal ? buildAttendanceRows([rehearsal], members, attendances) : [];
-  const allRows = buildAttendanceRows(rehearsals, members, attendances);
-  const months = getRehearsalMonths(rehearsals);
+  function exportCsv(kind) {
+    const builders = {
+      detail: {
+        filename: "keiko_detail_all.csv",
+        rows: buildDetailRows(rehearsals, members, attendances),
+      },
+      rehearsalSummary: {
+        filename: "keiko_rehearsal_summary_all.csv",
+        rows: buildRehearsalSummaryRows(rehearsals, members, attendances),
+      },
+      memberSummary: {
+        filename: "keiko_member_summary_all.csv",
+        rows: buildMemberSummaryRows(rehearsals, members, attendances),
+      },
+      matrix: {
+        filename: "keiko_matrix_all.csv",
+        rows: buildMatrixRows(rehearsals, members, attendances),
+      },
+    };
+    const target = builders[kind];
+    downloadCsv(target.filename, target.rows);
+  }
 
   return (
     <section className="panel exportPanel">
-      <h2 className="panelTitle"><span>↓</span>CSV出力</h2>
-      <div className="monthExportList">
-        {months.map((month) => {
-          const monthRehearsals = rehearsals.filter((item) => item.date.startsWith(month));
-          const monthRows = buildAttendanceRows(monthRehearsals, members, attendances);
-          return (
-            <button key={month} className="monthExportButton" onClick={() => downloadCsv(`keiko_${month}.csv`, monthRows)}>
-              {Number(month.slice(5, 7))}月分CSV
-              <span>{monthRehearsals.length}回分</span>
-            </button>
-          );
-        })}
-      </div>
+      <h2 className="panelTitle"><span>↓</span>CSVダウンロード</h2>
       <div className="exportActions">
-        <button onClick={() => downloadCsv(`keiko_${rehearsal?.date ?? "selected"}.csv`, selectedRows)}>この稽古日のCSV</button>
-        <button onClick={() => downloadCsv("keiko_all.csv", allRows)}>全稽古日のCSV</button>
+        <button onClick={() => exportCsv("detail")}>詳細CSV</button>
+        <button onClick={() => exportCsv("rehearsalSummary")}>稽古日別サマリー</button>
+        <button onClick={() => exportCsv("memberSummary")}>メンバー別サマリー</button>
+        <button onClick={() => exportCsv("matrix")}>一覧表CSV</button>
       </div>
-      <p className="note">月ごとのCSVは、各月の稽古日とメンバー全員分をまとめて出力します。</p>
     </section>
   );
 }
