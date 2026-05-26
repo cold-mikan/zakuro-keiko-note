@@ -529,6 +529,16 @@ function App() {
     setSelectedRehearsalId(next.id);
   }
 
+  function updateRehearsal(input: Rehearsal) {
+    const next = { ...input, updatedAt: new Date().toISOString() };
+    setRehearsalList((current) =>
+      current
+        .map((rehearsal) => (rehearsal.id === input.id ? next : rehearsal))
+        .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`)),
+    );
+    setSelectedRehearsalId(next.id);
+  }
+
   function deleteRehearsal(rehearsalId: string) {
     if (!confirm("この稽古日を削除しますか？")) return;
     setRehearsalList((current) => current.filter((rehearsal) => rehearsal.id !== rehearsalId));
@@ -590,7 +600,7 @@ function App() {
       />
       <NotificationGuidePreview />
       {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} sceneResults={sceneResults} />}
-      {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} scenes={sceneList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onDelete={deleteRehearsal} openAdmin={() => setTab("admin")} />}
+      {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} scenes={sceneList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onUpdate={updateRehearsal} onDelete={deleteRehearsal} openAdmin={() => setTab("admin")} />}
       {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} onSaveBatch={saveAttendanceBatch} />}
       {tab === "admin" && (
         <AdminView
@@ -795,10 +805,11 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
   );
 }
 
-function RehearsalList({ rehearsals, scenes, selectedRehearsalId, setSelectedRehearsalId, attendances, visibleMembers, onAdd, onDelete, openAdmin }) {
+function RehearsalList({ rehearsals, scenes, selectedRehearsalId, setSelectedRehearsalId, attendances, visibleMembers, onAdd, onUpdate, onDelete, openAdmin }) {
+  const [editingRehearsal, setEditingRehearsal] = useState(null);
   return (
     <section className="stack">
-      <RehearsalEditor scenes={scenes} onAdd={onAdd} />
+      <RehearsalEditor scenes={scenes} editingRehearsal={editingRehearsal} onAdd={onAdd} onUpdate={onUpdate} onCancelEdit={() => setEditingRehearsal(null)} />
       {rehearsals.map((rehearsal) => {
         const summary = summarizeRehearsal(rehearsal.id, attendances, visibleMembers);
         return (
@@ -816,6 +827,7 @@ function RehearsalList({ rehearsals, scenes, selectedRehearsalId, setSelectedReh
             </div>
             <div className="cardActions">
               <button onClick={() => { setSelectedRehearsalId(rehearsal.id); openAdmin(); }}>確認する</button>
+              <button onClick={() => { setSelectedRehearsalId(rehearsal.id); setEditingRehearsal(rehearsal); }}>編集</button>
               <button className="dangerButton" onClick={() => onDelete(rehearsal.id)}>削除</button>
             </div>
           </article>
@@ -825,7 +837,7 @@ function RehearsalList({ rehearsals, scenes, selectedRehearsalId, setSelectedReh
   );
 }
 
-function RehearsalEditor({ scenes, onAdd }) {
+function RehearsalEditor({ scenes, editingRehearsal, onAdd, onUpdate, onCancelEdit }) {
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("19:00");
   const [endTime, setEndTime] = useState("22:00");
@@ -834,6 +846,30 @@ function RehearsalEditor({ scenes, onAdd }) {
   const [eventType, setEventType] = useState("稽古日");
   const [rehearsalTeam, setRehearsalTeam] = useState("共通");
   const [selectedSceneIds, setSelectedSceneIds] = useState([]);
+  const isEditing = Boolean(editingRehearsal);
+
+  useEffect(() => {
+    if (!editingRehearsal) return;
+    setDate(editingRehearsal.date ?? "");
+    setStartTime(String(editingRehearsal.startTime ?? "").slice(0, 5) || "19:00");
+    setEndTime(String(editingRehearsal.endTime ?? "").slice(0, 5) || "22:00");
+    setPlace(editingRehearsal.place ?? "");
+    setMemo(editingRehearsal.memo ?? "");
+    setEventType(editingRehearsal.eventType ?? "稽古日");
+    setRehearsalTeam(editingRehearsal.rehearsalTeam ?? "共通");
+    setSelectedSceneIds(editingRehearsal.selectedSceneIds ?? []);
+  }, [editingRehearsal]);
+
+  function resetForm() {
+    setDate("");
+    setStartTime("19:00");
+    setEndTime("22:00");
+    setPlace("");
+    setMemo("");
+    setEventType("稽古日");
+    setRehearsalTeam("共通");
+    setSelectedSceneIds([]);
+  }
 
   function toggleSelectedScene(sceneId) {
     setSelectedSceneIds((current) => (current.includes(sceneId) ? current.filter((id) => id !== sceneId) : [...current, sceneId]));
@@ -848,18 +884,17 @@ function RehearsalEditor({ scenes, onAdd }) {
           alert("日付・開始時間・終了時間・場所を入力してください。");
           return;
         }
-        onAdd({ date, startTime, endTime, place, memo, eventType, rehearsalTeam, selectedSceneIds });
-        setDate("");
-        setStartTime("19:00");
-        setEndTime("22:00");
-        setPlace("");
-        setMemo("");
-        setEventType("稽古日");
-        setRehearsalTeam("共通");
-        setSelectedSceneIds([]);
+        const payload = { date, startTime, endTime, place, memo, eventType, rehearsalTeam, selectedSceneIds };
+        if (editingRehearsal) {
+          onUpdate({ ...editingRehearsal, ...payload });
+          onCancelEdit();
+        } else {
+          onAdd(payload);
+        }
+        resetForm();
       }}
     >
-      <h2 className="panelTitle"><span>＋</span>稽古日を追加</h2>
+      <h2 className="panelTitle"><span>{isEditing ? "✎" : "＋"}</span>{isEditing ? "稽古日を編集" : "稽古日を追加"}</h2>
       <div className="grid two">
         <label className="field">日付<input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
         <label className="field">予定の種類<select value={eventType} onChange={(event) => setEventType(event.target.value)}>{eventTypeOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
@@ -880,7 +915,10 @@ function RehearsalEditor({ scenes, onAdd }) {
       </fieldset>
       <label className="field">場所<input value={place} onChange={(event) => setPlace(event.target.value)} placeholder="例：駅前スタジオA" /></label>
       <label className="field">メモ<input value={memo} onChange={(event) => setMemo(event.target.value)} placeholder="例：1場、2場中心" /></label>
-      <button className="primary">稽古日を追加する</button>
+      <div className="formActions">
+        <button className="primary">{isEditing ? "変更を保存する" : "稽古日を追加する"}</button>
+        {isEditing && <button type="button" onClick={() => { resetForm(); onCancelEdit(); }}>編集をやめる</button>}
+      </div>
     </form>
   );
 }
