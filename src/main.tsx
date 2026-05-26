@@ -408,6 +408,8 @@ function getRehearsalMonths(rehearsalSource: Rehearsal[]) {
   return [...new Set(rehearsalSource.map((rehearsal) => rehearsal.date.slice(0, 7)))].sort();
 }
 
+const notificationSettingKey = "zakuro-keiko-notification-member";
+
 function getSupabaseConfig() {
   return readStorage("keiko.supabaseConfig", {
     url: import.meta.env.VITE_SUPABASE_URL ?? "",
@@ -1165,7 +1167,10 @@ function SyncGuardNotice({ configured, onlineReady, onlineStatus, realtimeStatus
 function NotificationGuide({ members, roomId, memberId, onMemberChange }) {
   const [status, setStatus] = useState("最初だけ下のボタンから、通知を許可してね♡");
   const [isSettingNotification, setIsSettingNotification] = useState(false);
+  const [notificationMemberId, setNotificationMemberId] = useState(() => localStorage.getItem(notificationSettingKey) ?? "");
+  const [isExpanded, setIsExpanded] = useState(() => !localStorage.getItem(notificationSettingKey));
   const selectedMemberId = memberId || members[0]?.id || "";
+  const savedNotificationMember = members.find((member) => member.id === notificationMemberId);
   const vapidPublicKey = getVapidPublicKey();
   const canUsePush = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 
@@ -1223,12 +1228,36 @@ function NotificationGuide({ members, roomId, memberId, onMemberChange }) {
         throw new Error(payload?.message || payload?.error || "通知登録APIでエラーが発生しました。");
       }
       setStatus("通知を受け取る設定が完了しました。稽古1時間前に通知します。");
+      localStorage.setItem(notificationSettingKey, selectedMemberId);
+      setNotificationMemberId(selectedMemberId);
+      setIsExpanded(false);
     } catch (error) {
       console.error(error);
       setStatus(error?.message || "通知設定に失敗しました。公開版URLで開いているか、Vercelの通知設定を確認してください。");
     } finally {
       setIsSettingNotification(false);
     }
+  }
+
+  if (!isExpanded && savedNotificationMember) {
+    return (
+      <section className="notificationGuide compact">
+        <div>
+          <strong>♥稽古前お知らせ機能♥</strong>
+          <p>通知設定済み：{savedNotificationMember.name}</p>
+        </div>
+        <button
+          type="button"
+          className="ghostButton"
+          onClick={() => {
+            onMemberChange(notificationMemberId);
+            setIsExpanded(true);
+          }}
+        >
+          変更する
+        </button>
+      </section>
+    );
   }
 
   return (
