@@ -1539,6 +1539,13 @@ function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSav
       ? defaultRehearsalId
       : upcomingRehearsals[0]?.id ?? "",
   );
+  const [selectedRehearsalIds, setSelectedRehearsalIds] = useState(
+    upcomingRehearsals.some((rehearsal) => rehearsal.id === defaultRehearsalId)
+      ? [defaultRehearsalId]
+      : upcomingRehearsals[0]?.id
+        ? [upcomingRehearsals[0].id]
+        : [],
+  );
   const [status, setStatus] = useState<AttendanceStatus>("出席");
   const [arrivalTime, setArrivalTime] = useState("");
   const [leaveTime, setLeaveTime] = useState("");
@@ -1555,18 +1562,30 @@ function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSav
       if (defaultRehearsalId && selectableIds.includes(defaultRehearsalId)) return defaultRehearsalId;
       return upcomingRehearsals[0]?.id ?? "";
     });
+    setSelectedRehearsalIds((current) => {
+      const kept = current.filter((id) => selectableIds.includes(id));
+      if (kept.length) return kept;
+      if (defaultRehearsalId && selectableIds.includes(defaultRehearsalId)) return [defaultRehearsalId];
+      return upcomingRehearsals[0]?.id ? [upcomingRehearsals[0].id] : [];
+    });
   }, [defaultRehearsalId, rehearsals]);
 
   function toggleMember(memberId) {
     setSelectedMemberIds((current) => (current.includes(memberId) ? current.filter((id) => id !== memberId) : [...current, memberId]));
   }
 
+  function toggleSingleRehearsal(rehearsalId) {
+    setSelectedRehearsalIds((current) => (
+      current.includes(rehearsalId) ? current.filter((id) => id !== rehearsalId) : [...current, rehearsalId]
+    ));
+  }
+
   function submitAttendance() {
-    if (!rehearsalId) {
-      alert("稽古日を選んでください。");
-      return;
-    }
     if (mode === "bulk") {
+      if (!rehearsalId) {
+        alert("稽古日を選んでください。");
+        return;
+      }
       if (!selectedMemberIds.length) {
         alert("名前を1人以上選んでください。");
         return;
@@ -1588,7 +1607,20 @@ function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSav
       alert("名前を選んでください。");
       return;
     }
-    onSave({ memberId, rehearsalId, status, arrivalTime, leaveTime, note });
+    if (!selectedRehearsalIds.length) {
+      alert("稽古日を1つ以上選んでください。");
+      return;
+    }
+    onSaveBatch(
+      selectedRehearsalIds.map((selectedId) => ({
+        memberId,
+        rehearsalId: selectedId,
+        status,
+        arrivalTime,
+        leaveTime,
+        note,
+      })),
+    );
   }
 
   return (
@@ -1621,11 +1653,19 @@ function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSav
         </div>
       </fieldset>
       <fieldset className="choiceGroup">
-        <legend>稽古日</legend>
+        <legend>{mode === "bulk" ? "稽古日" : "稽古日（複数選択できます）"}</legend>
         <div className="choiceGrid rehearsals">
           {upcomingRehearsals.map((rehearsal) => (
-            <label key={rehearsal.id} className={`choiceCard ${rehearsalId === rehearsal.id ? "selected" : ""}`}>
-              <input type="radio" name="attendance-rehearsal" checked={rehearsalId === rehearsal.id} onChange={() => setRehearsalId(rehearsal.id)} />
+            <label
+              key={rehearsal.id}
+              className={`choiceCard ${(mode === "bulk" ? rehearsalId === rehearsal.id : selectedRehearsalIds.includes(rehearsal.id)) ? "selected" : ""}`}
+            >
+              <input
+                type={mode === "bulk" ? "radio" : "checkbox"}
+                name={mode === "bulk" ? "attendance-rehearsal" : `attendance-rehearsal-${rehearsal.id}`}
+                checked={mode === "bulk" ? rehearsalId === rehearsal.id : selectedRehearsalIds.includes(rehearsal.id)}
+                onChange={() => (mode === "bulk" ? setRehearsalId(rehearsal.id) : toggleSingleRehearsal(rehearsal.id))}
+              />
               <span>{rehearsal.date}</span>
               <small>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</small>
             </label>
@@ -1640,7 +1680,7 @@ function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSav
       </div>
       {mode === "bulk" && <p className="note">まとめて登録では、選んだ全員に同じステータス・時間・連絡事項が入ります。個別の理由はあとからひとりずつ編集できます。</p>}
       <label className="field">理由・連絡事項<textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="例：仕事後に向かいます" /></label>
-      <button className="primary">{mode === "bulk" ? (selectedMemberIds.length ? `${selectedMemberIds.length}人分をまとめて登録する` : "まとめて登録する") : "登録する"}</button>
+      <button className="primary">{mode === "bulk" ? (selectedMemberIds.length ? `${selectedMemberIds.length}人分をまとめて登録する` : "まとめて登録する") : (selectedRehearsalIds.length > 1 ? `${selectedRehearsalIds.length}日分を登録する` : "登録する")}</button>
     </form>
   );
 }
