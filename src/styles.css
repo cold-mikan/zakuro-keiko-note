@@ -837,6 +837,56 @@ h3 {
   gap: 16px;
 }
 
+.adminLock form {
+  display: grid;
+  gap: 14px;
+}
+
+.todayScenesPanel p {
+  color: #6b5a51;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+.sceneDatePanel {
+  display: grid;
+  gap: 14px;
+}
+
+.dateScroller {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+  scrollbar-width: thin;
+}
+
+.dateScroller button {
+  background: rgba(255, 253, 249, 0.96);
+  border: 1px solid #ead7ca;
+  border-radius: 12px;
+  color: #5d4d46;
+  display: grid;
+  flex: 0 0 150px;
+  gap: 4px;
+  min-height: 72px;
+  padding: 12px;
+  text-align: left;
+}
+
+.dateScroller button.active {
+  background: #fff0f6;
+  border-color: #ee6b8e;
+  box-shadow: 0 0 0 3px rgba(238, 107, 142, 0.16);
+  color: #c94f74;
+}
+
+.dateScroller span {
+  color: #967c72;
+  font-family: "Yu Gothic UI", Meiryo, sans-serif;
+  font-size: 12px;
+}
+
 .exportActions {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

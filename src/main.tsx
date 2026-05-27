@@ -123,7 +123,7 @@ const tabs = [
   { id: "form", label: "出欠登録", icon: "＋" },
   { id: "admin", label: "出欠一覧", icon: "☷" },
   { id: "members", label: "メンバー", icon: "member" },
-  { id: "scenes", label: "シーン", icon: "★" },
+  { id: "scenes", label: "管理者", icon: "★" },
 ] as const;
 
 function getAttendanceFor(rehearsalId: string, attendances: Attendance[]) {
@@ -1207,7 +1207,7 @@ function App() {
           onMemberChange={setNotificationMemberId}
         />
       </div>
-      {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} sceneResults={sceneResults} />}
+      {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} scenes={sceneList} />}
       {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} scenes={sceneList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onUpdate={updateRehearsal} onDelete={deleteRehearsal} allowDelete={true} openAdmin={() => setTab("admin")} />}
       {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} onSaveBatch={saveAttendanceBatch} />}
       {tab === "admin" && (
@@ -1225,7 +1225,20 @@ function App() {
         />
       )}
       {tab === "members" && <MemberView rehearsals={rehearsalList} attendances={attendances} visibleMembers={visibleMembers} onAdd={addMember} onUpdate={updateMember} onDelete={deleteMember} allowDelete={true} />}
-      {tab === "scenes" && <ScenePage sceneResults={sceneResults} rehearsals={rehearsalList} onAdd={addScene} onUpdate={updateScene} onDelete={deleteScene} allowDelete={!onlineReady} />}
+      {tab === "scenes" && (
+        <ScenePage
+          rehearsals={rehearsalList}
+          rehearsalId={selectedRehearsalId}
+          attendances={attendances}
+          visibleMembers={visibleMembers}
+          scenes={sceneList}
+          allMembers={memberList}
+          onAdd={addScene}
+          onUpdate={updateScene}
+          onDelete={deleteScene}
+          allowDelete={!onlineReady}
+        />
+      )}
     </main>
   );
 }
@@ -1495,7 +1508,7 @@ function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
   );
 }
 
-function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visibleMembers, sceneResults }) {
+function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visibleMembers, scenes }) {
   const rehearsal = rehearsals.find((item) => item.id === rehearsalId) ?? rehearsals[0];
   const grouped = groupAttendance(rehearsalId, attendances, visibleMembers);
   const attendancePersonRow = (row, prefix = "") => ({
@@ -1519,12 +1532,12 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
         <p className="note">{rehearsal.memo}</p>
       </div>
       <ContactNotesPanel grouped={grouped} />
+      <TodayScenesPanel rehearsal={rehearsal} scenes={scenes} />
       {absenceRows.length > 0 && <PeoplePanel title="欠席・遅刻" rows={absenceRows} tone="warn" />}
       <div className="grid two">
         <PeoplePanel title="出席予定" rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => attendancePersonRow(row))} collapsible />
         <PeoplePanel title="未回答" rows={grouped.noReply.map(memberPersonRow)} tone="warn" />
       </div>
-      <ScenePanel sceneResults={sceneResults} />
       <section className="panel">
         <h2 className="panelTitle"><span>↗</span>出席率</h2>
         <div className="rateList">
@@ -1835,6 +1848,23 @@ function ContactNotesPanel({ grouped }) {
   return <PeoplePanel title="連絡事項まとめ" rows={rows} tone={rows.length ? "warn" : undefined} />;
 }
 
+function getSelectedSceneTitles(rehearsal, scenes) {
+  if (!rehearsal?.selectedSceneIds?.length) return [];
+  const sceneById = new Map(scenes.map((scene) => [scene.id, scene.title]));
+  return rehearsal.selectedSceneIds.map((id) => sceneById.get(id)).filter(Boolean);
+}
+
+function TodayScenesPanel({ rehearsal, scenes }) {
+  const titles = getSelectedSceneTitles(rehearsal, scenes);
+  if (!titles.length) return null;
+  return (
+    <section className="panel todayScenesPanel">
+      <h2 className="panelTitle"><span>★</span>本日の稽古シーン</h2>
+      <p>{titles.map(sceneShortName).join("、")}</p>
+    </section>
+  );
+}
+
 function ExportTools({
   rehearsals,
   members,
@@ -1916,7 +1946,7 @@ function NotionSyncPanel({ rehearsals, members, attendances, scenes }) {
   );
 }
 
-function AdminView({ rehearsals, rehearsalId, setRehearsalId, grouped, sceneResults, attendances, members, allMembers, allRehearsals, scenes }) {
+function AdminView({ rehearsals, rehearsalId, setRehearsalId, grouped }) {
   return (
     <section className="stack">
       <div className="panel"><RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} /></div>
@@ -1929,14 +1959,6 @@ function AdminView({ rehearsals, rehearsalId, setRehearsalId, grouped, sceneResu
         <PeoplePanel title="未定" rows={grouped.undecided.map(formatAttendanceLine)} tone="warn" />
         <PeoplePanel title="未回答者" rows={grouped.noReply.map((member) => member.name)} tone="warn" />
       </div>
-      <ScenePanel sceneResults={sceneResults} rehearsals={allRehearsals} />
-      <ExportTools
-        rehearsals={rehearsals}
-        rehearsalId={rehearsalId}
-        members={members}
-        attendances={attendances}
-      />
-      <NotionSyncPanel rehearsals={allRehearsals} members={allMembers} attendances={attendances} scenes={scenes} />
     </section>
   );
 }
@@ -2009,10 +2031,10 @@ function ScenePanel({ sceneResults, rehearsals = [], onAdd, onUpdate, onDelete, 
   const sortedSceneResults = sortSceneResults(sceneResults);
   const availableScenes = sortedSceneResults.filter((result) => result.canRehearse);
   const availabilityMessage = availableScenes.length === sortedSceneResults.length && sortedSceneResults.length
-    ? "本日全シーン可能"
+    ? "この日は全シーン可能"
     : availableScenes.length
-      ? `本日：${availableScenes.map((result) => sceneShortName(result.scene.title)).join("、")}ができます`
-      : "本日できるシーンはありません";
+      ? `この日にできるシーン：${availableScenes.map((result) => sceneShortName(result.scene.title)).join("、")}`
+      : "この日にできるシーンはありません";
 
   return (
     <section className="panel">
@@ -2045,11 +2067,105 @@ function ScenePanel({ sceneResults, rehearsals = [], onAdd, onUpdate, onDelete, 
   );
 }
 
-function ScenePage({ sceneResults, rehearsals, onAdd, onUpdate, onDelete, allowDelete }) {
+function AdminLock({ children }) {
+  const [password, setPassword] = useState("");
+  const [unlocked, setUnlocked] = useState(false);
+
+  if (unlocked) return children;
+
+  return (
+    <section className="panel adminLock">
+      <h2 className="panelTitle"><span>★</span>管理者ページ</h2>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (password === "つらこ") {
+            setUnlocked(true);
+            return;
+          }
+          alert("パスワードが違います。");
+        }}
+      >
+        <label className="field">
+          パスワードを入力してください。
+          <input value={password} onChange={(event) => setPassword(event.target.value)} placeholder="つらこ" />
+        </label>
+        <button className="primary">管理者ページを開く</button>
+      </form>
+    </section>
+  );
+}
+
+function SceneAvailabilityBrowser({ rehearsals, rehearsalId, attendances, visibleMembers, scenes, onAdd, onUpdate, onDelete, allowDelete }) {
+  const [selectedId, setSelectedId] = useState(rehearsalId || rehearsals[0]?.id || "");
+
+  useEffect(() => {
+    if (!rehearsals.some((rehearsal) => rehearsal.id === selectedId)) {
+      setSelectedId(rehearsalId || rehearsals[0]?.id || "");
+    }
+  }, [rehearsals, rehearsalId, selectedId]);
+
+  const selected = rehearsals.find((rehearsal) => rehearsal.id === selectedId) ?? rehearsals[0];
+  const selectedResults = selected ? evaluateScenes(selected.id, attendances, visibleMembers, scenes) : [];
+  const availableScenes = sortSceneResults(selectedResults).filter((result) => result.canRehearse);
+  const summary = !selectedResults.length
+    ? "登録済みのシーンがありません"
+    : availableScenes.length === selectedResults.length
+      ? "この日は全シーン可能"
+      : availableScenes.length
+        ? `この日にできるシーン：${availableScenes.map((result) => sceneShortName(result.scene.title)).join("、")}`
+        : "この日にできるシーンはありません";
+
   return (
     <section className="stack">
-      <ScenePanel sceneResults={sceneResults} rehearsals={rehearsals} onAdd={onAdd} onUpdate={onUpdate} onDelete={onDelete} allowDelete={allowDelete} />
+      <section className="panel sceneDatePanel">
+        <h2 className="panelTitle green"><span>★</span>稽古日ごとのシーン可否</h2>
+        <div className="dateScroller" aria-label="シーン可否を確認する稽古日">
+          {rehearsals.map((rehearsal) => (
+            <button
+              key={rehearsal.id}
+              type="button"
+              className={selected?.id === rehearsal.id ? "active" : ""}
+              onClick={() => setSelectedId(rehearsal.id)}
+            >
+              <strong>{rehearsal.date}</strong>
+              <span>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</span>
+            </button>
+          ))}
+        </div>
+        <p className={`sceneTodaySummary ${availableScenes.length ? "ok" : "ng"}`}>{summary}</p>
+      </section>
+      <ScenePanel
+        sceneResults={selectedResults}
+        rehearsals={rehearsals}
+        onAdd={onAdd}
+        onUpdate={onUpdate}
+        onDelete={onDelete}
+        allowDelete={allowDelete}
+      />
     </section>
+  );
+}
+
+function ScenePage({ rehearsals, rehearsalId, attendances, visibleMembers, scenes, allMembers, onAdd, onUpdate, onDelete, allowDelete }) {
+  return (
+    <AdminLock>
+      <section className="stack">
+        <ExportTools rehearsals={rehearsals} members={allMembers} attendances={attendances} />
+        <NotionSyncPanel rehearsals={rehearsals} members={allMembers} attendances={attendances} scenes={scenes} />
+        <SceneAvailabilityBrowser
+          rehearsals={rehearsals}
+          rehearsalId={rehearsalId}
+          attendances={attendances}
+          visibleMembers={visibleMembers}
+          scenes={scenes}
+          onAdd={onAdd}
+          onUpdate={onUpdate}
+          onDelete={onDelete}
+          allowDelete={allowDelete}
+        />
+      </section>
+    </AdminLock>
   );
 }
 
