@@ -121,7 +121,7 @@ const teamFilters: TeamFilter[] = ["全員", "Aチーム", "Bチーム"];
 const tabs = [
   { id: "dashboard", label: "ホーム", icon: "⌂" },
   { id: "rehearsals", label: "稽古日", icon: "▣" },
-  { id: "form", label: "出欠登録", icon: "＋" },
+  { id: "form", label: "参加予定の入力", icon: "＋" },
   { id: "admin", label: "出欠一覧", icon: "☷" },
   { id: "members", label: "メンバー", icon: "member" },
   { id: "scenes", label: "管理者", icon: "★" },
@@ -1065,6 +1065,8 @@ function App() {
     const target = memberList.find((member) => member.id === memberId);
     if (!target) return;
     if (!confirm(`${target.name} を削除しますか？\nこのメンバーの出欠データも一緒に削除されます。`)) return;
+    const typed = prompt("誤削除防止のため「削除」と入力してください。");
+    if (typed !== "削除") return;
     const relatedAttendances = attendances.filter((attendance) => attendance.memberId === memberId);
     if (onlineReady) {
       try {
@@ -1546,7 +1548,7 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
           title="出席予定"
           rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => attendancePersonRow(row))}
           collapsible
-          collapsedMessage={grouped.absent.length ? ",,,1,2,,,いっぱい！" : "なんと全員大集合❣"}
+          collapsedMessage={(grouped.absent.length || grouped.noReply.length) ? ",,,1,2,,,いっぱい！" : "なんと全員大集合❣"}
         />
         <PeoplePanel title="未回答" rows={grouped.noReply.map(memberPersonRow)} tone="warn" />
       </div>
@@ -1770,7 +1772,7 @@ function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSav
         submitAttendance();
       }}
     >
-      <h2>出欠登録</h2>
+      <h2>参加予定の入力</h2>
       <div className="formModeSwitch" aria-label="登録方法">
         <button type="button" className={mode === "single" ? "active" : ""} onClick={() => setMode("single")}>ひとりずつ登録</button>
         <button type="button" className={mode === "bulk" ? "active" : ""} onClick={() => setMode("bulk")}>まとめて登録</button>
@@ -1863,17 +1865,30 @@ function TodayScenesPanel({ rehearsal, scenes }) {
 function SceneSelectionEditor({ rehearsal, scenes, onUpdate }) {
   if (!rehearsal) return null;
   const selectedSceneIds = rehearsal.selectedSceneIds ?? [];
+  const sortedScenes = sortSceneResults(scenes.map((scene) => ({ scene, canRehearse: true, missingCharacters: [] }))).map(({ scene }) => scene);
+  const allSceneIds = sortedScenes.map((scene) => scene.id);
+  const allSelected = allSceneIds.length > 0 && allSceneIds.every((sceneId) => selectedSceneIds.includes(sceneId));
   const toggleScene = (sceneId) => {
     const nextSceneIds = selectedSceneIds.includes(sceneId)
       ? selectedSceneIds.filter((id) => id !== sceneId)
       : [...selectedSceneIds, sceneId];
     onUpdate({ ...rehearsal, selectedSceneIds: nextSceneIds });
   };
+  const toggleAllScenes = () => {
+    const nextSceneIds = allSelected
+      ? selectedSceneIds.filter((sceneId) => !allSceneIds.includes(sceneId))
+      : Array.from(new Set([...selectedSceneIds, ...allSceneIds]));
+    onUpdate({ ...rehearsal, selectedSceneIds: nextSceneIds });
+  };
 
   return (
     <fieldset className="checkboxGroup adminSceneSelector">
       <legend>この日にやるシーン</legend>
-      {sortSceneResults(scenes.map((scene) => ({ scene, canRehearse: true, missingCharacters: [] }))).map(({ scene }) => (
+      <label className="checkboxPill sceneSelectPill selectAllPill">
+        <input type="checkbox" checked={allSelected} onChange={toggleAllScenes} />
+        <span>全て選択する</span>
+      </label>
+      {sortedScenes.map((scene) => (
         <label key={scene.id} className="checkboxPill sceneSelectPill">
           <input type="checkbox" checked={selectedSceneIds.includes(scene.id)} onChange={() => toggleScene(scene.id)} />
           <span>{scene.title}</span>
@@ -2109,14 +2124,32 @@ function AdminLock({ children }) {
 
 function SceneAvailabilityBrowser({ rehearsals, rehearsalId, attendances, visibleMembers, scenes, onAdd, onUpdate, onDelete, onUpdateRehearsal, allowDelete }) {
   const [selectedId, setSelectedId] = useState(rehearsalId || rehearsals[0]?.id || "");
+  const selected = rehearsals.find((rehearsal) => rehearsal.id === selectedId) ?? rehearsals[0];
+  const monthOptions = useMemo(() => Array.from(new Set(rehearsals.map((rehearsal) => rehearsal.date.slice(0, 7)))).sort(), [rehearsals]);
+  const [monthKey, setMonthKey] = useState(selected?.date.slice(0, 7) || monthOptions[0] || "");
 
   useEffect(() => {
     if (!rehearsals.some((rehearsal) => rehearsal.id === selectedId)) {
-      setSelectedId(rehearsalId || rehearsals[0]?.id || "");
+      const nextRehearsal = (rehearsalId && rehearsals.find((rehearsal) => rehearsal.id === rehearsalId)) || rehearsals[0];
+      setSelectedId(nextRehearsal?.id || "");
+      setMonthKey(nextRehearsal?.date.slice(0, 7) || "");
+      return;
     }
-  }, [rehearsals, rehearsalId, selectedId]);
+    const current = rehearsals.find((rehearsal) => rehearsal.id === selectedId);
+    if (current && (!monthKey || !monthOptions.includes(monthKey))) {
+      setMonthKey(current.date.slice(0, 7));
+    }
+  }, [rehearsals, rehearsalId, selectedId, monthKey, monthOptions]);
 
-  const selected = rehearsals.find((rehearsal) => rehearsal.id === selectedId) ?? rehearsals[0];
+  const monthRehearsals = rehearsals.filter((rehearsal) => rehearsal.date.startsWith(monthKey));
+  const selectMonth = (nextMonth) => {
+    setMonthKey(nextMonth);
+    const current = rehearsals.find((rehearsal) => rehearsal.id === selectedId);
+    if (!current || !current.date.startsWith(nextMonth)) {
+      const firstInMonth = rehearsals.find((rehearsal) => rehearsal.date.startsWith(nextMonth));
+      if (firstInMonth) setSelectedId(firstInMonth.id);
+    }
+  };
   const selectedResults = selected ? evaluateScenes(selected.id, attendances, visibleMembers, scenes) : [];
   const availableScenes = sortSceneResults(selectedResults).filter((result) => result.canRehearse);
   const summary = !selectedResults.length
@@ -2131,8 +2164,20 @@ function SceneAvailabilityBrowser({ rehearsals, rehearsalId, attendances, visibl
     <section className="stack">
       <section className="panel sceneDatePanel">
         <h2 className="panelTitle green"><span>★</span>稽古日ごとのシーン可否</h2>
+        <div className="monthTabs" aria-label="表示する月">
+          {monthOptions.map((month) => (
+            <button
+              key={month}
+              type="button"
+              className={monthKey === month ? "active" : ""}
+              onClick={() => selectMonth(month)}
+            >
+              {month.replace("-", "年")}月
+            </button>
+          ))}
+        </div>
         <div className="dateScroller" aria-label="シーン可否を確認する稽古日">
-          {rehearsals.map((rehearsal) => (
+          {monthRehearsals.map((rehearsal) => (
             <button
               key={rehearsal.id}
               type="button"
@@ -2281,7 +2326,7 @@ function MemberView({ rehearsals, attendances, visibleMembers, onAdd, onUpdate, 
           </div>
           <div className="cardActions">
             <strong>{attendanceRate(member.id, attendances, rehearsals)}%</strong>
-            <button onClick={() => setEditingId(member.id)}>編集</button>
+            <button className="editButton" onClick={() => setEditingId(member.id)}>編集</button>
             {allowDelete && <button className="dangerButton" onClick={() => onDelete(member.id)}>削除</button>}
           </div>
         </article>
