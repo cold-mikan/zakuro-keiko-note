@@ -1213,7 +1213,7 @@ function App() {
         />
       </div>
       {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} scenes={sceneList} />}
-      {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} scenes={sceneList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onUpdate={updateRehearsal} onDelete={deleteRehearsal} allowDelete={true} openAdmin={() => setTab("admin")} />}
+      {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onUpdate={updateRehearsal} onDelete={deleteRehearsal} allowDelete={true} openAdmin={() => setTab("admin")} />}
       {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} onSaveBatch={saveAttendanceBatch} />}
       {tab === "admin" && (
         <AdminView
@@ -1241,6 +1241,7 @@ function App() {
           onAdd={addScene}
           onUpdate={updateScene}
           onDelete={deleteScene}
+          onUpdateRehearsal={updateRehearsal}
           allowDelete={!onlineReady}
         />
       )}
@@ -1546,19 +1547,18 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
       <section className="panel">
         <h2 className="panelTitle"><span>↗</span>出席率</h2>
         <div className="rateList">
-          {visibleMembers.map((member) => <div key={member.id} className="rateRow"><span className={`personName ${roleClassName(member.role)}`}>{member.name}</span><strong>{attendanceRate(member.id, attendances, rehearsals)}%</strong></div>)}
+          {visibleMembers.filter((member) => member.role === "キャスト").map((member) => <div key={member.id} className="rateRow"><span className={`personName ${roleClassName(member.role)}`}>{member.name}</span><strong>{attendanceRate(member.id, attendances, rehearsals)}%</strong></div>)}
         </div>
       </section>
     </section>
   );
 }
 
-function RehearsalList({ rehearsals, scenes, selectedRehearsalId, setSelectedRehearsalId, attendances, visibleMembers, onAdd, onUpdate, onDelete, allowDelete, openAdmin }) {
+function RehearsalList({ rehearsals, selectedRehearsalId, setSelectedRehearsalId, attendances, visibleMembers, onAdd, onUpdate, onDelete, allowDelete, openAdmin }) {
   const [editingRehearsal, setEditingRehearsal] = useState(null);
   return (
     <section className="stack">
       <RehearsalEditor
-        scenes={scenes}
         editingRehearsal={editingRehearsal}
         onAdd={onAdd}
         onUpdate={onUpdate}
@@ -1591,7 +1591,7 @@ function RehearsalList({ rehearsals, scenes, selectedRehearsalId, setSelectedReh
   );
 }
 
-function RehearsalEditor({ scenes, editingRehearsal, onAdd, onUpdate, onCancelEdit }) {
+function RehearsalEditor({ editingRehearsal, onAdd, onUpdate, onCancelEdit }) {
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("19:00");
   const [endTime, setEndTime] = useState("22:00");
@@ -1599,7 +1599,6 @@ function RehearsalEditor({ scenes, editingRehearsal, onAdd, onUpdate, onCancelEd
   const [memo, setMemo] = useState("");
   const [eventType, setEventType] = useState("稽古日");
   const [rehearsalTeam, setRehearsalTeam] = useState("共通");
-  const [selectedSceneIds, setSelectedSceneIds] = useState([]);
   const isEditing = Boolean(editingRehearsal);
 
   useEffect(() => {
@@ -1611,7 +1610,6 @@ function RehearsalEditor({ scenes, editingRehearsal, onAdd, onUpdate, onCancelEd
     setMemo(editingRehearsal.memo ?? "");
     setEventType(editingRehearsal.eventType ?? "稽古日");
     setRehearsalTeam(editingRehearsal.rehearsalTeam ?? "共通");
-    setSelectedSceneIds(editingRehearsal.selectedSceneIds ?? []);
   }, [editingRehearsal]);
 
   function resetForm() {
@@ -1622,23 +1620,19 @@ function RehearsalEditor({ scenes, editingRehearsal, onAdd, onUpdate, onCancelEd
     setMemo("");
     setEventType("稽古日");
     setRehearsalTeam("共通");
-    setSelectedSceneIds([]);
   }
 
-  function toggleSelectedScene(sceneId) {
-    setSelectedSceneIds((current) => (current.includes(sceneId) ? current.filter((id) => id !== sceneId) : [...current, sceneId]));
-  }
 
   return (
     <form
       className="panel form"
       onSubmit={(event) => {
         event.preventDefault();
-        if (!date || !startTime || !endTime || !place) {
-          alert("日付・開始時間・終了時間・場所を入力してください。");
+        if (!date || !startTime || !endTime) {
+          alert("日付・開始時間・終了時間を入力してください。");
           return;
         }
-        const payload = { date, startTime, endTime, place, memo, eventType, rehearsalTeam, selectedSceneIds };
+        const payload = { date, startTime, endTime, place: place || editingRehearsal?.place || "場所未定", memo, eventType, rehearsalTeam, selectedSceneIds: editingRehearsal?.selectedSceneIds ?? [] };
         if (editingRehearsal) {
           onUpdate({ ...editingRehearsal, ...payload });
           onCancelEdit();
@@ -1658,16 +1652,6 @@ function RehearsalEditor({ scenes, editingRehearsal, onAdd, onUpdate, onCancelEd
         <label className="field">終了<input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} /></label>
       </div>
       <label className="field">対象チーム<select value={rehearsalTeam} onChange={(event) => setRehearsalTeam(event.target.value)}>{rehearsalTeamOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
-      <fieldset className="checkboxGroup">
-        <legend>この日にやるシーン</legend>
-        {scenes.map((scene) => (
-          <label key={scene.id} className="checkboxPill sceneSelectPill">
-            <input type="checkbox" checked={selectedSceneIds.includes(scene.id)} onChange={() => toggleSelectedScene(scene.id)} />
-            <span>{scene.title}</span>
-          </label>
-        ))}
-      </fieldset>
-      <label className="field">場所<input value={place} onChange={(event) => setPlace(event.target.value)} placeholder="例：駅前スタジオA" /></label>
       <label className="field">メモ<input value={memo} onChange={(event) => setMemo(event.target.value)} placeholder="例：1場、2場中心" /></label>
       <div className="formActions">
         <button className="primary">{isEditing ? "変更を保存する" : "稽古日を追加する"}</button>
@@ -1870,6 +1854,29 @@ function TodayScenesPanel({ rehearsal, scenes }) {
   );
 }
 
+function SceneSelectionEditor({ rehearsal, scenes, onUpdate }) {
+  if (!rehearsal) return null;
+  const selectedSceneIds = rehearsal.selectedSceneIds ?? [];
+  const toggleScene = (sceneId) => {
+    const nextSceneIds = selectedSceneIds.includes(sceneId)
+      ? selectedSceneIds.filter((id) => id !== sceneId)
+      : [...selectedSceneIds, sceneId];
+    onUpdate({ ...rehearsal, selectedSceneIds: nextSceneIds });
+  };
+
+  return (
+    <fieldset className="checkboxGroup adminSceneSelector">
+      <legend>この日にやるシーン</legend>
+      {sortSceneResults(scenes.map((scene) => ({ scene, canRehearse: true, missingCharacters: [] }))).map(({ scene }) => (
+        <label key={scene.id} className="checkboxPill sceneSelectPill">
+          <input type="checkbox" checked={selectedSceneIds.includes(scene.id)} onChange={() => toggleScene(scene.id)} />
+          <span>{scene.title}</span>
+        </label>
+      ))}
+    </fieldset>
+  );
+}
+
 function ExportTools({
   rehearsals,
   members,
@@ -2037,7 +2044,7 @@ function ScenePanel({ sceneResults, rehearsals = [], onAdd, onUpdate, onDelete, 
 
   return (
     <section className="panel">
-      <h2 className="panelTitle green"><span>★</span>シーン稽古可否</h2>
+      <h2 className="panelTitle green"><span>★</span>シーンの編集・追加</h2>
       {editable && <SceneEditor editingScene={editingScene} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => setEditingId("")} />}
       <div className="sceneList">
         {sortedSceneResults.map(({ scene, canRehearse, missingCharacters }) => {
@@ -2094,7 +2101,7 @@ function AdminLock({ children }) {
   );
 }
 
-function SceneAvailabilityBrowser({ rehearsals, rehearsalId, attendances, visibleMembers, scenes, onAdd, onUpdate, onDelete, allowDelete }) {
+function SceneAvailabilityBrowser({ rehearsals, rehearsalId, attendances, visibleMembers, scenes, onAdd, onUpdate, onDelete, onUpdateRehearsal, allowDelete }) {
   const [selectedId, setSelectedId] = useState(rehearsalId || rehearsals[0]?.id || "");
 
   useEffect(() => {
@@ -2132,6 +2139,7 @@ function SceneAvailabilityBrowser({ rehearsals, rehearsalId, attendances, visibl
           ))}
         </div>
         <p className={`sceneTodaySummary ${availableScenes.length ? "ok" : "ng"}`}>{summary}</p>
+        <SceneSelectionEditor rehearsal={selected} scenes={scenes} onUpdate={onUpdateRehearsal} />
       </section>
       <ScenePanel
         sceneResults={selectedResults}
@@ -2145,7 +2153,7 @@ function SceneAvailabilityBrowser({ rehearsals, rehearsalId, attendances, visibl
   );
 }
 
-function ScenePage({ rehearsals, rehearsalId, attendances, visibleMembers, scenes, allMembers, onAdd, onUpdate, onDelete, allowDelete }) {
+function ScenePage({ rehearsals, rehearsalId, attendances, visibleMembers, scenes, allMembers, onAdd, onUpdate, onDelete, onUpdateRehearsal, allowDelete }) {
   return (
     <AdminLock>
       <section className="stack">
@@ -2158,6 +2166,7 @@ function ScenePage({ rehearsals, rehearsalId, attendances, visibleMembers, scene
           onAdd={onAdd}
           onUpdate={onUpdate}
           onDelete={onDelete}
+          onUpdateRehearsal={onUpdateRehearsal}
           allowDelete={allowDelete}
         />
         <ExportTools rehearsals={rehearsals} members={allMembers} attendances={attendances} />
