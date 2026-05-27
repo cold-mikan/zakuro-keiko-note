@@ -115,6 +115,7 @@ const rehearsalSeedVersion = "2026-06-confirmed-v2";
 const sceneSeedVersion = "zakuro-scenes-v1";
 const sceneRoleOptions = allSceneRoles;
 const removedMemberNames = ["春野 いろは"];
+const deletedMemberMemo = "__deleted_member__";
 type TeamFilter = "全員" | "Aチーム" | "Bチーム";
 const teamFilters: TeamFilter[] = ["全員", "Aチーム", "Bチーム"];
 const tabs = [
@@ -227,7 +228,7 @@ function readRehearsals() {
 }
 
 function withoutRemovedMembers(memberSource) {
-  return memberSource.filter((member) => !removedMemberNames.includes(member.name));
+  return memberSource.filter((member) => !removedMemberNames.includes(member.name) && member.memo !== deletedMemberMemo);
 }
 
 function readScenes() {
@@ -670,23 +671,27 @@ async function deleteSupabaseRehearsal(config, actorName, rehearsal, attendanceR
 async function deleteSupabaseMember(config, actorName, member, attendanceRows) {
   const client = getSupabaseClient(config);
   if (!client) return { ok: false, message: "Supabase未接続のため、この端末内だけで削除しました。" };
-  await logEdit(client, config, actorName, "members", member.id, "delete", {
+  const hiddenMember = {
+    ...member,
+    memo: deletedMemberMemo,
+    updatedBy: actorName,
+    updatedAt: new Date().toISOString(),
+  };
+  await logEdit(client, config, actorName, "members", member.id, "hide", {
     member,
     attendances: attendanceRows,
-  }, null);
-  const { error: attendanceError } = await client
-    .from("attendances")
-    .delete()
-    .eq("room_id", config.roomId)
-    .eq("member_id", member.id);
-  if (attendanceError) throw attendanceError;
-  const { error: memberError } = await client
+  }, hiddenMember);
+  const { error } = await client
     .from("members")
-    .delete()
+    .update({
+      memo: deletedMemberMemo,
+      updated_by: actorName,
+      updated_at: new Date().toISOString(),
+    })
     .eq("room_id", config.roomId)
     .eq("id", member.id);
-  if (memberError) throw memberError;
-  return { ok: true, message: "メンバーをオンラインから削除しました。" };
+  if (error) throw error;
+  return { ok: true, message: "メンバーを非表示にしました。" };
 }
 
 async function loadSupabaseState(config) {

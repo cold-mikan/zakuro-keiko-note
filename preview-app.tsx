@@ -111,6 +111,7 @@ const rehearsalSeedVersion = "2026-06-confirmed-v2";
 const sceneSeedVersion = "zakuro-scenes-v1";
 const sceneRoleOptions = allSceneRoles;
 const removedMemberNames = ["春野 いろは"];
+const deletedMemberMemo = "__deleted_member__";
 type TeamFilter = "全員" | "Aチーム" | "Bチーム";
 const teamFilters: TeamFilter[] = ["全員", "Aチーム", "Bチーム"];
 const tabs = [
@@ -223,7 +224,7 @@ function readRehearsals() {
 }
 
 function withoutRemovedMembers(memberSource) {
-  return memberSource.filter((member) => !removedMemberNames.includes(member.name));
+  return memberSource.filter((member) => !removedMemberNames.includes(member.name) && member.memo !== deletedMemberMemo);
 }
 
 function readScenes() {
