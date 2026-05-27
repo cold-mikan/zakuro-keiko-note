@@ -651,8 +651,25 @@ h3 {
   color: #8c6543;
 }
 
+.calendarDay.today {
+  background: #f76f99;
+  border-color: #e45480;
+  box-shadow: 0 8px 18px rgba(229, 95, 137, 0.28);
+  color: #fff;
+  font-weight: 950;
+}
+
+.calendarDay.today.hasMtg {
+  background: #b97956;
+  border-color: #a96744;
+}
+
 .calendarDay.selected {
   box-shadow: 0 0 0 3px rgba(243, 116, 152, 0.22);
+}
+
+.calendarDay.today.selected {
+  box-shadow: 0 0 0 4px rgba(243, 116, 152, 0.25), 0 8px 18px rgba(229, 95, 137, 0.28);
 }
 
 .calendarDay i {
@@ -767,6 +784,10 @@ h3 {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
+}
+
+.exportActions.single {
+  grid-template-columns: 1fr;
 }
 
 .exportActions button {
@@ -933,6 +954,26 @@ textarea {
   padding: 0;
 }
 
+.panelTitleRow {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.panelTitleRow .panelTitle {
+  margin: 0;
+}
+
+.miniToggle {
+  border: 1px solid #efc7d2;
+  background: rgba(255, 255, 255, 0.74);
+  color: #a55770;
+  min-height: 34px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
 .people li {
   align-items: center;
   border: 1px solid #efdfd4;
@@ -968,6 +1009,23 @@ textarea {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-top: 14px;
+}
+
+.sceneTodaySummary {
+  border: 1px solid #d6e8cf;
+  border-radius: 12px;
+  color: #4f8b55;
+  background: rgba(242, 252, 242, 0.9);
+  font-weight: 800;
+  line-height: 1.6;
+  margin: 4px 0 14px;
+  padding: 10px 12px;
+}
+
+.sceneTodaySummary.ng {
+  border-color: #f2b9c8;
+  background: rgba(255, 244, 248, 0.9);
+  color: #b35d78;
 }
 
 .sceneEditor {

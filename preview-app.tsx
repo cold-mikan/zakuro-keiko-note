@@ -173,6 +173,24 @@ function evaluateScenes(rehearsalId: string, attendances: Attendance[], targetMe
   });
 }
 
+function sceneOrderValue(title = "") {
+  const match = String(title).match(/[0-9０-９]+/);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+  return Number(match[0].replace(/[０-９]/g, (char) => String(char.charCodeAt(0) - 0xff10)));
+}
+
+function sortSceneResults(sceneResults) {
+  return [...sceneResults].sort((a, b) => {
+    const orderDiff = sceneOrderValue(a.scene.title) - sceneOrderValue(b.scene.title);
+    return orderDiff || a.scene.title.localeCompare(b.scene.title, "ja");
+  });
+}
+
+function sceneShortName(title = "") {
+  const match = String(title).match(/[0-9０-９]+場/);
+  return match?.[0] ?? title;
+}
+
 function attendanceRate(memberId: string, attendances: Attendance[], rehearsalSource = rehearsals) {
   const rows = rehearsalSource
     .map((rehearsal) => attendances.find((attendance) => attendance.rehearsalId === rehearsal.id && attendance.memberId === memberId))
@@ -339,6 +357,40 @@ function buildMemberSummaryRows(rehearsalSource, memberSource, attendanceSource)
   });
 }
 
+function buildNotionSyncRows(rehearsalSource, memberSource, attendanceSource, sceneSource) {
+  return [...rehearsalSource]
+    .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`))
+    .map((rehearsal) => {
+      const summary = getAttendanceSummary(rehearsal, memberSource, attendanceSource);
+      const selectedScenes = sceneSource
+        .filter((scene) => rehearsal.selectedSceneIds?.includes(scene.id))
+        .map((scene) => scene.title);
+      return {
+        id: rehearsal.id,
+        title: `${rehearsal.date} ${rehearsal.eventType ?? "稽古日"}`,
+        date: rehearsal.date,
+        startTime: formatTime(rehearsal.startTime),
+        endTime: formatTime(rehearsal.endTime),
+        place: rehearsal.place ?? "",
+        eventType: rehearsal.eventType ?? "稽古日",
+        rehearsalTeam: rehearsal.rehearsalTeam ?? "共通",
+        presentCount: summary.present.length,
+        absentCount: summary.absent.length,
+        lateCount: summary.late.length,
+        earlyCount: summary.early.length,
+        undecidedCount: summary.undecided.length,
+        noReplyCount: summary.noReply.length,
+        presentMembers: summary.present.map((row) => row.member.name).join("、"),
+        absentMembers: summary.absent.map((row) => row.member.name).join("、"),
+        lateMembers: summary.late.map((row) => row.member.name).join("、"),
+        earlyMembers: summary.early.map((row) => row.member.name).join("、"),
+        noReplyMembers: summary.noReply.map((row) => row.member.name).join("、"),
+        selectedScenes: selectedScenes.join("、"),
+        memo: rehearsal.memo ?? "",
+      };
+    });
+}
+
 function formatMatrixStatus(attendance) {
   if (!attendance) return "未回答";
   if (attendance.status === "遅刻" && attendance.arrivalTime) return `遅刻 ${attendance.arrivalTime}到着`;
@@ -403,6 +455,8 @@ async function downloadCsv(filename: string, rows: Record<string, string | numbe
 function getRehearsalMonths(rehearsalSource: Rehearsal[]) {
   return [...new Set(rehearsalSource.map((rehearsal) => rehearsal.date.slice(0, 7)))].sort();
 }
+
+const notificationSettingKey = "zakuro-keiko-notification-member";
 
 function getSupabaseConfig() {
   return readStorage("keiko.supabaseConfig", { url: "", anonKey: "", roomId: "zakuro-keiko" });
@@ -709,13 +763,15 @@ function App() {
         ))}
       </nav>
       <TeamSwitch value={teamFilter} onChange={setTeamFilter} />
-      <SyncGuardNotice
-        configured={isOnlineConfigured()}
-        onlineReady={onlineReady}
-        onlineStatus={onlineStatus}
-        realtimeStatus={realtimeStatus}
-      />
-      <NotificationGuidePreview members={memberList} />
+      <div className="statusCards">
+        <SyncGuardNotice
+          configured={isOnlineConfigured()}
+          onlineReady={onlineReady}
+          onlineStatus={onlineStatus}
+          realtimeStatus={realtimeStatus}
+        />
+        <NotificationGuidePreview members={memberList} />
+      </div>
       {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} sceneResults={sceneResults} />}
       {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} scenes={sceneList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onUpdate={updateRehearsal} onDelete={deleteRehearsal} openAdmin={() => setTab("admin")} />}
       {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} onSaveBatch={saveAttendanceBatch} />}
@@ -728,7 +784,9 @@ function App() {
           sceneResults={sceneResults}
           attendances={attendances}
           members={visibleMembers}
+          allMembers={memberList}
           allRehearsals={rehearsalList}
+          scenes={sceneList}
         />
       )}
       {tab === "members" && <MemberView rehearsals={rehearsalList} attendances={attendances} visibleMembers={visibleMembers} onAdd={addMember} onUpdate={updateMember} onDelete={deleteMember} />}
@@ -763,10 +821,34 @@ function SyncGuardNotice({ configured, onlineReady, onlineStatus, realtimeStatus
 
 function NotificationGuidePreview({ members }) {
   const [selectedMemberId, setSelectedMemberId] = useState(members[0]?.id ?? "");
+  const [notificationMemberId, setNotificationMemberId] = useState(() => localStorage.getItem(notificationSettingKey) ?? "");
+  const [isExpanded, setIsExpanded] = useState(() => !localStorage.getItem(notificationSettingKey));
+  const savedNotificationMember = members.find((member) => member.id === notificationMemberId);
 
   useEffect(() => {
     if (!selectedMemberId && members[0]?.id) setSelectedMemberId(members[0].id);
   }, [members, selectedMemberId]);
+
+  if (!isExpanded && savedNotificationMember) {
+    return (
+      <section className="notificationGuide compact">
+        <div>
+          <strong>♥稽古前お知らせ機能♥</strong>
+          <p>通知設定済み：{savedNotificationMember.name}</p>
+        </div>
+        <button
+          type="button"
+          className="ghostButton"
+          onClick={() => {
+            setSelectedMemberId(notificationMemberId);
+            setIsExpanded(true);
+          }}
+        >
+          変更する
+        </button>
+      </section>
+    );
+  }
 
   return (
     <section className="notificationGuide">
@@ -783,7 +865,18 @@ function NotificationGuidePreview({ members }) {
             {members.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}
           </select>
         </label>
-        <button type="button" className="primary" disabled>通知を受け取る</button>
+        <button
+          type="button"
+          className="primary"
+          onClick={() => {
+            if (!selectedMemberId) return;
+            localStorage.setItem(notificationSettingKey, selectedMemberId);
+            setNotificationMemberId(selectedMemberId);
+            setIsExpanded(false);
+          }}
+        >
+          表示だけ確認する
+        </button>
       </div>
     </section>
   );
@@ -884,10 +977,11 @@ function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
           const events = eventsByDate.get(day.date) ?? [];
           const hasMtg = events.some((event) => getEventKind(event) === "mtg");
           const isSelected = day.date === selected?.date;
+          const isToday = day.date === new Date().toLocaleDateString("sv-SE");
           return (
             <button
               key={day.date}
-              className={`calendarDay ${events.length ? "hasEvent" : ""} ${hasMtg ? "hasMtg" : ""} ${isSelected ? "selected" : ""}`}
+              className={`calendarDay ${events.length ? "hasEvent" : ""} ${hasMtg ? "hasMtg" : ""} ${isSelected ? "selected" : ""} ${isToday ? "today" : ""}`}
               onClick={() => events[0] && onSelect(events[0].id)}
               disabled={!events.length}
               title={events.map((event) => `${event.startTime} ${event.place}`).join("\n")}
@@ -909,6 +1003,10 @@ function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
 function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visibleMembers, sceneResults }) {
   const rehearsal = rehearsals.find((item) => item.id === rehearsalId) ?? rehearsals[0];
   const grouped = groupAttendance(rehearsalId, attendances, visibleMembers);
+  const absenceRows = [
+    ...grouped.absent.map(formatAttendanceLine),
+    ...grouped.late.map((row) => `遅刻：${formatAttendanceLine(row)}`),
+  ];
   if (!rehearsal) return <section className="panel emptyState">稽古日を追加してください。</section>;
   return (
     <section className="stack">
@@ -919,11 +1017,12 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
         <p>{rehearsal.startTime}-{rehearsal.endTime} / {rehearsal.place}</p>
         <p className="note">{rehearsal.memo}</p>
       </div>
+      <ContactNotesPanel grouped={grouped} />
+      {absenceRows.length > 0 && <PeoplePanel title="欠席・遅刻" rows={absenceRows} tone="warn" />}
       <div className="grid two">
-        <PeoplePanel title="出席予定" rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => row.member.name)} />
+        <PeoplePanel title="出席予定" rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => row.member.name)} collapsible />
         <PeoplePanel title="未回答" rows={grouped.noReply.map((member) => member.name)} tone="warn" />
       </div>
-      <ContactNotesPanel grouped={grouped} />
       <ScenePanel sceneResults={sceneResults} />
       <section className="panel">
         <h2 className="panelTitle"><span>↗</span>出席率</h2>
@@ -1064,6 +1163,13 @@ function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSav
       ? defaultRehearsalId
       : upcomingRehearsals[0]?.id ?? "",
   );
+  const [selectedRehearsalIds, setSelectedRehearsalIds] = useState(
+    upcomingRehearsals.some((rehearsal) => rehearsal.id === defaultRehearsalId)
+      ? [defaultRehearsalId]
+      : upcomingRehearsals[0]?.id
+        ? [upcomingRehearsals[0].id]
+        : [],
+  );
   const [status, setStatus] = useState<AttendanceStatus>("出席");
   const [arrivalTime, setArrivalTime] = useState("");
   const [leaveTime, setLeaveTime] = useState("");
@@ -1080,18 +1186,30 @@ function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSav
       if (defaultRehearsalId && selectableIds.includes(defaultRehearsalId)) return defaultRehearsalId;
       return upcomingRehearsals[0]?.id ?? "";
     });
+    setSelectedRehearsalIds((current) => {
+      const kept = current.filter((id) => selectableIds.includes(id));
+      if (kept.length) return kept;
+      if (defaultRehearsalId && selectableIds.includes(defaultRehearsalId)) return [defaultRehearsalId];
+      return upcomingRehearsals[0]?.id ? [upcomingRehearsals[0].id] : [];
+    });
   }, [defaultRehearsalId, rehearsals]);
 
   function toggleMember(memberId) {
     setSelectedMemberIds((current) => (current.includes(memberId) ? current.filter((id) => id !== memberId) : [...current, memberId]));
   }
 
+  function toggleSingleRehearsal(rehearsalId) {
+    setSelectedRehearsalIds((current) => (
+      current.includes(rehearsalId) ? current.filter((id) => id !== rehearsalId) : [...current, rehearsalId]
+    ));
+  }
+
   function submitAttendance() {
-    if (!rehearsalId) {
-      alert("稽古日を選んでください。");
-      return;
-    }
     if (mode === "bulk") {
+      if (!rehearsalId) {
+        alert("稽古日を選んでください。");
+        return;
+      }
       if (!selectedMemberIds.length) {
         alert("名前を1人以上選んでください。");
         return;
@@ -1113,7 +1231,20 @@ function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSav
       alert("名前を選んでください。");
       return;
     }
-    onSave({ memberId, rehearsalId, status, arrivalTime, leaveTime, note });
+    if (!selectedRehearsalIds.length) {
+      alert("稽古日を1つ以上選んでください。");
+      return;
+    }
+    onSaveBatch(
+      selectedRehearsalIds.map((selectedId) => ({
+        memberId,
+        rehearsalId: selectedId,
+        status,
+        arrivalTime,
+        leaveTime,
+        note,
+      })),
+    );
   }
 
   return (
@@ -1146,11 +1277,19 @@ function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSav
         </div>
       </fieldset>
       <fieldset className="choiceGroup">
-        <legend>稽古日</legend>
+        <legend>{mode === "bulk" ? "稽古日" : "稽古日（複数選択できます）"}</legend>
         <div className="choiceGrid rehearsals">
           {upcomingRehearsals.map((rehearsal) => (
-            <label key={rehearsal.id} className={`choiceCard ${rehearsalId === rehearsal.id ? "selected" : ""}`}>
-              <input type="radio" name="attendance-rehearsal" checked={rehearsalId === rehearsal.id} onChange={() => setRehearsalId(rehearsal.id)} />
+            <label
+              key={rehearsal.id}
+              className={`choiceCard ${(mode === "bulk" ? rehearsalId === rehearsal.id : selectedRehearsalIds.includes(rehearsal.id)) ? "selected" : ""}`}
+            >
+              <input
+                type={mode === "bulk" ? "radio" : "checkbox"}
+                name={mode === "bulk" ? "attendance-rehearsal" : `attendance-rehearsal-${rehearsal.id}`}
+                checked={mode === "bulk" ? rehearsalId === rehearsal.id : selectedRehearsalIds.includes(rehearsal.id)}
+                onChange={() => (mode === "bulk" ? setRehearsalId(rehearsal.id) : toggleSingleRehearsal(rehearsal.id))}
+              />
               <span>{rehearsal.date}</span>
               <small>{rehearsal.startTime}-{rehearsal.endTime}</small>
             </label>
@@ -1165,7 +1304,7 @@ function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSav
       </div>
       {mode === "bulk" && <p className="note">まとめて登録では、選んだ全員に同じステータス・時間・連絡事項が入ります。個別の理由はあとからひとりずつ編集できます。</p>}
       <label className="field">理由・連絡事項<textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="例：仕事後に向かいます" /></label>
-      <button className="primary">{mode === "bulk" ? (selectedMemberIds.length ? `${selectedMemberIds.length}人分をまとめて登録する` : "まとめて登録する") : "登録する"}</button>
+      <button className="primary">{mode === "bulk" ? (selectedMemberIds.length ? `${selectedMemberIds.length}人分をまとめて登録する` : "まとめて登録する") : (selectedRehearsalIds.length > 1 ? `${selectedRehearsalIds.length}日分を登録する` : "登録する")}</button>
     </form>
   );
 }
@@ -1230,7 +1369,47 @@ function ExportTools({
   );
 }
 
-function AdminView({ rehearsals, rehearsalId, setRehearsalId, grouped, sceneResults, attendances, members, allRehearsals }) {
+function NotionSyncPanel({ rehearsals, members, attendances, scenes }) {
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState("Notionの稽古カレンダーへ一方通行で同期します。");
+
+  async function syncNotion() {
+    if (!rehearsals.length) {
+      alert("同期する稽古日がありません。");
+      return;
+    }
+    try {
+      setIsSyncing(true);
+      setSyncStatus("Notionへ同期中です...");
+      const response = await fetch("/api/sync-notion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rehearsals: buildNotionSyncRows(rehearsals, members, attendances, scenes) }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result?.message || result?.error || "Notion同期に失敗しました。");
+      setSyncStatus(`同期完了：${result.created ?? 0}件作成 / ${result.updated ?? 0}件更新`);
+    } catch (error) {
+      setSyncStatus(error?.message || "Notion同期に失敗しました。公開版URLで開いているか、VercelのNotion設定を確認してください。");
+    } finally {
+      setIsSyncing(false);
+    }
+  }
+
+  return (
+    <section className="panel exportPanel">
+      <h2 className="panelTitle"><span>↗</span>Notion同期</h2>
+      <div className="exportActions single">
+        <button type="button" onClick={syncNotion} disabled={isSyncing}>
+          {isSyncing ? "同期中..." : "Notionへ同期"}
+        </button>
+      </div>
+      <p className="note">{syncStatus}</p>
+    </section>
+  );
+}
+
+function AdminView({ rehearsals, rehearsalId, setRehearsalId, grouped, sceneResults, attendances, members, allMembers, allRehearsals, scenes }) {
   return (
     <section className="stack">
       <div className="panel"><RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} /></div>
@@ -1250,6 +1429,7 @@ function AdminView({ rehearsals, rehearsalId, setRehearsalId, grouped, sceneResu
         members={members}
         attendances={attendances}
       />
+      <NotionSyncPanel rehearsals={allRehearsals} members={allMembers} attendances={attendances} scenes={scenes} />
     </section>
   );
 }
@@ -1319,13 +1499,21 @@ function ScenePanel({ sceneResults, rehearsals = [], onAdd, onUpdate, onDelete }
   const [editingId, setEditingId] = useState("");
   const editingScene = sceneResults.find(({ scene }) => scene.id === editingId)?.scene;
   const editable = Boolean(onAdd && onUpdate && onDelete);
+  const sortedSceneResults = sortSceneResults(sceneResults);
+  const availableScenes = sortedSceneResults.filter((result) => result.canRehearse);
+  const availabilityMessage = availableScenes.length === sortedSceneResults.length && sortedSceneResults.length
+    ? "本日全シーン可能"
+    : availableScenes.length
+      ? `本日：${availableScenes.map((result) => sceneShortName(result.scene.title)).join("、")}ができます`
+      : "本日できるシーンはありません";
 
   return (
     <section className="panel">
       <h2 className="panelTitle green"><span>★</span>シーン稽古可否</h2>
+      <p className={`sceneTodaySummary ${availableScenes.length ? "ok" : "ng"}`}>{availabilityMessage}</p>
       {editable && <SceneEditor editingScene={editingScene} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => setEditingId("")} />}
       <div className="sceneList">
-        {sceneResults.map(({ scene, canRehearse, missingCharacters }) => {
+        {sortedSceneResults.map(({ scene, canRehearse, missingCharacters }) => {
           const sceneCounts = getSceneCounts(scene.id, rehearsals);
           return (
           <article key={scene.id} className={`scene ${canRehearse ? "ok" : "ng"}`}>
@@ -1358,11 +1546,19 @@ function ScenePage({ sceneResults, rehearsals, onAdd, onUpdate, onDelete }) {
   );
 }
 
-function PeoplePanel({ title, rows, tone }) {
+function PeoplePanel({ title, rows, tone, collapsible = false, initialCollapsed = false }) {
+  const [collapsed, setCollapsed] = useState(initialCollapsed);
   return (
     <section className={`panel people ${tone ?? ""}`}>
-      <h2 className="panelTitle"><span>{tone === "warn" ? "?" : "♙"}</span>{title}</h2>
-      {rows.length ? <ul>{rows.map((row) => <li key={row}>{row}</li>)}</ul> : <p className="note">該当なし</p>}
+      <div className="panelTitleRow">
+        <h2 className="panelTitle"><span>{tone === "warn" ? "?" : "♙"}</span>{title}</h2>
+        {collapsible && (
+          <button type="button" className="miniToggle" onClick={() => setCollapsed((current) => !current)}>
+            {collapsed ? "開く" : "閉じる"}
+          </button>
+        )}
+      </div>
+      {!collapsed && (rows.length ? <ul>{rows.map((row) => <li key={row}>{row}</li>)}</ul> : <p className="note">該当なし</p>)}
     </section>
   );
 }

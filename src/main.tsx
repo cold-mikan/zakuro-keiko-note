@@ -177,6 +177,24 @@ function evaluateScenes(rehearsalId: string, attendances: Attendance[], targetMe
   });
 }
 
+function sceneOrderValue(title = "") {
+  const match = String(title).match(/[0-9０-９]+/);
+  if (!match) return Number.MAX_SAFE_INTEGER;
+  return Number(match[0].replace(/[０-９]/g, (char) => String(char.charCodeAt(0) - 0xff10)));
+}
+
+function sortSceneResults(sceneResults) {
+  return [...sceneResults].sort((a, b) => {
+    const orderDiff = sceneOrderValue(a.scene.title) - sceneOrderValue(b.scene.title);
+    return orderDiff || a.scene.title.localeCompare(b.scene.title, "ja");
+  });
+}
+
+function sceneShortName(title = "") {
+  const match = String(title).match(/[0-9０-９]+場/);
+  return match?.[0] ?? title;
+}
+
 function attendanceRate(memberId: string, attendances: Attendance[], rehearsalSource = rehearsals) {
   const rows = rehearsalSource
     .map((rehearsal) => attendances.find((attendance) => attendance.rehearsalId === rehearsal.id && attendance.memberId === memberId))
@@ -341,6 +359,40 @@ function buildMemberSummaryRows(rehearsalSource, memberSource, attendanceSource)
       出席率: total ? `${Math.round((participation / total) * 100)}%` : "0%",
     };
   });
+}
+
+function buildNotionSyncRows(rehearsalSource, memberSource, attendanceSource, sceneSource) {
+  return [...rehearsalSource]
+    .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`))
+    .map((rehearsal) => {
+      const summary = getAttendanceSummary(rehearsal, memberSource, attendanceSource);
+      const selectedScenes = sceneSource
+        .filter((scene) => rehearsal.selectedSceneIds?.includes(scene.id))
+        .map((scene) => scene.title);
+      return {
+        id: rehearsal.id,
+        title: `${rehearsal.date} ${rehearsal.eventType ?? "稽古日"}`,
+        date: rehearsal.date,
+        startTime: formatTime(rehearsal.startTime),
+        endTime: formatTime(rehearsal.endTime),
+        place: rehearsal.place ?? "",
+        eventType: rehearsal.eventType ?? "稽古日",
+        rehearsalTeam: rehearsal.rehearsalTeam ?? "共通",
+        presentCount: summary.present.length,
+        absentCount: summary.absent.length,
+        lateCount: summary.late.length,
+        earlyCount: summary.early.length,
+        undecidedCount: summary.undecided.length,
+        noReplyCount: summary.noReply.length,
+        presentMembers: summary.present.map((row) => row.member.name).join("、"),
+        absentMembers: summary.absent.map((row) => row.member.name).join("、"),
+        lateMembers: summary.late.map((row) => row.member.name).join("、"),
+        earlyMembers: summary.early.map((row) => row.member.name).join("、"),
+        noReplyMembers: summary.noReply.map((row) => row.member.name).join("、"),
+        selectedScenes: selectedScenes.join("、"),
+        memo: rehearsal.memo ?? "",
+      };
+    });
 }
 
 function formatMatrixStatus(attendance) {
@@ -1133,7 +1185,9 @@ function App() {
           sceneResults={sceneResults}
           attendances={attendances}
           members={visibleMembers}
+          allMembers={memberList}
           allRehearsals={rehearsalList}
+          scenes={sceneList}
         />
       )}
       {tab === "members" && <MemberView rehearsals={rehearsalList} attendances={attendances} visibleMembers={visibleMembers} onAdd={addMember} onUpdate={updateMember} onDelete={deleteMember} allowDelete={!onlineReady} />}
@@ -1384,10 +1438,11 @@ function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
           const events = eventsByDate.get(day.date) ?? [];
           const hasMtg = events.some((event) => getEventKind(event) === "mtg");
           const isSelected = day.date === selected?.date;
+          const isToday = day.date === new Date().toLocaleDateString("sv-SE");
           return (
             <button
               key={day.date}
-              className={`calendarDay ${events.length ? "hasEvent" : ""} ${hasMtg ? "hasMtg" : ""} ${isSelected ? "selected" : ""}`}
+              className={`calendarDay ${events.length ? "hasEvent" : ""} ${hasMtg ? "hasMtg" : ""} ${isSelected ? "selected" : ""} ${isToday ? "today" : ""}`}
               onClick={() => events[0] && onSelect(events[0].id)}
               disabled={!events.length}
               title={events.map((event) => `${formatTime(event.startTime)} ${event.place}`).join("\n")}
@@ -1409,6 +1464,10 @@ function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
 function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visibleMembers, sceneResults }) {
   const rehearsal = rehearsals.find((item) => item.id === rehearsalId) ?? rehearsals[0];
   const grouped = groupAttendance(rehearsalId, attendances, visibleMembers);
+  const absenceRows = [
+    ...grouped.absent.map(formatAttendanceLine),
+    ...grouped.late.map((row) => `遅刻：${formatAttendanceLine(row)}`),
+  ];
   if (!rehearsal) return <section className="panel emptyState">稽古日を追加してください。</section>;
   return (
     <section className="stack">
@@ -1419,11 +1478,12 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
         <p>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)} / {rehearsal.place}</p>
         <p className="note">{rehearsal.memo}</p>
       </div>
+      <ContactNotesPanel grouped={grouped} />
+      {absenceRows.length > 0 && <PeoplePanel title="欠席・遅刻" rows={absenceRows} tone="warn" />}
       <div className="grid two">
-        <PeoplePanel title="出席予定" rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => row.member.name)} />
+        <PeoplePanel title="出席予定" rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => row.member.name)} collapsible />
         <PeoplePanel title="未回答" rows={grouped.noReply.map((member) => member.name)} tone="warn" />
       </div>
-      <ContactNotesPanel grouped={grouped} />
       <ScenePanel sceneResults={sceneResults} />
       <section className="panel">
         <h2 className="panelTitle"><span>↗</span>出席率</h2>
@@ -1776,7 +1836,47 @@ function ExportTools({
   );
 }
 
-function AdminView({ rehearsals, rehearsalId, setRehearsalId, grouped, sceneResults, attendances, members, allRehearsals }) {
+function NotionSyncPanel({ rehearsals, members, attendances, scenes }) {
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState("Notionの稽古カレンダーへ一方通行で同期します。");
+
+  async function syncNotion() {
+    if (!rehearsals.length) {
+      alert("同期する稽古日がありません。");
+      return;
+    }
+    try {
+      setIsSyncing(true);
+      setSyncStatus("Notionへ同期中です...");
+      const response = await fetch("/api/sync-notion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rehearsals: buildNotionSyncRows(rehearsals, members, attendances, scenes) }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result?.message || result?.error || "Notion同期に失敗しました。");
+      setSyncStatus(`同期完了：${result.created ?? 0}件作成 / ${result.updated ?? 0}件更新`);
+    } catch (error) {
+      setSyncStatus(error?.message || "Notion同期に失敗しました。Vercelの環境変数とNotion設定を確認してください。");
+    } finally {
+      setIsSyncing(false);
+    }
+  }
+
+  return (
+    <section className="panel exportPanel">
+      <h2 className="panelTitle"><span>↗</span>Notion同期</h2>
+      <div className="exportActions single">
+        <button type="button" onClick={syncNotion} disabled={isSyncing}>
+          {isSyncing ? "同期中..." : "Notionへ同期"}
+        </button>
+      </div>
+      <p className="note">{syncStatus}</p>
+    </section>
+  );
+}
+
+function AdminView({ rehearsals, rehearsalId, setRehearsalId, grouped, sceneResults, attendances, members, allMembers, allRehearsals, scenes }) {
   return (
     <section className="stack">
       <div className="panel"><RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} /></div>
@@ -1796,6 +1896,7 @@ function AdminView({ rehearsals, rehearsalId, setRehearsalId, grouped, sceneResu
         members={members}
         attendances={attendances}
       />
+      <NotionSyncPanel rehearsals={allRehearsals} members={allMembers} attendances={attendances} scenes={scenes} />
     </section>
   );
 }
@@ -1865,13 +1966,21 @@ function ScenePanel({ sceneResults, rehearsals = [], onAdd, onUpdate, onDelete, 
   const [editingId, setEditingId] = useState("");
   const editingScene = sceneResults.find(({ scene }) => scene.id === editingId)?.scene;
   const editable = Boolean(onAdd && onUpdate && onDelete);
+  const sortedSceneResults = sortSceneResults(sceneResults);
+  const availableScenes = sortedSceneResults.filter((result) => result.canRehearse);
+  const availabilityMessage = availableScenes.length === sortedSceneResults.length && sortedSceneResults.length
+    ? "本日全シーン可能"
+    : availableScenes.length
+      ? `本日：${availableScenes.map((result) => sceneShortName(result.scene.title)).join("、")}ができます`
+      : "本日できるシーンはありません";
 
   return (
     <section className="panel">
       <h2 className="panelTitle green"><span>★</span>シーン稽古可否</h2>
+      <p className={`sceneTodaySummary ${availableScenes.length ? "ok" : "ng"}`}>{availabilityMessage}</p>
       {editable && <SceneEditor editingScene={editingScene} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => setEditingId("")} />}
       <div className="sceneList">
-        {sceneResults.map(({ scene, canRehearse, missingCharacters }) => {
+        {sortedSceneResults.map(({ scene, canRehearse, missingCharacters }) => {
           const sceneCounts = getSceneCounts(scene.id, rehearsals);
           return (
           <article key={scene.id} className={`scene ${canRehearse ? "ok" : "ng"}`}>
@@ -1904,11 +2013,19 @@ function ScenePage({ sceneResults, rehearsals, onAdd, onUpdate, onDelete, allowD
   );
 }
 
-function PeoplePanel({ title, rows, tone }) {
+function PeoplePanel({ title, rows, tone, collapsible = false, initialCollapsed = false }) {
+  const [collapsed, setCollapsed] = useState(initialCollapsed);
   return (
     <section className={`panel people ${tone ?? ""}`}>
-      <h2 className="panelTitle"><span>{tone === "warn" ? "?" : "♙"}</span>{title}</h2>
-      {rows.length ? <ul>{rows.map((row) => <li key={row}>{row}</li>)}</ul> : <p className="note">該当なし</p>}
+      <div className="panelTitleRow">
+        <h2 className="panelTitle"><span>{tone === "warn" ? "?" : "♙"}</span>{title}</h2>
+        {collapsible && (
+          <button type="button" className="miniToggle" onClick={() => setCollapsed((current) => !current)}>
+            {collapsed ? "開く" : "閉じる"}
+          </button>
+        )}
+      </div>
+      {!collapsed && (rows.length ? <ul>{rows.map((row) => <li key={row}>{row}</li>)}</ul> : <p className="note">該当なし</p>)}
     </section>
   );
 }
