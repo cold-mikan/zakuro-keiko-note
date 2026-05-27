@@ -73,9 +73,12 @@ function normalizeTime(value, fallback = "00:00") {
 }
 
 function addDays(date, days) {
-  const next = new Date(`${date}T00:00:00+09:00`);
-  next.setDate(next.getDate() + days);
-  return next.toISOString().slice(0, 10);
+  const [year, month, day] = String(date).split("-").map(Number);
+  const next = new Date(Date.UTC(year, month - 1, day + days));
+  const nextYear = next.getUTCFullYear();
+  const nextMonth = String(next.getUTCMonth() + 1).padStart(2, "0");
+  const nextDay = String(next.getUTCDate()).padStart(2, "0");
+  return `${nextYear}-${nextMonth}-${nextDay}`;
 }
 
 function toNotionDate(row) {
