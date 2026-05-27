@@ -61,6 +61,17 @@ function number(value) {
   return { number: Number(value ?? 0) };
 }
 
+function isValidDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value ?? ""))) return false;
+  const date = new Date(`${value}T00:00:00+09:00`);
+  return !Number.isNaN(date.getTime());
+}
+
+function normalizeTime(value, fallback = "00:00") {
+  const raw = String(value ?? "").slice(0, 5);
+  return /^\d{2}:\d{2}$/.test(raw) ? raw : fallback;
+}
+
 function addDays(date, days) {
   const next = new Date(`${date}T00:00:00+09:00`);
   next.setDate(next.getDate() + days);
@@ -68,8 +79,8 @@ function addDays(date, days) {
 }
 
 function toNotionDate(row) {
-  const startTime = String(row.startTime ?? "").slice(0, 5) || "00:00";
-  const endTime = String(row.endTime ?? "").slice(0, 5) || startTime;
+  const startTime = normalizeTime(row.startTime);
+  const endTime = normalizeTime(row.endTime, startTime);
   const endDate = endTime <= startTime ? addDays(row.date, 1) : row.date;
   return {
     date: {
@@ -79,33 +90,52 @@ function toNotionDate(row) {
   };
 }
 
-function pageProperties(row) {
-  return {
-    名前: title(row.title),
-    日付: toNotionDate(row),
-    開始: text(row.startTime),
-    終了: text(row.endTime),
-    場所: text(row.place),
-    予定の種類: select(row.eventType),
-    対象チーム: select(row.rehearsalTeam),
-    出席数: number(row.presentCount),
-    欠席数: number(row.absentCount),
-    遅刻数: number(row.lateCount),
-    早退数: number(row.earlyCount),
-    未定数: number(row.undecidedCount),
-    未回答数: number(row.noReplyCount),
-    出席者: text(row.presentMembers),
-    欠席者: text(row.absentMembers),
-    遅刻者: text(row.lateMembers),
-    早退者: text(row.earlyMembers),
-    未回答者: text(row.noReplyMembers),
-    この日にやるシーン: text(row.selectedScenes),
-    メモ: text(row.memo),
-    稽古ノートID: text(row.id),
-  };
+function firstPropertyName(properties, type) {
+  return Object.entries(properties).find(([, property]) => property.type === type)?.[0] ?? null;
 }
 
-async function findExistingPage(databaseId, rehearsalId) {
+function addIfExists(output, properties, name, value) {
+  if (properties[name]) output[name] = value;
+}
+
+function pageProperties(row, databaseProperties) {
+  const output = {};
+  const titleProperty = databaseProperties["名前"] ? "名前" : firstPropertyName(databaseProperties, "title");
+  const dateProperty = databaseProperties["日付"] ? "日付" : firstPropertyName(databaseProperties, "date");
+
+  if (!titleProperty || !dateProperty) {
+    throw new Error("Notionデータベースにタイトル列と日付列が必要です。");
+  }
+
+  output[titleProperty] = title(row.title);
+  output[dateProperty] = toNotionDate(row);
+
+  addIfExists(output, databaseProperties, "開始", text(row.startTime));
+  addIfExists(output, databaseProperties, "終了", text(row.endTime));
+  addIfExists(output, databaseProperties, "場所", text(row.place));
+  addIfExists(output, databaseProperties, "予定の種類", select(row.eventType));
+  addIfExists(output, databaseProperties, "対象チーム", select(row.rehearsalTeam));
+  addIfExists(output, databaseProperties, "出席数", number(row.presentCount));
+  addIfExists(output, databaseProperties, "欠席数", number(row.absentCount));
+  addIfExists(output, databaseProperties, "遅刻数", number(row.lateCount));
+  addIfExists(output, databaseProperties, "早退数", number(row.earlyCount));
+  addIfExists(output, databaseProperties, "未定数", number(row.undecidedCount));
+  addIfExists(output, databaseProperties, "未回答数", number(row.noReplyCount));
+  addIfExists(output, databaseProperties, "出席者", text(row.presentMembers));
+  addIfExists(output, databaseProperties, "欠席者", text(row.absentMembers));
+  addIfExists(output, databaseProperties, "遅刻者", text(row.lateMembers));
+  addIfExists(output, databaseProperties, "早退者", text(row.earlyMembers));
+  addIfExists(output, databaseProperties, "未回答者", text(row.noReplyMembers));
+  addIfExists(output, databaseProperties, "この日にやるシーン", text(row.selectedScenes));
+  addIfExists(output, databaseProperties, "メモ", text(row.memo));
+  addIfExists(output, databaseProperties, "稽古ノートID", text(row.id));
+
+  return output;
+}
+
+async function findExistingPage(databaseId, databaseProperties, rehearsalId) {
+  if (!databaseProperties["稽古ノートID"]) return null;
+
   const result = await notionFetch(`/databases/${databaseId}/query`, {
     method: "POST",
     body: JSON.stringify({
@@ -119,9 +149,9 @@ async function findExistingPage(databaseId, rehearsalId) {
   return result.results?.[0]?.id ?? null;
 }
 
-async function upsertRehearsal(databaseId, row) {
-  const existingPageId = await findExistingPage(databaseId, row.id);
-  const properties = pageProperties(row);
+async function upsertRehearsal(databaseId, databaseProperties, row) {
+  const existingPageId = await findExistingPage(databaseId, databaseProperties, row.id);
+  const properties = pageProperties(row, databaseProperties);
 
   if (existingPageId) {
     await notionFetch(`/pages/${existingPageId}`, {
@@ -154,15 +184,20 @@ export default async function handler(req, res) {
       return json(res, 400, { error: "同期する稽古日データがありません。" });
     }
 
+    const database = await notionFetch(`/databases/${databaseId}`);
+    const databaseProperties = database.properties ?? {};
+    const validRehearsals = rehearsals.filter((rehearsal) => isValidDate(rehearsal.date));
+    const skipped = rehearsals.length - validRehearsals.length;
+
     let created = 0;
     let updated = 0;
-    for (const rehearsal of rehearsals) {
-      const result = await upsertRehearsal(databaseId, rehearsal);
+    for (const rehearsal of validRehearsals) {
+      const result = await upsertRehearsal(databaseId, databaseProperties, rehearsal);
       if (result === "created") created += 1;
       if (result === "updated") updated += 1;
     }
 
-    return json(res, 200, { ok: true, created, updated });
+    return json(res, 200, { ok: true, created, updated, skipped });
   } catch (error) {
     console.error(error);
     return json(res, 500, {
