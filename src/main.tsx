@@ -2034,17 +2034,10 @@ function ScenePanel({ sceneResults, rehearsals = [], onAdd, onUpdate, onDelete, 
   const editingScene = sceneResults.find(({ scene }) => scene.id === editingId)?.scene;
   const editable = Boolean(onAdd && onUpdate && onDelete);
   const sortedSceneResults = sortSceneResults(sceneResults);
-  const availableScenes = sortedSceneResults.filter((result) => result.canRehearse);
-  const availabilityMessage = availableScenes.length === sortedSceneResults.length && sortedSceneResults.length
-    ? "この日は全シーン可能"
-    : availableScenes.length
-      ? `この日にできるシーン：${availableScenes.map((result) => sceneShortName(result.scene.title)).join("、")}`
-      : "この日にできるシーンはありません";
 
   return (
     <section className="panel">
       <h2 className="panelTitle green"><span>★</span>シーン稽古可否</h2>
-      <p className={`sceneTodaySummary ${availableScenes.length ? "ok" : "ng"}`}>{availabilityMessage}</p>
       {editable && <SceneEditor editingScene={editingScene} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => setEditingId("")} />}
       <div className="sceneList">
         {sortedSceneResults.map(({ scene, canRehearse, missingCharacters }) => {
@@ -2156,8 +2149,6 @@ function ScenePage({ rehearsals, rehearsalId, attendances, visibleMembers, scene
   return (
     <AdminLock>
       <section className="stack">
-        <ExportTools rehearsals={rehearsals} members={allMembers} attendances={attendances} />
-        <NotionSyncPanel rehearsals={rehearsals} members={allMembers} attendances={attendances} scenes={scenes} />
         <SceneAvailabilityBrowser
           rehearsals={rehearsals}
           rehearsalId={rehearsalId}
@@ -2169,6 +2160,8 @@ function ScenePage({ rehearsals, rehearsalId, attendances, visibleMembers, scene
           onDelete={onDelete}
           allowDelete={allowDelete}
         />
+        <ExportTools rehearsals={rehearsals} members={allMembers} attendances={attendances} />
+        <NotionSyncPanel rehearsals={rehearsals} members={allMembers} attendances={attendances} scenes={scenes} />
       </section>
     </AdminLock>
   );
