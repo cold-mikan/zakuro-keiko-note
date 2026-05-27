@@ -825,6 +825,12 @@ h3 {
   color: #557b9a;
 }
 
+.collapsedMessage {
+  color: #c94f74;
+  font-weight: 700;
+  margin-top: 12px;
+}
+
 .cardActions {
   display: flex;
   flex-wrap: wrap;

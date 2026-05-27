@@ -1255,7 +1255,7 @@ function SyncGuardNotice({ configured, onlineReady, onlineStatus, realtimeStatus
   const message = !configured
     ? "この画面はローカル確認用です。公開版ではSupabaseに保存されます。"
     : onlineReady
-      ? "入力内容はオンラインに保存され、他の端末にも反映されます。"
+      ? "入力内容は他の端末にも反映されています。"
       : "接続が完了するまで保存操作を止めています。";
   const statusText = !configured
     ? "Supabase未設定 / ローカル表示"
@@ -1266,9 +1266,10 @@ function SyncGuardNotice({ configured, onlineReady, onlineStatus, realtimeStatus
     <section className={`syncGuard ${tone}`} aria-live="polite">
       <div>
         <strong>{title}</strong>
+        {onlineReady && configured && <p>{statusText}</p>}
         <p>{message}</p>
       </div>
-      <span>{statusText}</span>
+      {(!onlineReady || !configured) && <span>{statusText}</span>}
     </section>
   );
 }
@@ -1541,7 +1542,12 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
       <TodayScenesPanel rehearsal={rehearsal} scenes={scenes} />
       {absenceRows.length > 0 && <PeoplePanel title="欠席・遅刻" rows={absenceRows} tone="warn" />}
       <div className="grid two">
-        <PeoplePanel title="出席予定" rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => attendancePersonRow(row))} collapsible />
+        <PeoplePanel
+          title="出席予定"
+          rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => attendancePersonRow(row))}
+          collapsible
+          collapsedMessage={grouped.absent.length ? ",,,1,2,,,いっぱい！" : "なんと全員大集合❣"}
+        />
         <PeoplePanel title="未回答" rows={grouped.noReply.map(memberPersonRow)} tone="warn" />
       </div>
       <section className="panel">
@@ -2185,7 +2191,7 @@ function renderPeopleRow(row) {
   return <span className={`personName ${roleClassName(row.role)}`}>{row.label}</span>;
 }
 
-function PeoplePanel({ title, rows, tone, collapsible = false, initialCollapsed = false }) {
+function PeoplePanel({ title, rows, tone, collapsible = false, initialCollapsed = false, collapsedMessage = "" }) {
   const [collapsed, setCollapsed] = useState(initialCollapsed);
   return (
     <section className={`panel people ${tone ?? ""}`}>
@@ -2197,6 +2203,7 @@ function PeoplePanel({ title, rows, tone, collapsible = false, initialCollapsed 
           </button>
         )}
       </div>
+      {collapsed && collapsedMessage && <p className="collapsedMessage">{collapsedMessage}</p>}
       {!collapsed && (rows.length ? <ul>{rows.map((row, index) => <li key={typeof row === "string" ? row : row.key ?? `${row.label}-${index}`}>{renderPeopleRow(row)}</li>)}</ul> : <p className="note">該当なし</p>)}
     </section>
   );
