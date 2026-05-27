@@ -119,7 +119,7 @@ const deletedMemberMemo = "__deleted_member__";
 type TeamFilter = "全員" | "Aチーム" | "Bチーム";
 const teamFilters: TeamFilter[] = ["全員", "Aチーム", "Bチーム"];
 const tabs = [
-  { id: "dashboard", label: "ダッシュボード", icon: "⌂" },
+  { id: "dashboard", label: "ホーム", icon: "⌂" },
   { id: "rehearsals", label: "稽古日", icon: "▣" },
   { id: "form", label: "出欠登録", icon: "＋" },
   { id: "admin", label: "出欠一覧", icon: "☷" },
