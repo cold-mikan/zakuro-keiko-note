@@ -2088,7 +2088,7 @@ function AdminLock({ children }) {
       >
         <label className="field">
           パスワードを入力してください。
-          <input value={password} onChange={(event) => setPassword(event.target.value)} placeholder="つらこ" />
+          <input value={password} onChange={(event) => setPassword(event.target.value)} />
         </label>
         <button className="primary">管理者ページを開く</button>
       </form>
