@@ -1838,7 +1838,7 @@ function ExportTools({
 
 function NotionSyncPanel({ rehearsals, members, attendances, scenes }) {
   const [isSyncing, setIsSyncing] = useState(false);
-  const [syncStatus, setSyncStatus] = useState("Notionの稽古カレンダーへ一方通行で同期します。");
+  const [syncStatus, setSyncStatus] = useState("クリックするとアプリ内の最新情報をのNotionの稽古カレンダーへ同期するよ！");
 
   async function syncNotion() {
     if (!rehearsals.length) {
