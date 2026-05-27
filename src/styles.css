@@ -768,6 +768,63 @@ h3 {
   gap: 12px;
 }
 
+.memberCard {
+  border-left: 6px solid #f0c8b9;
+}
+
+.memberCard.cast {
+  background: linear-gradient(90deg, rgba(255, 239, 246, 0.92), rgba(255, 253, 249, 0.94));
+  border-left-color: #ee6b8e;
+}
+
+.memberCard.staff {
+  background: linear-gradient(90deg, rgba(246, 250, 255, 0.92), rgba(255, 253, 249, 0.94));
+  border-left-color: #87a6c8;
+}
+
+.roleBadge {
+  border: 1px solid #e9cfc2;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  margin-right: 6px;
+  font-family: "Yu Gothic UI", Meiryo, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.roleBadge.cast {
+  background: #fff0f6;
+  border-color: #f3a8bd;
+  color: #d95178;
+}
+
+.roleBadge.staff {
+  background: #eef7ff;
+  border-color: #a8c5de;
+  color: #557b9a;
+}
+
+.personName {
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.4;
+  padding: 2px 8px;
+}
+
+.personName.cast {
+  background: rgba(255, 240, 246, 0.88);
+  color: #c94f74;
+}
+
+.personName.staff {
+  background: rgba(238, 247, 255, 0.88);
+  color: #557b9a;
+}
+
 .cardActions {
   display: flex;
   flex-wrap: wrap;

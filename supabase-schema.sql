@@ -136,6 +136,7 @@ drop policy if exists "members can be updated by shared users" on public.members
 drop policy if exists "rehearsals can be updated by shared users" on public.rehearsals;
 drop policy if exists "scenes can be updated by shared users" on public.scenes;
 drop policy if exists "attendances can be updated by shared users" on public.attendances;
+drop policy if exists "members can be deleted by shared users" on public.members;
 drop policy if exists "rehearsals can be deleted by shared users" on public.rehearsals;
 drop policy if exists "attendances can be deleted by shared users" on public.attendances;
 drop policy if exists "edit logs can be inserted by shared users" on public.edit_logs;
@@ -186,6 +187,9 @@ create policy "scenes can be updated by shared users" on public.scenes
 create policy "attendances can be updated by shared users" on public.attendances
   for update to anon using (true) with check (true);
 
+create policy "members can be deleted by shared users" on public.members
+  for delete to anon using (true);
+
 create policy "rehearsals can be deleted by shared users" on public.rehearsals
   for delete to anon using (true);
 
@@ -204,13 +208,14 @@ grant select, insert, update on public.members to anon;
 grant select, insert, update on public.rehearsals to anon;
 grant select, insert, update on public.scenes to anon;
 grant select, insert, update on public.attendances to anon;
+grant delete on public.members to anon;
 grant delete on public.rehearsals to anon;
 grant delete on public.attendances to anon;
 grant select, insert on public.edit_logs to anon;
 grant usage, select on sequence public.edit_logs_id_seq to anon;
 grant usage on schema public to service_role;
 grant select, insert, update on public.rooms to service_role;
-grant select, insert, update on public.members to service_role;
+grant select, insert, update, delete on public.members to service_role;
 grant select, insert, update, delete on public.rehearsals to service_role;
 grant select, insert, update on public.scenes to service_role;
 grant select, insert, update, delete on public.attendances to service_role;

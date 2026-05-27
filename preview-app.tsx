@@ -689,7 +689,9 @@ function App() {
   }
 
   function deleteMember(memberId: string) {
-    if (!confirm("このメンバーを削除しますか？")) return;
+    const target = memberList.find((member) => member.id === memberId);
+    if (!target) return;
+    if (!confirm(`${target.name} を削除しますか？\nこのメンバーの出欠データも一緒に削除されます。`)) return;
     setMemberList((current) => current.filter((member) => member.id !== memberId));
     setAttendances((current) => current.filter((attendance) => attendance.memberId !== memberId));
   }
@@ -1003,9 +1005,15 @@ function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
 function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visibleMembers, sceneResults }) {
   const rehearsal = rehearsals.find((item) => item.id === rehearsalId) ?? rehearsals[0];
   const grouped = groupAttendance(rehearsalId, attendances, visibleMembers);
+  const attendancePersonRow = (row, prefix = "") => ({
+    key: `${prefix}${row.member.id}-${row.attendance.status}`,
+    label: `${prefix}${formatAttendanceLine(row)}`,
+    role: row.member.role,
+  });
+  const memberPersonRow = (member) => ({ key: member.id, label: member.name, role: member.role });
   const absenceRows = [
-    ...grouped.absent.map(formatAttendanceLine),
-    ...grouped.late.map((row) => `遅刻：${formatAttendanceLine(row)}`),
+    ...grouped.absent.map((row) => attendancePersonRow(row)),
+    ...grouped.late.map((row) => attendancePersonRow(row, "遅刻：")),
   ];
   if (!rehearsal) return <section className="panel emptyState">稽古日を追加してください。</section>;
   return (
@@ -1020,14 +1028,14 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
       <ContactNotesPanel grouped={grouped} />
       {absenceRows.length > 0 && <PeoplePanel title="欠席・遅刻" rows={absenceRows} tone="warn" />}
       <div className="grid two">
-        <PeoplePanel title="出席予定" rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => row.member.name)} collapsible />
-        <PeoplePanel title="未回答" rows={grouped.noReply.map((member) => member.name)} tone="warn" />
+        <PeoplePanel title="出席予定" rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => attendancePersonRow(row))} collapsible />
+        <PeoplePanel title="未回答" rows={grouped.noReply.map(memberPersonRow)} tone="warn" />
       </div>
       <ScenePanel sceneResults={sceneResults} />
       <section className="panel">
         <h2 className="panelTitle"><span>↗</span>出席率</h2>
         <div className="rateList">
-          {visibleMembers.map((member) => <div key={member.id} className="rateRow"><span>{member.name}</span><strong>{attendanceRate(member.id, attendances, rehearsals)}%</strong></div>)}
+          {visibleMembers.map((member) => <div key={member.id} className="rateRow"><span className={`personName ${roleClassName(member.role)}`}>{member.name}</span><strong>{attendanceRate(member.id, attendances, rehearsals)}%</strong></div>)}
         </div>
       </section>
     </section>
@@ -1546,6 +1554,15 @@ function ScenePage({ sceneResults, rehearsals, onAdd, onUpdate, onDelete }) {
   );
 }
 
+function roleClassName(role) {
+  return role === "キャスト" ? "cast" : "staff";
+}
+
+function renderPeopleRow(row) {
+  if (typeof row === "string") return row;
+  return <span className={`personName ${roleClassName(row.role)}`}>{row.label}</span>;
+}
+
 function PeoplePanel({ title, rows, tone, collapsible = false, initialCollapsed = false }) {
   const [collapsed, setCollapsed] = useState(initialCollapsed);
   return (
@@ -1558,7 +1575,7 @@ function PeoplePanel({ title, rows, tone, collapsible = false, initialCollapsed 
           </button>
         )}
       </div>
-      {!collapsed && (rows.length ? <ul>{rows.map((row) => <li key={row}>{row}</li>)}</ul> : <p className="note">該当なし</p>)}
+      {!collapsed && (rows.length ? <ul>{rows.map((row, index) => <li key={typeof row === "string" ? row : row.key ?? `${row.label}-${index}`}>{renderPeopleRow(row)}</li>)}</ul> : <p className="note">該当なし</p>)}
     </section>
   );
 }
@@ -1621,15 +1638,16 @@ function MemberEditor({ editingMember, onAdd, onUpdate, onCancel }) {
 function MemberView({ rehearsals, attendances, visibleMembers, onAdd, onUpdate, onDelete }) {
   const [editingId, setEditingId] = useState("");
   const editingMember = visibleMembers.find((member) => member.id === editingId);
+  const roleClass = roleClassName;
 
   return (
     <section className="stack">
       <MemberEditor editingMember={editingMember} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => setEditingId("")} />
       {visibleMembers.map((member) => (
-        <article key={member.id} className="panel memberCard">
+        <article key={member.id} className={`panel memberCard ${roleClass(member.role)}`}>
           <div>
             <h2>{member.name}</h2>
-            <p>{member.role} / {member.team}{member.character ? ` / 役：${member.character}` : ""}</p>
+            <p><span className={`roleBadge ${roleClass(member.role)}`}>{member.role}</span> {member.team}{member.character ? ` / 役：${member.character}` : ""}</p>
             <p className="note">{member.memo}</p>
           </div>
           <div className="cardActions">
