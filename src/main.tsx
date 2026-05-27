@@ -123,7 +123,6 @@ const tabs = [
   { id: "rehearsals", label: "稽古日", icon: "▣" },
   { id: "form", label: "参加予定の入力", icon: "＋" },
   { id: "admin", label: "出欠一覧", icon: "☷" },
-  { id: "members", label: "メンバー", icon: "member" },
   { id: "scenes", label: "管理者", icon: "★" },
 ] as const;
 
@@ -1231,7 +1230,6 @@ function App() {
           scenes={sceneList}
         />
       )}
-      {tab === "members" && <MemberView rehearsals={rehearsalList} attendances={attendances} visibleMembers={visibleMembers} onAdd={addMember} onUpdate={updateMember} onDelete={deleteMember} allowDelete={true} />}
       {tab === "scenes" && (
         <ScenePage
           rehearsals={rehearsalList}
@@ -1244,6 +1242,9 @@ function App() {
           onUpdate={updateScene}
           onDelete={deleteScene}
           onUpdateRehearsal={updateRehearsal}
+          onAddMember={addMember}
+          onUpdateMember={updateMember}
+          onDeleteMember={deleteMember}
           allowDelete={!onlineReady}
         />
       )}
@@ -2204,7 +2205,7 @@ function SceneAvailabilityBrowser({ rehearsals, rehearsalId, attendances, visibl
   );
 }
 
-function ScenePage({ rehearsals, rehearsalId, attendances, visibleMembers, scenes, allMembers, onAdd, onUpdate, onDelete, onUpdateRehearsal, allowDelete }) {
+function ScenePage({ rehearsals, rehearsalId, attendances, visibleMembers, scenes, allMembers, onAdd, onUpdate, onDelete, onUpdateRehearsal, onAddMember, onUpdateMember, onDeleteMember, allowDelete }) {
   return (
     <AdminLock>
       <section className="stack">
@@ -2219,6 +2220,15 @@ function ScenePage({ rehearsals, rehearsalId, attendances, visibleMembers, scene
           onDelete={onDelete}
           onUpdateRehearsal={onUpdateRehearsal}
           allowDelete={allowDelete}
+        />
+        <MemberView
+          rehearsals={rehearsals}
+          attendances={attendances}
+          visibleMembers={visibleMembers}
+          onAdd={onAddMember}
+          onUpdate={onUpdateMember}
+          onDelete={onDeleteMember}
+          allowDelete={true}
         />
         <ExportTools rehearsals={rehearsals} members={allMembers} attendances={attendances} />
         <NotionSyncPanel rehearsals={rehearsals} members={allMembers} attendances={attendances} scenes={scenes} />
