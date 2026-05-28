@@ -1486,6 +1486,13 @@ function formatTicketDate(date) {
   return `${date} (${weekday})`;
 }
 
+function formatDateWithWeekday(date) {
+  const parsed = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return date;
+  const weekday = parsed.toLocaleDateString("ja-JP", { weekday: "short" });
+  return `${date}（${weekday}）`;
+}
+
 function isTodayDate(date) {
   return date === new Date().toLocaleDateString("sv-SE");
 }
@@ -1614,9 +1621,12 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
       )}
       <DashboardCalendar rehearsals={rehearsals} selectedRehearsalId={rehearsalId} onSelect={setRehearsalId} />
       <div className="panel highlight">
-        <h2 className="sparkTitle currentInfoTitle"><span className="currentInfoLabel">表示中の稽古日：</span><span className="currentInfoDate">{rehearsal.date}</span><span>✦</span></h2>
+        <h2 className="sparkTitle currentInfoTitle">
+          <span className="currentInfoLabel">表示中の稽古日：</span>
+          <span className="currentInfoDate currentInfoMeta">{formatDateWithWeekday(rehearsal.date)} {formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</span>
+          <span>✦</span>
+        </h2>
         <RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} />
-        <p>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</p>
         <p className="note">{rehearsal.memo}</p>
       </div>
       <ContactNotesPanel grouped={grouped} />
