@@ -1495,7 +1495,7 @@ function TodayScenesPanel({ rehearsal, scenes }) {
   const allScenesSelected = scenes.length > 0 && scenes.every((scene) => selectedSceneIds.includes(scene.id));
   return (
     <section className="panel todayScenesPanel">
-      <h2 className="panelTitle"><span>★</span>本日の稽古シーン</h2>
+      <h2 className="panelTitle"><span>★</span>稽古予定の場面</h2>
       <p>{allScenesSelected ? "ぜんぶ❣" : titles.map(sceneShortName).join("、")}</p>
     </section>
   );
