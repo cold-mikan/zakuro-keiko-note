@@ -1503,7 +1503,7 @@ function TodayScenesPanel({ rehearsal, scenes }) {
   const allScenesSelected = scenes.length > 0 && scenes.every((scene) => selectedSceneIds.includes(scene.id));
   return (
     <section className="panel todayScenesPanel">
-      <h2 className="panelTitle"><span>★</span>選択日の稽古するシーン</h2>
+      <h2 className="panelTitle"><span>★</span>稽古内容</h2>
       <p>{allScenesSelected ? "全シーン" : titles.map(sceneShortName).join("、")}</p>
     </section>
   );
