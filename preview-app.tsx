@@ -944,9 +944,9 @@ function scrollToRef(ref) {
 function RehearsalPicker({ rehearsals, value, onChange }) {
   return (
     <label className="field">
-      表示する稽古日の切り替え
+      確認したい稽古日を下の選択ボックスか上部のカレンダーから選んでください。
       <select value={value} onChange={(event) => onChange(event.target.value)}>
-        {rehearsals.map((rehearsal) => <option key={rehearsal.id} value={rehearsal.id}>{rehearsal.date} {rehearsal.startTime}</option>)}
+        {rehearsals.map((rehearsal) => <option key={rehearsal.id} value={rehearsal.id}>{rehearsal.date}</option>)}
       </select>
     </label>
   );
@@ -1120,7 +1120,7 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
       )}
       <DashboardCalendar rehearsals={rehearsals} selectedRehearsalId={rehearsalId} onSelect={setRehearsalId} />
       <div className="panel highlight">
-        <h2 className="sparkTitle currentInfoTitle"><span className="currentInfoLabel">現在表示されている情報：</span><span className="currentInfoDate">{rehearsal.date}</span><span>✦</span></h2>
+        <h2 className="sparkTitle currentInfoTitle"><span className="currentInfoLabel">表示中の稽古日：</span><span className="currentInfoDate">{rehearsal.date}</span><span>✦</span></h2>
         <RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} />
         <p>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</p>
         <p className="note">{rehearsal.memo}</p>
@@ -1130,13 +1130,13 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
       {absenceRows.length > 0 && <PeoplePanel title="欠席・遅刻" rows={absenceRows} tone="warn" />}
       <div className="grid two">
         <PeoplePanel
-          title="出席予定"
+          title="参加予定メンバー"
           rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => attendancePersonRow(row))}
           collapsible
           initialCollapsed
           collapsedMessage={(grouped.absent.length || grouped.noReply.length) ? ",,,1,2,,,いっぱい！" : "なんと全員大集合❣"}
         />
-        <PeoplePanel title="未回答" rows={grouped.noReply.map(memberPersonRow)} tone="warn" />
+        <PeoplePanel title="まだ回答していない人" rows={grouped.noReply.map(memberPersonRow)} tone="warn" />
       </div>
       <AttendanceRatePanel members={visibleMembers} attendances={attendances} rehearsals={rehearsals} />
     </section>
@@ -1478,7 +1478,7 @@ function ContactNotesPanel({ grouped }) {
       return `${row.member.name}（${row.attendance.status}${time ? ` ${time}` : ""}）${row.attendance.note ? `：${row.attendance.note}` : ""}`;
     });
 
-  return <PeoplePanel title="連絡事項まとめ" rows={rows} tone={rows.length ? "warn" : undefined} />;
+  return <PeoplePanel title="該当日の連絡事項" rows={rows} tone={rows.length ? "warn" : undefined} />;
 }
 
 function getSelectedSceneTitles(rehearsal, scenes) {
@@ -1494,7 +1494,7 @@ function TodayScenesPanel({ rehearsal, scenes }) {
   const allScenesSelected = scenes.length > 0 && scenes.every((scene) => selectedSceneIds.includes(scene.id));
   return (
     <section className="panel todayScenesPanel">
-      <h2 className="panelTitle"><span>★</span>稽古予定の場面</h2>
+      <h2 className="panelTitle"><span>★</span>選択日の稽古するシーン</h2>
       <p>{allScenesSelected ? "ぜんぶ❣" : titles.map(sceneShortName).join("、")}</p>
     </section>
   );
@@ -1911,7 +1911,7 @@ function AttendanceRatePanel({ members, attendances, rehearsals }) {
   return (
     <section className="panel">
       <div className="panelTitleRow">
-        <h2 className="panelTitle"><span>↗</span>出席率</h2>
+        <h2 className="panelTitle"><span>↗</span>出席状況</h2>
         <button type="button" className="miniToggle" onClick={() => setCollapsed((current) => !current)}>
           {collapsed ? "開く" : "閉じる"}
         </button>
