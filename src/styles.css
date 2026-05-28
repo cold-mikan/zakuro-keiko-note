@@ -901,6 +901,12 @@ h3 {
   grid-template-columns: minmax(0, 1.45fr) minmax(210px, 0.75fr);
 }
 
+.rehearsalEditorSide {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
 .calendarWeekdays.compact,
 .calendarGrid.compact {
   gap: 5px;

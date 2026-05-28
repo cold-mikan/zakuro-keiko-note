@@ -1290,13 +1290,13 @@ function RehearsalEditor({ editingRehearsal, onAdd, onUpdate, onCancelEdit }) {
       <h2 className="panelTitle"><span>{isEditing ? "✎" : "＋"}</span>{isEditing ? "稽古日を編集" : "稽古日を追加"}</h2>
       <div className="grid rehearsalEditorTop">
         <label className="field datePickerField">日付<DateMultiPicker selectedDates={isEditing ? (date ? [date] : []) : selectedDates} onChange={(dates) => { setSelectedDates(dates); setDate(dates[0] ?? ""); }} single={isEditing} /></label>
-        <label className="field">予定の種類<select value={eventType} onChange={(event) => setEventType(event.target.value)}>{eventTypeOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+        <div className="rehearsalEditorSide">
+          <label className="field">予定の種類<select value={eventType} onChange={(event) => setEventType(event.target.value)}>{eventTypeOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+          <label className="field">開始<input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} /></label>
+          <label className="field">終了<input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} /></label>
+          <label className="field">対象チーム<select value={rehearsalTeam} onChange={(event) => setRehearsalTeam(event.target.value)}>{rehearsalTeamOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+        </div>
       </div>
-      <div className="grid two">
-        <label className="field">開始<input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} /></label>
-        <label className="field">終了<input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} /></label>
-      </div>
-      <label className="field">対象チーム<select value={rehearsalTeam} onChange={(event) => setRehearsalTeam(event.target.value)}>{rehearsalTeamOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
       <label className="field">メモ<input value={memo} onChange={(event) => setMemo(event.target.value)} placeholder="例：1場、2場中心" /></label>
       <div className="formActions">
         <button className="primary">{isEditing ? "変更を保存する" : "稽古日を追加する"}</button>
