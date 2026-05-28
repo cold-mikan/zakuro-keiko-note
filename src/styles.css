@@ -1072,8 +1072,9 @@ h3 {
 }
 
 .collapsedMessage {
-  color: #c94f74;
-  font-weight: 700;
+  color: #7c6960;
+  font-size: 13px;
+  font-weight: 400;
   margin-top: 12px;
 }
 
