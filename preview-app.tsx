@@ -935,7 +935,7 @@ function TeamSwitch({ value, onChange }) {
 function RehearsalPicker({ rehearsals, value, onChange }) {
   return (
     <label className="field">
-      稽古日
+      表示する稽古日の切り替え
       <select value={value} onChange={(event) => onChange(event.target.value)}>
         {rehearsals.map((rehearsal) => <option key={rehearsal.id} value={rehearsal.id}>{rehearsal.date} {rehearsal.startTime}</option>)}
       </select>
@@ -1034,7 +1034,7 @@ function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
   return (
     <section className="panel calendarPanel">
       <div className="calendarHeader">
-        <h2 className="panelTitle"><span><img className="calendarTitleIcon" src="./assets/calendar-moon-icon.png" alt="" /></span>稽古予定日確認カレンダー</h2>
+        <h2 className="panelTitle"><span><img className="calendarTitleIcon" src="./assets/calendar-moon-icon.png" alt="" /></span>カレンダー</h2>
         <div className="calendarMonthControls">
           <select value={monthKey} onChange={(event) => setMonthKey(event.target.value)} aria-label="表示する月">
             {monthOptions.map((month) => <option key={month} value={month}>{month.replace("-", "年")}月</option>)}
@@ -1111,8 +1111,8 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
       )}
       <DashboardCalendar rehearsals={rehearsals} selectedRehearsalId={rehearsalId} onSelect={setRehearsalId} />
       <div className="panel highlight">
+        <h2 className="sparkTitle">現在表示されている情報：{rehearsal.date}<span>✦</span></h2>
         <RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} />
-        <h2 className="sparkTitle">選択稽古日：{rehearsal.date}<span>✦</span></h2>
         <p>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</p>
         <p className="note">{rehearsal.memo}</p>
       </div>
@@ -1274,7 +1274,7 @@ function RehearsalEditor({ editingRehearsal, onAdd, onUpdate, onCancelEdit }) {
       }}
     >
       <h2 className="panelTitle"><span>{isEditing ? "✎" : "＋"}</span>{isEditing ? "稽古日を編集" : "稽古日を追加"}</h2>
-      <div className="grid two">
+      <div className="grid rehearsalEditorTop">
         <label className="field datePickerField">日付<DateMultiPicker selectedDates={isEditing ? (date ? [date] : []) : selectedDates} onChange={(dates) => { setSelectedDates(dates); setDate(dates[0] ?? ""); }} single={isEditing} /></label>
         <label className="field">予定の種類<select value={eventType} onChange={(event) => setEventType(event.target.value)}>{eventTypeOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
       </div>

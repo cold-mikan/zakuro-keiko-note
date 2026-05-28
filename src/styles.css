@@ -887,7 +887,14 @@ h3 {
 }
 
 .datePickerField {
-  display: block;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rehearsalEditorTop {
+  align-items: start;
+  grid-template-columns: minmax(0, 1.45fr) minmax(210px, 0.75fr);
 }
 
 .calendarWeekdays.compact,
@@ -1740,6 +1747,7 @@ textarea {
 
   .two,
   .three,
+  .rehearsalEditorTop,
   .sceneList {
     grid-template-columns: 1fr;
   }
@@ -1962,6 +1970,10 @@ textarea {
 
   .choiceGrid.members,
   .choiceGrid.rehearsals {
+    grid-template-columns: 1fr;
+  }
+
+  .rehearsalEditorTop {
     grid-template-columns: 1fr;
   }
 
