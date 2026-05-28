@@ -932,6 +932,15 @@ function TeamSwitch({ value, onChange }) {
   );
 }
 
+function scrollToRef(ref) {
+  setTimeout(() => {
+    const element = ref.current;
+    if (!element) return;
+    const top = element.getBoundingClientRect().top + window.scrollY - 18;
+    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+  }, 120);
+}
+
 function RehearsalPicker({ rehearsals, value, onChange }) {
   return (
     <label className="field">
@@ -1136,9 +1145,13 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
 
 function RehearsalList({ rehearsals, selectedRehearsalId, setSelectedRehearsalId, attendances, visibleMembers, onAdd, onUpdate, onDelete, openAdmin }) {
   const [editingRehearsal, setEditingRehearsal] = useState(null);
+  const editorRef = useRef(null);
+  const scrollToEditor = () => scrollToRef(editorRef);
   return (
     <section className="stack">
-      <RehearsalEditor scenes={scenes} editingRehearsal={editingRehearsal} onAdd={onAdd} onUpdate={onUpdate} onCancelEdit={() => setEditingRehearsal(null)} />
+      <div ref={editorRef} className="scrollAnchor">
+        <RehearsalEditor scenes={scenes} editingRehearsal={editingRehearsal} onAdd={onAdd} onUpdate={onUpdate} onCancelEdit={() => setEditingRehearsal(null)} />
+      </div>
       {rehearsals.map((rehearsal) => {
         const summary = summarizeRehearsal(rehearsal.id, attendances, visibleMembers);
         return (
@@ -1156,7 +1169,7 @@ function RehearsalList({ rehearsals, selectedRehearsalId, setSelectedRehearsalId
             </div>
             <div className="cardActions">
               <button onClick={() => { setSelectedRehearsalId(rehearsal.id); openAdmin(); }}>確認する</button>
-              <button onClick={() => { setSelectedRehearsalId(rehearsal.id); setEditingRehearsal(rehearsal); }}>編集</button>
+              <button onClick={() => { setSelectedRehearsalId(rehearsal.id); setEditingRehearsal(rehearsal); scrollToEditor(); }}>編集</button>
               <button className="dangerButton" onClick={() => onDelete(rehearsal.id)}>削除</button>
             </div>
           </article>
@@ -1685,14 +1698,20 @@ function SceneEditor({ editingScene, onAdd, onUpdate, onCancel }) {
 
 function ScenePanel({ sceneResults, rehearsals = [], onAdd, onUpdate, onDelete, allowDelete = true }) {
   const [editingId, setEditingId] = useState("");
+  const editorRef = useRef(null);
   const editingScene = sceneResults.find(({ scene }) => scene.id === editingId)?.scene;
   const editable = Boolean(onAdd && onUpdate && onDelete);
   const sortedSceneResults = sortSceneResults(sceneResults);
+  const scrollToEditor = () => scrollToRef(editorRef);
 
   return (
     <section className="panel">
       <h2 className="panelTitle green"><span>★</span>シーンの編集・追加</h2>
-      {editable && <SceneEditor editingScene={editingScene} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => setEditingId("")} />}
+      {editable && (
+        <div ref={editorRef} className="scrollAnchor">
+          <SceneEditor editingScene={editingScene} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => setEditingId("")} />
+        </div>
+      )}
       <div className="sceneList">
         {sortedSceneResults.map(({ scene, canRehearse, missingCharacters }) => {
           const sceneCounts = getSceneCounts(scene.id, rehearsals);
@@ -1707,7 +1726,7 @@ function ScenePanel({ sceneResults, rehearsals = [], onAdd, onUpdate, onDelete, 
             <strong>{canRehearse ? "✓ 稽古できます" : `不足：${missingCharacters.join("、")}`}</strong>
             {editable && (
               <div className="sceneActions">
-                <button onClick={() => setEditingId(scene.id)}>編集</button>
+                <button onClick={() => { setEditingId(scene.id); scrollToEditor(); }}>編集</button>
                 {allowDelete && <button className="dangerButton" onClick={() => onDelete(scene.id)}>削除</button>}
               </div>
             )}
@@ -1969,12 +1988,16 @@ function MemberEditor({ editingMember, onAdd, onUpdate, onCancel }) {
 
 function MemberView({ rehearsals, attendances, visibleMembers, onAdd, onUpdate, onDelete }) {
   const [editingId, setEditingId] = useState("");
+  const editorRef = useRef(null);
   const editingMember = visibleMembers.find((member) => member.id === editingId);
   const roleClass = roleClassName;
+  const scrollToEditor = () => scrollToRef(editorRef);
 
   return (
     <section className="stack">
-      <MemberEditor editingMember={editingMember} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => setEditingId("")} />
+      <div ref={editorRef} className="scrollAnchor">
+        <MemberEditor editingMember={editingMember} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => setEditingId("")} />
+      </div>
       {visibleMembers.map((member) => (
         <article key={member.id} className={`panel memberCard ${roleClass(member.role)}`}>
           <div>
@@ -1984,7 +2007,7 @@ function MemberView({ rehearsals, attendances, visibleMembers, onAdd, onUpdate, 
           </div>
           <div className="cardActions">
             <strong>{attendanceRate(member.id, attendances, rehearsals)}%</strong>
-            <button className="editButton" onClick={() => setEditingId(member.id)}>編集</button>
+            <button className="editButton" onClick={() => { setEditingId(member.id); scrollToEditor(); }}>編集</button>
             <button className="dangerButton" onClick={() => onDelete(member.id)}>削除</button>
           </div>
         </article>

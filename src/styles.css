@@ -519,6 +519,10 @@ h3 {
   gap: 18px;
 }
 
+.scrollAnchor {
+  scroll-margin-top: 18px;
+}
+
 .grid {
   display: grid;
   gap: 14px;
