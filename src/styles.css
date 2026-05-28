@@ -594,6 +594,129 @@ h3 {
   line-height: 1.55;
 }
 
+.dashboardDateSwitch {
+  align-items: stretch;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(260px, 0.92fr) minmax(300px, 1.08fr);
+}
+
+.dashboardDateSwitch .calendarPanel,
+.dateSwitchSide {
+  min-width: 0;
+}
+
+.dateSwitchSide {
+  display: grid;
+  gap: 14px;
+}
+
+.currentRehearsalCard {
+  border-color: #f18aa7;
+  border-radius: 18px;
+  box-shadow: 0 14px 28px rgba(207, 63, 112, 0.14);
+  overflow: hidden;
+  position: relative;
+}
+
+.currentRehearsalCard::after {
+  color: #f1789a;
+  content: "✦";
+  font-size: 26px;
+  position: absolute;
+  right: 22px;
+  top: 22px;
+}
+
+.currentRehearsalCard .currentInfoTitle {
+  align-items: flex-start;
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding-right: 40px;
+}
+
+.currentRehearsalCard .currentInfoLabel {
+  color: #3e302c;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.currentRehearsalCard .currentInfoDate {
+  display: grid;
+  gap: 6px;
+}
+
+.currentRehearsalCard .currentInfoDay {
+  color: #d74376;
+  font-size: 28px;
+  line-height: 1.12;
+}
+
+.currentRehearsalCard .currentInfoTime {
+  color: #8a514f;
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.currentRehearsalCard .currentInfoTitle > span:last-child {
+  display: none;
+}
+
+.rehearsalPicker {
+  display: grid;
+  gap: 10px;
+}
+
+.rehearsalPickerHelp {
+  font-weight: 900;
+  margin: 0;
+}
+
+.rehearsalChipList {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  padding: 2px 2px 8px;
+  scrollbar-color: #e7a4b6 transparent;
+}
+
+.rehearsalDateChip {
+  background: rgba(255, 253, 250, 0.94);
+  border: 1px solid #f1cad5;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(121, 84, 58, 0.07);
+  color: #6a4c42;
+  display: grid;
+  flex: 0 0 auto;
+  gap: 2px;
+  min-width: 74px;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.rehearsalDateChip span {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.rehearsalDateChip small {
+  color: #a87982;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.rehearsalDateChip.selected {
+  background: linear-gradient(135deg, #ec5f8d, #e84e82);
+  border-color: #cf3f70;
+  box-shadow: 0 10px 22px rgba(207, 63, 112, 0.26);
+  color: #fff;
+}
+
+.rehearsalDateChip.selected small {
+  color: rgba(255, 255, 255, 0.88);
+}
+
 .calendarPanel {
   display: grid;
   gap: 12px;
@@ -1779,6 +1902,7 @@ textarea {
 
   .two,
   .three,
+  .dashboardDateSwitch,
   .rehearsalEditorTop,
   .sceneList {
     grid-template-columns: 1fr;
@@ -1943,6 +2067,25 @@ textarea {
     gap: 7px;
   }
 
+  .dashboardDateSwitch {
+    gap: 12px;
+    grid-template-columns: 1fr;
+  }
+
+  .dateSwitchSide {
+    gap: 12px;
+  }
+
+  .currentRehearsalCard {
+    border-radius: 18px;
+    padding: 16px;
+  }
+
+  .currentRehearsalCard::after {
+    right: 18px;
+    top: 18px;
+  }
+
   .currentInfoTitle {
     align-items: center;
     display: grid;
@@ -1993,6 +2136,16 @@ textarea {
     font-size: 13px;
     line-height: 1.7;
     margin-bottom: 8px;
+  }
+
+  .rehearsalChipList {
+    gap: 8px;
+    padding-bottom: 10px;
+  }
+
+  .rehearsalDateChip {
+    min-width: 86px;
+    padding: 10px 11px;
   }
 
   .decorLeft {

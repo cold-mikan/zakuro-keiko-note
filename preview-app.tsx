@@ -943,12 +943,26 @@ function scrollToRef(ref) {
 
 function RehearsalPicker({ rehearsals, value, onChange }) {
   return (
-    <label className="field rehearsalPicker">
-      <span className="rehearsalPickerHelp">確認したい稽古日を下の選択ボックスか上部のカレンダーから選んでください。</span>
-      <select value={value} onChange={(event) => onChange(event.target.value)}>
-        {rehearsals.map((rehearsal) => <option key={rehearsal.id} value={rehearsal.id}>{rehearsal.date}</option>)}
-      </select>
-    </label>
+    <div className="rehearsalPicker" role="group" aria-label="表示する稽古日の変更">
+      <p className="rehearsalPickerHelp">他の日を見る</p>
+      <div className="rehearsalChipList">
+        {rehearsals.map((rehearsal) => {
+          const selected = rehearsal.id === value;
+          return (
+            <button
+              key={rehearsal.id}
+              type="button"
+              className={`rehearsalDateChip ${selected ? "selected" : ""}`}
+              aria-pressed={selected}
+              onClick={() => onChange(rehearsal.id)}
+            >
+              <span>{formatChipDate(rehearsal.date)}</span>
+              <small>{formatTime(rehearsal.startTime)}</small>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -997,6 +1011,13 @@ function formatDateWithWeekday(date) {
   if (Number.isNaN(parsed.getTime())) return date;
   const weekday = parsed.toLocaleDateString("ja-JP", { weekday: "short" });
   return `${date}（${weekday}）`;
+}
+
+function formatChipDate(date) {
+  const parsed = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return date;
+  const weekday = parsed.toLocaleDateString("ja-JP", { weekday: "short" });
+  return `${parsed.getMonth() + 1}/${parsed.getDate()}（${weekday}）`;
 }
 
 function isTodayDate(date) {
@@ -1125,17 +1146,21 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
           </div>
         </section>
       )}
-      <DashboardCalendar rehearsals={rehearsals} selectedRehearsalId={rehearsalId} onSelect={setRehearsalId} />
-      <div className="panel highlight">
-        <h2 className="sparkTitle currentInfoTitle">
-          <span className="currentInfoLabel">表示中の稽古日：</span>
-          <span className="currentInfoDate currentInfoMeta">
-            <span className="currentInfoDay">{formatDateWithWeekday(rehearsal.date)}</span>
-            <span className="currentInfoTime">{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</span>
-          </span>
-          <span>✦</span>
-        </h2>
-        <RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} />
+      <div className="dashboardDateSwitch">
+        <DashboardCalendar rehearsals={rehearsals} selectedRehearsalId={rehearsalId} onSelect={setRehearsalId} />
+        <div className="dateSwitchSide">
+          <div className="panel highlight currentRehearsalCard">
+            <h2 className="sparkTitle currentInfoTitle">
+              <span className="currentInfoLabel">現在表示中</span>
+              <span className="currentInfoDate currentInfoMeta">
+                <span className="currentInfoDay">{formatDateWithWeekday(rehearsal.date)}</span>
+                <span className="currentInfoTime">{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</span>
+              </span>
+              <span>✦</span>
+            </h2>
+          </div>
+          <RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} />
+        </div>
       </div>
       <ContactNotesPanel grouped={grouped} />
       <TodayScenesPanel rehearsal={rehearsal} scenes={scenes} />
