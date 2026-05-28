@@ -1627,14 +1627,13 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
           <span>✦</span>
         </h2>
         <RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} />
-        <p className="note">{rehearsal.memo}</p>
       </div>
       <ContactNotesPanel grouped={grouped} />
       <TodayScenesPanel rehearsal={rehearsal} scenes={scenes} />
       {absenceRows.length > 0 && <PeoplePanel title="欠席・遅刻" rows={absenceRows} tone="warn" />}
       <div className="grid two">
         <PeoplePanel
-          title="参加予定メンバー"
+          title="参加予定"
           rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => attendancePersonRow(row))}
           collapsible
           initialCollapsed
@@ -1987,7 +1986,7 @@ function ContactNotesPanel({ grouped }) {
       return `${row.member.name}（${row.attendance.status}${time ? ` ${time}` : ""}）${row.attendance.note ? `：${row.attendance.note}` : ""}`;
     });
 
-  return <PeoplePanel title="該当日の連絡事項" rows={rows} tone={rows.length ? "warn" : undefined} />;
+  return <PeoplePanel title="連絡事項" rows={rows} tone={rows.length ? "warn" : undefined} />;
 }
 
 function getSelectedSceneTitles(rehearsal, scenes) {
