@@ -736,15 +736,13 @@ h3 {
 
 .nextRehearsalCard {
   background:
-    radial-gradient(circle at 15% 72%, rgba(255, 182, 197, 0.28), transparent 16%),
-    radial-gradient(circle at 84% 28%, rgba(255, 213, 160, 0.24), transparent 14%),
-    linear-gradient(135deg, #fff7f9, #fffaf1 58%, #fff1f6);
-  border: 3px solid #e94f82;
-  border-radius: 28px;
-  box-shadow: 0 18px 34px rgba(206, 80, 116, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.78);
-  min-height: 178px;
+    linear-gradient(135deg, rgba(255, 246, 249, 0.96), rgba(255, 250, 241, 0.98) 60%, rgba(255, 242, 247, 0.96));
+  border: 2px solid #e85b8b;
+  border-radius: 24px;
+  box-shadow: 0 14px 26px rgba(206, 80, 116, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.76);
+  min-height: 188px;
   overflow: hidden;
-  padding: 30px 28px 26px;
+  padding: 38px 26px 24px;
   position: relative;
   text-align: center;
 }
@@ -759,20 +757,15 @@ h3 {
 }
 
 .nextRehearsalCard::after {
-  background:
-    radial-gradient(circle at 0 0, transparent 0 18px, #e94f82 19px 20px, transparent 21px),
-    radial-gradient(circle at 100% 0, transparent 0 18px, #e94f82 19px 20px, transparent 21px),
-    radial-gradient(circle at 0 100%, transparent 0 18px, #e94f82 19px 20px, transparent 21px),
-    radial-gradient(circle at 100% 100%, transparent 0 18px, #e94f82 19px 20px, transparent 21px);
   content: "";
-  inset: -3px;
+  inset: 0;
   pointer-events: none;
   position: absolute;
 }
 
 .ticketInner {
   display: grid;
-  gap: 14px;
+  gap: 10px;
   min-width: 0;
   position: relative;
   z-index: 2;
@@ -780,7 +773,7 @@ h3 {
 
 .ticketInner p {
   color: #54372f;
-  font-size: clamp(24px, 5.2vw, 36px);
+  font-size: clamp(22px, 4.8vw, 32px);
   font-weight: 900;
   letter-spacing: 0;
 }
@@ -797,7 +790,7 @@ h3 {
   align-items: center;
   color: #df3e79;
   display: flex;
-  font-size: clamp(31px, 8vw, 52px);
+  font-size: clamp(30px, 7.5vw, 50px);
   font-weight: 900;
   gap: 12px;
   justify-content: center;
@@ -813,38 +806,55 @@ h3 {
   line-height: 1;
 }
 
+.ticketTime {
+  color: #5a3831;
+  display: block;
+  font-size: clamp(21px, 5.6vw, 34px);
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.ticketMemo {
+  background: rgba(255, 226, 234, 0.75);
+  border-radius: 999px;
+  color: #c84d78;
+  display: inline-block;
+  font-size: clamp(15px, 3.8vw, 20px);
+  font-weight: 800;
+  justify-self: center;
+  line-height: 1.4;
+  max-width: min(420px, 88%);
+  padding: 6px 18px;
+}
+
 .ticketRibbon {
   background: linear-gradient(135deg, #e93f79, #f57fa1);
-  box-shadow: 0 8px 12px rgba(173, 48, 85, 0.24);
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 7px 12px rgba(173, 48, 85, 0.18);
   color: #fff;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 23px;
+  font-size: 16px;
   font-weight: 900;
-  left: -36px;
+  left: 24px;
   letter-spacing: 0.07em;
-  padding: 9px 56px;
+  padding: 6px 20px 7px;
   position: absolute;
   text-shadow: 0 1px 0 rgba(128, 32, 66, 0.24);
-  top: 22px;
-  transform: rotate(-45deg);
+  top: 0;
   z-index: 4;
 }
 
 .ticketRibbon::after {
   color: #ffe7aa;
   content: "✦";
-  font-size: 15px;
+  font-size: 12px;
   position: absolute;
-  right: 31px;
-  top: 7px;
+  right: 8px;
+  top: 4px;
 }
 
 .ticketDecor {
-  color: rgba(239, 107, 145, 0.52);
-  font-family: "Yu Gothic UI", Meiryo, sans-serif;
-  pointer-events: none;
-  position: absolute;
-  z-index: 1;
+  display: none;
 }
 
 .decorLeft {
@@ -1861,8 +1871,8 @@ textarea {
 
   .nextRehearsalCard {
     border-width: 2px;
-    min-height: 154px;
-    padding: 34px 18px 24px;
+    min-height: 178px;
+    padding: 36px 16px 22px;
   }
 
   .nextRehearsalCard::before {
@@ -1871,9 +1881,9 @@ textarea {
 
   .ticketRibbon {
     font-size: 16px;
-    left: -39px;
-    padding: 7px 48px;
-    top: 17px;
+    left: 18px;
+    padding: 6px 18px 7px;
+    top: 0;
   }
 
   .ticketInner {

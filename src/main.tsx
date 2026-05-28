@@ -1584,12 +1584,11 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
       {nextRehearsal && (
         <section className="panel nextRehearsalCard">
           <span className="ticketRibbon">NEXT</span>
-          <span className="ticketDecor decorLeft">✦</span>
-          <span className="ticketDecor decorRight">♡</span>
-          <span className="ticketDecor decorBottom">♢</span>
           <div className="ticketInner">
             <p>次回稽古日</p>
             <h2><span>{ticketSymbol}</span>{formatTicketDate(nextRehearsal.date)}</h2>
+            <strong className="ticketTime">{formatTime(nextRehearsal.startTime)}-{formatTime(nextRehearsal.endTime)}</strong>
+            {nextRehearsal.memo && <small className="ticketMemo">{nextRehearsal.memo}</small>}
           </div>
         </section>
       )}
