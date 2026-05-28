@@ -1618,6 +1618,7 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
           title="出席予定"
           rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => attendancePersonRow(row))}
           collapsible
+          initialCollapsed
           collapsedMessage={(grouped.absent.length || grouped.noReply.length) ? ",,,1,2,,,いっぱい！" : "なんと全員大集合❣"}
         />
         <PeoplePanel title="未回答" rows={grouped.noReply.map(memberPersonRow)} tone="warn" />
@@ -1976,10 +1977,12 @@ function getSelectedSceneTitles(rehearsal, scenes) {
 function TodayScenesPanel({ rehearsal, scenes }) {
   const titles = getSelectedSceneTitles(rehearsal, scenes);
   if (!titles.length) return null;
+  const selectedSceneIds = rehearsal?.selectedSceneIds ?? [];
+  const allScenesSelected = scenes.length > 0 && scenes.every((scene) => selectedSceneIds.includes(scene.id));
   return (
     <section className="panel todayScenesPanel">
       <h2 className="panelTitle"><span>★</span>本日の稽古シーン</h2>
-      <p>{titles.map(sceneShortName).join("、")}</p>
+      <p>{allScenesSelected ? "ぜんぶ❣" : titles.map(sceneShortName).join("、")}</p>
     </section>
   );
 }
@@ -2386,7 +2389,7 @@ function PeoplePanel({ title, rows, tone, collapsible = false, initialCollapsed 
 }
 
 function AttendanceRatePanel({ members, attendances, rehearsals }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   return (
     <section className="panel">
       <div className="panelTitleRow">
