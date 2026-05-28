@@ -983,6 +983,10 @@ function formatTicketDate(date) {
   return `${date} (${weekday})`;
 }
 
+function isTodayDate(date) {
+  return date === new Date().toLocaleDateString("sv-SE");
+}
+
 const ticketSymbols = ["♤", "❤︎", "♧", "♦︎"];
 
 function getNextRehearsal(rehearsals) {
@@ -1072,6 +1076,7 @@ function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
 function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visibleMembers, scenes }) {
   const rehearsal = rehearsals.find((item) => item.id === rehearsalId) ?? rehearsals[0];
   const nextRehearsal = getNextRehearsal(rehearsals);
+  const isNextRehearsalToday = nextRehearsal ? isTodayDate(nextRehearsal.date) : false;
   const ticketSymbol = useMemo(() => ticketSymbols[Math.floor(Math.random() * ticketSymbols.length)], []);
   const grouped = groupAttendance(rehearsalId, attendances, visibleMembers);
   const attendancePersonRow = (row, prefix = "") => ({
@@ -1091,8 +1096,14 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
         <section className="panel nextRehearsalCard">
           <span className="ticketRibbon">NEXT</span>
           <div className="ticketInner">
-            <p>次回稽古日</p>
-            <h2><span>{ticketSymbol}</span>{formatTicketDate(nextRehearsal.date)}</h2>
+            {isNextRehearsalToday ? (
+              <p className="ticketTodayHeading">次回稽古日：<span>本日❣</span></p>
+            ) : (
+              <>
+                <p>次回稽古日</p>
+                <h2><span>{ticketSymbol}</span>{formatTicketDate(nextRehearsal.date)}</h2>
+              </>
+            )}
             <strong className="ticketTime">{formatTime(nextRehearsal.startTime)}-{formatTime(nextRehearsal.endTime)}</strong>
             {nextRehearsal.memo && <small className="ticketMemo">{nextRehearsal.memo}</small>}
           </div>

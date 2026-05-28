@@ -786,6 +786,10 @@ h3 {
   width: min(390px, 78%);
 }
 
+.ticketTodayHeading span {
+  color: #df3e79;
+}
+
 .ticketInner h2 {
   align-items: center;
   color: #df3e79;
