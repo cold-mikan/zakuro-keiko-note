@@ -72,22 +72,27 @@ button {
 }
 
 .appHeader {
-  align-items: flex-start;
-  display: flex;
+  align-items: center;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: clamp(8px, 2.6vw, 18px);
   justify-content: center;
-  gap: 16px;
-  padding: 8px 0 28px;
+  padding: 12px 0 28px;
   position: relative;
   text-align: center;
 }
 
-.appHeader > div:not(.fruit):not(.cutlery)::after {
+.headerTitle {
+  min-width: 0;
+}
+
+.appHeader > .headerTitle::after {
   content: none;
 }
 
 .titleLine {
   display: block;
-  width: min(520px, 72vw);
+  width: min(520px, 100%);
   height: 48px;
   margin: -1px auto -4px;
   object-fit: contain;
@@ -96,11 +101,9 @@ button {
 }
 
 .fruit {
-  position: absolute;
-  left: -6px;
-  top: -10px;
-  width: 118px;
-  height: 94px;
+  position: relative;
+  width: clamp(64px, 17vw, 118px);
+  height: clamp(58px, 14vw, 94px);
 }
 
 .fruit::before,
@@ -130,11 +133,9 @@ button {
 }
 
 .cutlery {
-  position: absolute;
-  right: 8px;
-  top: -6px;
-  width: 78px;
-  height: 118px;
+  position: relative;
+  width: clamp(38px, 10vw, 78px);
+  height: clamp(66px, 17vw, 118px);
   pointer-events: none;
 }
 
@@ -652,24 +653,48 @@ h3 {
 }
 
 .calendarDay.today {
-  background: #f76f99;
-  border-color: #e45480;
-  box-shadow: 0 8px 18px rgba(229, 95, 137, 0.28);
+  background: #fff8df;
+  border-color: #d9aa50;
+  box-shadow: 0 0 0 2px rgba(217, 170, 80, 0.18);
+  color: #8b6325;
+  font-weight: 950;
+}
+
+.calendarDay.today::after {
+  content: "今日";
+  bottom: -18px;
+  color: #b27c2e;
+  font-size: 9px;
+  font-weight: 900;
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.calendarDay.today.hasMtg {
+  background: #fff8df;
+  border-color: #d9aa50;
+  color: #8b6325;
+}
+
+.calendarDay.selected {
+  background: #ec5f8d;
+  border-color: #cf3f70;
+  box-shadow: 0 0 0 4px rgba(236, 95, 141, 0.2), 0 10px 22px rgba(207, 63, 112, 0.28);
   color: #fff;
   font-weight: 950;
 }
 
-.calendarDay.today.hasMtg {
-  background: #b97956;
-  border-color: #a96744;
-}
-
-.calendarDay.selected {
-  box-shadow: 0 0 0 3px rgba(243, 116, 152, 0.22);
-}
-
 .calendarDay.today.selected {
-  box-shadow: 0 0 0 4px rgba(243, 116, 152, 0.25), 0 8px 18px rgba(229, 95, 137, 0.28);
+  background: #d74278;
+  border-color: #b72d61;
+  box-shadow: 0 0 0 4px rgba(217, 170, 80, 0.24), 0 0 0 8px rgba(236, 95, 141, 0.16), 0 10px 22px rgba(207, 63, 112, 0.28);
+  color: #fff;
+}
+
+.calendarDay.selected i {
+  border-width: 3px;
 }
 
 .calendarDay i {
@@ -707,6 +732,61 @@ h3 {
 
 .mtgDot {
   background: #d7b894;
+}
+
+.nextRehearsalCard {
+  background: linear-gradient(135deg, #fff2f6, #fffdf8);
+  border: 1px solid #f29ab3;
+  box-shadow: 0 14px 28px rgba(236, 107, 147, 0.14);
+}
+
+.nextRehearsalCard h2 {
+  color: #c94f74;
+  font-size: 26px;
+  margin: 6px 0;
+}
+
+.dateMultiPicker {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.datePickerField {
+  display: block;
+}
+
+.calendarWeekdays.compact,
+.calendarGrid.compact {
+  gap: 5px;
+}
+
+.calendarGrid.compact .calendarDay {
+  min-height: 42px;
+}
+
+.calendarDay.selectable:not(:disabled) {
+  cursor: pointer;
+}
+
+.toastNotice {
+  border-radius: 16px;
+  font-weight: 800;
+  margin: -4px 0 14px;
+  padding: 12px 16px;
+  text-align: center;
+}
+
+.toastNotice.ok {
+  background: #f0fff4;
+  border: 1px solid #9bceaa;
+  color: #4f8f62;
+}
+
+.toastNotice.error {
+  background: #fff0f5;
+  border: 1px solid #ee8aa5;
+  color: #bd466d;
 }
 
 .panelTitle {
@@ -1444,16 +1524,15 @@ textarea {
   }
 
   .appHeader {
-    min-height: 164px;
-    padding: 82px 0 22px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    min-height: 118px;
+    padding: 18px 0 22px;
     overflow: hidden;
   }
 
   .fruit {
-    left: 16px;
-    top: 4px;
-    width: 92px;
-    height: 76px;
+    width: clamp(52px, 17vw, 78px);
+    height: clamp(48px, 14vw, 66px);
     transform: none;
   }
 
@@ -1468,16 +1547,14 @@ textarea {
   }
 
   .cutlery {
-    right: 16px;
-    top: 4px;
-    width: 50px;
-    height: 78px;
+    width: clamp(30px, 10vw, 46px);
+    height: clamp(54px, 17vw, 76px);
     transform: none;
     opacity: 0.88;
   }
 
   h1 {
-    font-size: 29px;
+    font-size: clamp(24px, 7.4vw, 29px);
     line-height: 1.15;
   }
 
@@ -1486,7 +1563,7 @@ textarea {
   }
 
   .titleLine {
-    width: min(340px, 86vw);
+    width: min(340px, 100%);
     height: 36px;
     margin-top: 2px;
   }

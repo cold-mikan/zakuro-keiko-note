@@ -52,6 +52,16 @@ function rehearsalLabel(rehearsal) {
   return `${start}-${end}${place}`;
 }
 
+const REMINDER_MESSAGES = [
+  "今日はザクロの稽古日だよ！がんばろうね！",
+  "今日はザクロの稽古日だよ！気合い入れてこ～！",
+  "今日はザクロの稽古日だよ！…動くためのカロリー、ちゃんと摂れてる？",
+];
+
+function pickReminderMessage() {
+  return REMINDER_MESSAGES[Math.floor(Math.random() * REMINDER_MESSAGES.length)];
+}
+
 async function alreadyLogged(supabase, roomId, rehearsalId, memberId) {
   const { data, error } = await supabase
     .from("notification_logs")
@@ -153,7 +163,7 @@ export default async function handler(req, res) {
               row.subscription,
               JSON.stringify({
                 title: "ザクロ稽古ノート",
-                body: `今日はザクロの稽古日だよ！がんばろうね！\n${rehearsalLabel(rehearsal)}`,
+                body: `${pickReminderMessage()}\n${rehearsalLabel(rehearsal)}`,
                 url: "/",
               }),
             );

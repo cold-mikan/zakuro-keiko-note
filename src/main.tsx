@@ -120,9 +120,8 @@ type TeamFilter = "全員" | "Aチーム" | "Bチーム";
 const teamFilters: TeamFilter[] = ["全員", "Aチーム", "Bチーム"];
 const tabs = [
   { id: "dashboard", label: "ホーム", icon: "⌂" },
-  { id: "rehearsals", label: "稽古日", icon: "▣" },
+  { id: "rehearsals", label: "稽古日の登録", icon: "▣" },
   { id: "form", label: "参加予定の入力", icon: "＋" },
-  { id: "admin", label: "出欠一覧", icon: "☷" },
   { id: "scenes", label: "管理者", icon: "★" },
 ] as const;
 
@@ -781,6 +780,7 @@ function App() {
   const [selectedRehearsalId, setSelectedRehearsalId] = useState(rehearsalList[0]?.id ?? "");
   const [tab, setTab] = useState("dashboard");
   const [teamFilter, setTeamFilter] = useState<TeamFilter>("全員");
+  const [toast, setToast] = useState<{ message: string; tone: "ok" | "error" } | null>(null);
   const visibleMembers = useMemo(
     () => memberList.filter((member) => teamFilter === "全員" || member.team === "共通" || member.team === teamFilter),
     [memberList, teamFilter],
@@ -856,6 +856,13 @@ function App() {
     alert("オンライン同期の接続がまだ完了していないため、保存を中止しました。少し待ってからもう一度試すか、ページを再読み込みしてください。");
     setOnlineStatus("オンライン接続が完了するまで保存を止めています。");
     return false;
+  }
+
+  function showToast(message: string, tone: "ok" | "error" = "ok") {
+    setToast({ message, tone });
+    window.setTimeout(() => {
+      setToast((current) => (current?.message === message ? null : current));
+    }, 3600);
   }
 
   useEffect(() => {
@@ -993,6 +1000,7 @@ function App() {
 
   async function reportOnlineError(error) {
     console.error(error);
+    showToast("送信に失敗しました。もう一度お試しください。", "error");
     setOnlineStatus("オンライン保存でエラーが出ました。オンラインデータを読み直しています...");
     try {
       const data = await loadSupabaseState(supabaseConfig);
@@ -1011,6 +1019,7 @@ function App() {
     if (!guardOnlineWrite()) return;
     const next = { ...input, id: `m${Date.now()}`, updatedBy: actorName, updatedAt: new Date().toISOString() };
     setMemberList((current) => [...current, next]);
+    showToast("変更が完了しました。");
     if (onlineReady) {
       upsertSupabaseRow(supabaseConfig, actorName, "members", memberToRow(supabaseConfig, next, actorName), null, next)
         .then((result) => setOnlineStatus(result.message))
@@ -1023,6 +1032,7 @@ function App() {
     const next = { ...input, updatedBy: actorName, updatedAt: new Date().toISOString() };
     const before = memberList.find((member) => member.id === input.id);
     setMemberList((current) => current.map((member) => (member.id === input.id ? next : member)));
+    showToast("変更が完了しました。");
     if (onlineReady) {
       upsertSupabaseRow(supabaseConfig, actorName, "members", memberToRow(supabaseConfig, next, actorName), before, next)
         .then((result) => setOnlineStatus(result.message))
@@ -1034,6 +1044,7 @@ function App() {
     if (!guardOnlineWrite()) return;
     const next = { ...input, id: `s${Date.now()}`, updatedBy: actorName, updatedAt: new Date().toISOString() };
     setSceneList((current) => [...current, next]);
+    showToast("変更が完了しました。");
     if (onlineReady) {
       upsertSupabaseRow(supabaseConfig, actorName, "scenes", sceneToRow(supabaseConfig, next, actorName), null, next)
         .then((result) => setOnlineStatus(result.message))
@@ -1046,6 +1057,7 @@ function App() {
     const next = { ...input, updatedBy: actorName, updatedAt: new Date().toISOString() };
     const before = sceneList.find((scene) => scene.id === input.id);
     setSceneList((current) => current.map((scene) => (scene.id === input.id ? next : scene)));
+    showToast("変更が完了しました。");
     if (onlineReady) {
       upsertSupabaseRow(supabaseConfig, actorName, "scenes", sceneToRow(supabaseConfig, next, actorName), before, next)
         .then((result) => setOnlineStatus(result.message))
@@ -1078,6 +1090,7 @@ function App() {
     }
     setMemberList((current) => current.filter((member) => member.id !== memberId));
     setAttendances((current) => current.filter((attendance) => attendance.memberId !== memberId));
+    showToast("変更が完了しました。");
   }
 
   function addRehearsal(input: Omit<Rehearsal, "id">) {
@@ -1085,6 +1098,7 @@ function App() {
     const next = { ...input, id: `r${Date.now()}`, createdAt: new Date().toISOString(), updatedBy: actorName, updatedAt: new Date().toISOString() };
     setRehearsalList((current) => [...current, next].sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`)));
     setSelectedRehearsalId(next.id);
+    showToast("変更が完了しました。");
     if (onlineReady) {
       upsertSupabaseRow(supabaseConfig, actorName, "rehearsals", rehearsalToRow(supabaseConfig, next, actorName), null, next)
         .then((result) => setOnlineStatus(result.message))
@@ -1102,6 +1116,7 @@ function App() {
         .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`)),
     );
     setSelectedRehearsalId(next.id);
+    showToast("変更が完了しました。");
     if (onlineReady) {
       upsertSupabaseRow(supabaseConfig, actorName, "rehearsals", rehearsalToRow(supabaseConfig, next, actorName), before, next)
         .then((result) => setOnlineStatus(result.message))
@@ -1129,6 +1144,7 @@ function App() {
     }
     setRehearsalList((current) => current.filter((rehearsal) => rehearsal.id !== rehearsalId));
     setAttendances((current) => current.filter((attendance) => attendance.rehearsalId !== rehearsalId));
+    showToast("変更が完了しました。");
   }
 
   function saveAttendanceBatch(inputs: Omit<Attendance, "id">[]) {
@@ -1152,6 +1168,7 @@ function App() {
       savedRows.push(savedRow);
     });
     setAttendances(nextRows);
+    showToast("ご記入ありがとうございます。情報を送信しました。");
     if (onlineReady && savedRows.length) {
       Promise.all(
         savedRows.map((savedRow, index) =>
@@ -1175,13 +1192,13 @@ function App() {
         <div className="fruit" aria-hidden="true">
           <img src="./assets/pomegranate-clean.png" alt="" />
         </div>
-        <div className="cutlery" aria-hidden="true">
-          <img src="./assets/sword-cropped.png" alt="" />
-        </div>
-        <div>
+        <div className="headerTitle">
           <p className="eyebrow">10月公演 ザクロ 稽古管理</p>
           <h1>稽古出欠ノート</h1>
           <img className="titleLine" src="./assets/title-line-v2-cropped.png" alt="" />
+        </div>
+        <div className="cutlery" aria-hidden="true">
+          <img src="./assets/sword-cropped.png" alt="" />
         </div>
       </header>
       <nav className="tabs" aria-label="画面切り替え">
@@ -1213,6 +1230,7 @@ function App() {
           onMemberChange={setNotificationMemberId}
         />
       </div>
+      {toast && <div className={`toastNotice ${toast.tone}`} role="status">{toast.message}</div>}
       {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} scenes={sceneList} />}
       {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onUpdate={updateRehearsal} onDelete={deleteRehearsal} allowDelete={true} openAdmin={() => setTab("admin")} />}
       {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} onSaveBatch={saveAttendanceBatch} />}
@@ -1441,6 +1459,24 @@ function formatTime(time) {
   return String(time ?? "").slice(0, 5);
 }
 
+function formatJapaneseDate(date) {
+  const parsed = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return parsed.toLocaleDateString("ja-JP", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  });
+}
+
+function getNextRehearsal(rehearsals) {
+  const today = new Date().toLocaleDateString("sv-SE");
+  return rehearsals
+    .filter((rehearsal) => rehearsal.date >= today)
+    .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`))[0] ?? rehearsals[0];
+}
+
 function getSceneCounts(sceneId, rehearsals) {
   return rehearsals.reduce(
     (counts, rehearsal) => {
@@ -1479,7 +1515,7 @@ function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
   return (
     <section className="panel calendarPanel">
       <div className="calendarHeader">
-        <h2 className="panelTitle"><span><img className="calendarTitleIcon" src="./assets/calendar-moon-icon.png" alt="" /></span>カレンダー</h2>
+        <h2 className="panelTitle"><span><img className="calendarTitleIcon" src="./assets/calendar-moon-icon.png" alt="" /></span>稽古予定日確認カレンダー</h2>
         <div className="calendarMonthControls">
           <select value={monthKey} onChange={(event) => setMonthKey(event.target.value)} aria-label="表示する月">
             {monthOptions.map((month) => <option key={month} value={month}>{month.replace("-", "年")}月</option>)}
@@ -1502,7 +1538,7 @@ function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
               className={`calendarDay ${events.length ? "hasEvent" : ""} ${hasMtg ? "hasMtg" : ""} ${isSelected ? "selected" : ""} ${isToday ? "today" : ""}`}
               onClick={() => events[0] && onSelect(events[0].id)}
               disabled={!events.length}
-              title={events.map((event) => `${formatTime(event.startTime)} ${event.place}`).join("\n")}
+              title={events.map((event) => `${formatTime(event.startTime)} ${event.eventType ?? "稽古日"}`).join("\n")}
             >
               <span>{day.day}</span>
               {events.length > 0 && <i aria-hidden="true"></i>}
@@ -1520,6 +1556,7 @@ function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
 
 function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visibleMembers, scenes }) {
   const rehearsal = rehearsals.find((item) => item.id === rehearsalId) ?? rehearsals[0];
+  const nextRehearsal = getNextRehearsal(rehearsals);
   const grouped = groupAttendance(rehearsalId, attendances, visibleMembers);
   const attendancePersonRow = (row, prefix = "") => ({
     key: `${prefix}${row.member.id}-${row.attendance.status}`,
@@ -1534,11 +1571,19 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
   if (!rehearsal) return <section className="panel emptyState">稽古日を追加してください。</section>;
   return (
     <section className="stack">
+      {nextRehearsal && (
+        <section className="panel nextRehearsalCard">
+          <p className="eyebrow">次回稽古日</p>
+          <h2>{formatJapaneseDate(nextRehearsal.date)}</h2>
+          <p>{formatTime(nextRehearsal.startTime)}-{formatTime(nextRehearsal.endTime)}</p>
+          {nextRehearsal.memo && <p className="note">{nextRehearsal.memo}</p>}
+        </section>
+      )}
       <DashboardCalendar rehearsals={rehearsals} selectedRehearsalId={rehearsalId} onSelect={setRehearsalId} />
       <div className="panel highlight">
         <RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} />
-        <h2 className="sparkTitle">次回稽古：{rehearsal.date}<span>✦</span></h2>
-        <p>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)} / {rehearsal.place}</p>
+        <h2 className="sparkTitle">選択稽古日：{rehearsal.date}<span>✦</span></h2>
+        <p>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</p>
         <p className="note">{rehearsal.memo}</p>
       </div>
       <ContactNotesPanel grouped={grouped} />
@@ -1553,12 +1598,7 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
         />
         <PeoplePanel title="未回答" rows={grouped.noReply.map(memberPersonRow)} tone="warn" />
       </div>
-      <section className="panel">
-        <h2 className="panelTitle"><span>↗</span>出席率</h2>
-        <div className="rateList">
-          {visibleMembers.filter((member) => member.role === "キャスト").map((member) => <div key={member.id} className="rateRow"><span className={`personName ${roleClassName(member.role)}`}>{member.name}</span><strong>{attendanceRate(member.id, attendances, rehearsals)}%</strong></div>)}
-        </div>
-      </section>
+      <AttendanceRatePanel members={visibleMembers} attendances={attendances} rehearsals={rehearsals} />
     </section>
   );
 }
@@ -1578,7 +1618,7 @@ function RehearsalList({ rehearsals, selectedRehearsalId, setSelectedRehearsalId
         return (
           <article key={rehearsal.id} className={`panel rehearsalCard ${selectedRehearsalId === rehearsal.id ? "selected" : ""}`}>
             <div>
-              <p className="eyebrow">{rehearsal.eventType ?? "稽古日"} / {rehearsal.place}</p>
+              <p className="eyebrow">{rehearsal.eventType ?? "稽古日"}</p>
               <h2>{rehearsal.date}</h2>
               <p>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</p>
               <p className="note">{rehearsal.memo}</p>
@@ -1600,8 +1640,62 @@ function RehearsalList({ rehearsals, selectedRehearsalId, setSelectedRehearsalId
   );
 }
 
+function DateMultiPicker({ selectedDates, onChange, single = false }) {
+  const today = new Date();
+  const defaultMonth = selectedDates[0]?.slice(0, 7) ?? today.toLocaleDateString("sv-SE").slice(0, 7);
+  const [monthKey, setMonthKey] = useState(defaultMonth);
+  const monthOptions = Array.from({ length: 8 }, (_, index) => {
+    const date = new Date(today.getFullYear(), today.getMonth() + index, 1);
+    return date.toLocaleDateString("sv-SE").slice(0, 7);
+  });
+
+  useEffect(() => {
+    if (selectedDates[0]) setMonthKey(selectedDates[0].slice(0, 7));
+  }, [selectedDates.join(",")]);
+
+  const toggleDate = (date) => {
+    if (single) {
+      onChange([date]);
+      return;
+    }
+    onChange(selectedDates.includes(date) ? selectedDates.filter((item) => item !== date) : [...selectedDates, date].sort());
+  };
+
+  return (
+    <div className="dateMultiPicker">
+      <div className="calendarMonthControls">
+        <select value={monthKey} onChange={(event) => setMonthKey(event.target.value)} aria-label="日付を選ぶ月">
+          {monthOptions.map((month) => <option key={month} value={month}>{month.replace("-", "年")}月</option>)}
+        </select>
+      </div>
+      <div className="calendarWeekdays compact" aria-hidden="true">
+        {["日", "月", "火", "水", "木", "金", "土"].map((day) => <span key={day}>{day}</span>)}
+      </div>
+      <div className="calendarGrid compact">
+        {getCalendarDays(monthKey).map((day, index) => {
+          if (!day) return <span key={`blank-${index}`} className="calendarDay blank"></span>;
+          const selected = selectedDates.includes(day.date);
+          const isToday = day.date === new Date().toLocaleDateString("sv-SE");
+          return (
+            <button
+              key={day.date}
+              type="button"
+              className={`calendarDay selectable ${selected ? "selected" : ""} ${isToday ? "today" : ""}`}
+              onClick={() => toggleDate(day.date)}
+            >
+              <span>{day.day}</span>
+            </button>
+          );
+        })}
+      </div>
+      <p className="note">{selectedDates.length ? `選択中：${selectedDates.join("、")}` : "カレンダーから日付を選んでください。"}</p>
+    </div>
+  );
+}
+
 function RehearsalEditor({ editingRehearsal, onAdd, onUpdate, onCancelEdit }) {
   const [date, setDate] = useState("");
+  const [selectedDates, setSelectedDates] = useState([]);
   const [startTime, setStartTime] = useState("19:00");
   const [endTime, setEndTime] = useState("22:00");
   const [place, setPlace] = useState("");
@@ -1613,6 +1707,7 @@ function RehearsalEditor({ editingRehearsal, onAdd, onUpdate, onCancelEdit }) {
   useEffect(() => {
     if (!editingRehearsal) return;
     setDate(editingRehearsal.date ?? "");
+    setSelectedDates(editingRehearsal.date ? [editingRehearsal.date] : []);
     setStartTime(formatTime(editingRehearsal.startTime) || "19:00");
     setEndTime(formatTime(editingRehearsal.endTime) || "22:00");
     setPlace(editingRehearsal.place ?? "");
@@ -1623,6 +1718,7 @@ function RehearsalEditor({ editingRehearsal, onAdd, onUpdate, onCancelEdit }) {
 
   function resetForm() {
     setDate("");
+    setSelectedDates([]);
     setStartTime("19:00");
     setEndTime("22:00");
     setPlace("");
@@ -1637,23 +1733,24 @@ function RehearsalEditor({ editingRehearsal, onAdd, onUpdate, onCancelEdit }) {
       className="panel form"
       onSubmit={(event) => {
         event.preventDefault();
-        if (!date || !startTime || !endTime) {
+        const targetDates = isEditing ? [date] : selectedDates;
+        if (!targetDates.length || !startTime || !endTime) {
           alert("日付・開始時間・終了時間を入力してください。");
           return;
         }
-        const payload = { date, startTime, endTime, place: place || editingRehearsal?.place || "場所未定", memo, eventType, rehearsalTeam, selectedSceneIds: editingRehearsal?.selectedSceneIds ?? [] };
+        const payload = { date: targetDates[0], startTime, endTime, place: place || editingRehearsal?.place || "場所未定", memo, eventType, rehearsalTeam, selectedSceneIds: editingRehearsal?.selectedSceneIds ?? [] };
         if (editingRehearsal) {
           onUpdate({ ...editingRehearsal, ...payload });
           onCancelEdit();
         } else {
-          onAdd(payload);
+          targetDates.forEach((targetDate) => onAdd({ ...payload, date: targetDate }));
         }
         resetForm();
       }}
     >
       <h2 className="panelTitle"><span>{isEditing ? "✎" : "＋"}</span>{isEditing ? "稽古日を編集" : "稽古日を追加"}</h2>
       <div className="grid two">
-        <label className="field">日付<input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
+        <label className="field datePickerField">日付<DateMultiPicker selectedDates={isEditing ? (date ? [date] : []) : selectedDates} onChange={(dates) => { setSelectedDates(dates); setDate(dates[0] ?? ""); }} single={isEditing} /></label>
         <label className="field">予定の種類<select value={eventType} onChange={(event) => setEventType(event.target.value)}>{eventTypeOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
       </div>
       <div className="grid two">
@@ -2260,6 +2357,30 @@ function PeoplePanel({ title, rows, tone, collapsible = false, initialCollapsed 
       </div>
       {collapsed && collapsedMessage && <p className="collapsedMessage">{collapsedMessage}</p>}
       {!collapsed && (rows.length ? <ul>{rows.map((row, index) => <li key={typeof row === "string" ? row : row.key ?? `${row.label}-${index}`}>{renderPeopleRow(row)}</li>)}</ul> : <p className="note">該当なし</p>)}
+    </section>
+  );
+}
+
+function AttendanceRatePanel({ members, attendances, rehearsals }) {
+  const [collapsed, setCollapsed] = useState(false);
+  return (
+    <section className="panel">
+      <div className="panelTitleRow">
+        <h2 className="panelTitle"><span>↗</span>出席率</h2>
+        <button type="button" className="miniToggle" onClick={() => setCollapsed((current) => !current)}>
+          {collapsed ? "開く" : "閉じる"}
+        </button>
+      </div>
+      {!collapsed && (
+        <div className="rateList">
+          {members.filter((member) => member.role === "キャスト").map((member) => (
+            <div key={member.id} className="rateRow">
+              <span className={`personName ${roleClassName(member.role)}`}>{member.name}</span>
+              <strong>{attendanceRate(member.id, attendances, rehearsals)}%</strong>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
