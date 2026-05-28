@@ -580,10 +580,15 @@ h3 {
 }
 
 .sparkTitle .currentInfoMeta {
+  align-items: baseline;
   color: #f1789a;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .rehearsalPickerHelp {
+  display: block;
   color: #694737;
   font-size: 15px;
   line-height: 1.55;
@@ -1939,19 +1944,55 @@ textarea {
   }
 
   .currentInfoTitle {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 2px;
-    line-height: 1.18;
+    align-items: center;
+    display: grid;
+    gap: 8px 10px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    line-height: 1.25;
+    margin-bottom: 12px;
+    margin-top: 4px;
+  }
+
+  .currentInfoTitle .currentInfoLabel {
+    color: #3e302c;
+    font-size: 22px;
+    grid-column: 1;
+    line-height: 1.25;
   }
 
   .currentInfoTitle .currentInfoDate {
-    display: block;
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(241, 120, 154, 0.25);
+    border-radius: 16px;
+    box-shadow: 0 8px 18px rgba(121, 84, 58, 0.06);
+    display: grid;
+    gap: 4px;
+    grid-column: 1 / -1;
+    padding: 10px 12px;
   }
 
   .currentInfoTitle > span:last-child {
-    align-self: flex-end;
-    margin-top: -34px;
+    align-self: center;
+    font-size: 24px;
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+  }
+
+  .currentInfoDay {
+    font-size: 24px;
+    line-height: 1.15;
+  }
+
+  .currentInfoTime {
+    font-size: 17px;
+    line-height: 1.2;
+  }
+
+  .rehearsalPickerHelp {
+    font-size: 13px;
+    line-height: 1.7;
+    margin-bottom: 8px;
   }
 
   .decorLeft {

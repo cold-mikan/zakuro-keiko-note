@@ -1129,7 +1129,10 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
       <div className="panel highlight">
         <h2 className="sparkTitle currentInfoTitle">
           <span className="currentInfoLabel">表示中の稽古日：</span>
-          <span className="currentInfoDate currentInfoMeta">{formatDateWithWeekday(rehearsal.date)} {formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</span>
+          <span className="currentInfoDate currentInfoMeta">
+            <span className="currentInfoDay">{formatDateWithWeekday(rehearsal.date)}</span>
+            <span className="currentInfoTime">{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</span>
+          </span>
           <span>✦</span>
         </h2>
         <RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} />
