@@ -583,6 +583,12 @@ h3 {
   color: #f1789a;
 }
 
+.rehearsalPickerHelp {
+  color: #694737;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
 .calendarPanel {
   display: grid;
   gap: 12px;

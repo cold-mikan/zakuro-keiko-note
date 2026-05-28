@@ -943,8 +943,8 @@ function scrollToRef(ref) {
 
 function RehearsalPicker({ rehearsals, value, onChange }) {
   return (
-    <label className="field">
-      確認したい稽古日を下の選択ボックスか上部のカレンダーから選んでください。
+    <label className="field rehearsalPicker">
+      <span className="rehearsalPickerHelp">確認したい稽古日を下の選択ボックスか上部のカレンダーから選んでください。</span>
       <select value={value} onChange={(event) => onChange(event.target.value)}>
         {rehearsals.map((rehearsal) => <option key={rehearsal.id} value={rehearsal.id}>{rehearsal.date}</option>)}
       </select>
