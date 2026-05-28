@@ -574,6 +574,11 @@ h3 {
   color: #f1789a;
 }
 
+.sparkTitle .currentInfoLabel,
+.sparkTitle .currentInfoDate {
+  color: inherit;
+}
+
 .calendarPanel {
   display: grid;
   gap: 12px;
@@ -1195,10 +1200,11 @@ h3 {
 }
 
 .editButton {
-  border-color: #ec6b93;
-  background: linear-gradient(135deg, #ec6b93, #f198ad);
+  border-color: #d93670;
+  background: linear-gradient(135deg, #e63f7a, #f06b96);
   color: #fff;
-  box-shadow: 0 8px 18px rgba(236, 107, 147, 0.2);
+  box-shadow: 0 8px 18px rgba(217, 54, 112, 0.28);
+  font-weight: 900;
 }
 
 .selectAllPill {
@@ -1919,6 +1925,22 @@ textarea {
 
   .ticketInner h2 {
     gap: 7px;
+  }
+
+  .currentInfoTitle {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1.18;
+  }
+
+  .currentInfoTitle .currentInfoDate {
+    display: block;
+  }
+
+  .currentInfoTitle > span:last-child {
+    align-self: flex-end;
+    margin-top: -34px;
   }
 
   .decorLeft {

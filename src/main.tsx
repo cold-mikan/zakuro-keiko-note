@@ -1614,7 +1614,7 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
       )}
       <DashboardCalendar rehearsals={rehearsals} selectedRehearsalId={rehearsalId} onSelect={setRehearsalId} />
       <div className="panel highlight">
-        <h2 className="sparkTitle">現在表示されている情報：{rehearsal.date}<span>✦</span></h2>
+        <h2 className="sparkTitle currentInfoTitle"><span className="currentInfoLabel">現在表示されている情報：</span><span className="currentInfoDate">{rehearsal.date}</span><span>✦</span></h2>
         <RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} />
         <p>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</p>
         <p className="note">{rehearsal.memo}</p>
@@ -1667,8 +1667,7 @@ function RehearsalList({ rehearsals, selectedRehearsalId, setSelectedRehearsalId
               <span>未回答 {summary.noReply}</span>
             </div>
             <div className="cardActions">
-              <button onClick={() => { setSelectedRehearsalId(rehearsal.id); openAdmin(); }}>確認する</button>
-              <button onClick={() => { setSelectedRehearsalId(rehearsal.id); setEditingRehearsal(rehearsal); scrollToEditor(); }}>編集</button>
+              <button className="editButton" onClick={() => { setSelectedRehearsalId(rehearsal.id); setEditingRehearsal(rehearsal); scrollToEditor(); }}>編集</button>
               {allowDelete && <button className="dangerButton" onClick={() => onDelete(rehearsal.id)}>削除</button>}
             </div>
           </article>
@@ -1726,7 +1725,7 @@ function DateMultiPicker({ selectedDates, onChange, single = false }) {
           );
         })}
       </div>
-      <p className="note">{selectedDates.length ? `選択中：${selectedDates.join("、")}` : "カレンダーから日付を選んでください。"}</p>
+      {selectedDates.length > 0 && <p className="note">選択中：{selectedDates.join("、")}</p>}
     </div>
   );
 }
@@ -1788,7 +1787,7 @@ function RehearsalEditor({ editingRehearsal, onAdd, onUpdate, onCancelEdit }) {
     >
       <h2 className="panelTitle"><span>{isEditing ? "✎" : "＋"}</span>{isEditing ? "稽古日を編集" : "稽古日を追加"}</h2>
       <div className="grid rehearsalEditorTop">
-        <label className="field datePickerField">日付<DateMultiPicker selectedDates={isEditing ? (date ? [date] : []) : selectedDates} onChange={(dates) => { setSelectedDates(dates); setDate(dates[0] ?? ""); }} single={isEditing} /></label>
+        <label className="field datePickerField">カレンダーから日付を選んでください。<DateMultiPicker selectedDates={isEditing ? (date ? [date] : []) : selectedDates} onChange={(dates) => { setSelectedDates(dates); setDate(dates[0] ?? ""); }} single={isEditing} /></label>
         <div className="rehearsalEditorSide">
           <label className="field">予定の種類<select value={eventType} onChange={(event) => setEventType(event.target.value)}>{eventTypeOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
           <label className="field">開始<input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} /></label>
