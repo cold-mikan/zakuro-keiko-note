@@ -1,4 +1,4 @@
-const CACHE_NAME = "keiko-note-v7";
+const CACHE_NAME = "keiko-note-v8";
 const APP_SHELL = [
   "/manifest.webmanifest",
   "/assets/app-icon-192.png",

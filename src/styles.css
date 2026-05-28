@@ -735,15 +735,135 @@ h3 {
 }
 
 .nextRehearsalCard {
-  background: linear-gradient(135deg, #fff2f6, #fffdf8);
-  border: 1px solid #f29ab3;
-  box-shadow: 0 14px 28px rgba(236, 107, 147, 0.14);
+  background:
+    radial-gradient(circle at 15% 72%, rgba(255, 182, 197, 0.28), transparent 16%),
+    radial-gradient(circle at 84% 28%, rgba(255, 213, 160, 0.24), transparent 14%),
+    linear-gradient(135deg, #fff7f9, #fffaf1 58%, #fff1f6);
+  border: 3px solid #e94f82;
+  border-radius: 28px;
+  box-shadow: 0 18px 34px rgba(206, 80, 116, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.78);
+  min-height: 178px;
+  overflow: hidden;
+  padding: 30px 28px 26px;
+  position: relative;
+  text-align: center;
 }
 
-.nextRehearsalCard h2 {
-  color: #c94f74;
-  font-size: 26px;
-  margin: 6px 0;
+.nextRehearsalCard::before {
+  border: 2px dashed rgba(235, 94, 137, 0.5);
+  border-radius: 22px;
+  content: "";
+  inset: 17px;
+  pointer-events: none;
+  position: absolute;
+}
+
+.nextRehearsalCard::after {
+  background:
+    radial-gradient(circle at 0 0, transparent 0 18px, #e94f82 19px 20px, transparent 21px),
+    radial-gradient(circle at 100% 0, transparent 0 18px, #e94f82 19px 20px, transparent 21px),
+    radial-gradient(circle at 0 100%, transparent 0 18px, #e94f82 19px 20px, transparent 21px),
+    radial-gradient(circle at 100% 100%, transparent 0 18px, #e94f82 19px 20px, transparent 21px);
+  content: "";
+  inset: -3px;
+  pointer-events: none;
+  position: absolute;
+}
+
+.ticketInner {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  position: relative;
+  z-index: 2;
+}
+
+.ticketInner p {
+  color: #54372f;
+  font-size: clamp(24px, 5.2vw, 36px);
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.ticketInner p::after {
+  border-bottom: 4px dotted rgba(237, 93, 136, 0.48);
+  content: "";
+  display: block;
+  margin: 13px auto 0;
+  width: min(390px, 78%);
+}
+
+.ticketInner h2 {
+  align-items: center;
+  color: #df3e79;
+  display: flex;
+  font-size: clamp(31px, 8vw, 52px);
+  font-weight: 900;
+  gap: 12px;
+  justify-content: center;
+  line-height: 1.05;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.ticketInner h2 span {
+  color: #d93373;
+  font-family: "Yu Gothic UI", Meiryo, sans-serif;
+  font-size: 0.82em;
+  line-height: 1;
+}
+
+.ticketRibbon {
+  background: linear-gradient(135deg, #e93f79, #f57fa1);
+  box-shadow: 0 8px 12px rgba(173, 48, 85, 0.24);
+  color: #fff;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 23px;
+  font-weight: 900;
+  left: -36px;
+  letter-spacing: 0.07em;
+  padding: 9px 56px;
+  position: absolute;
+  text-shadow: 0 1px 0 rgba(128, 32, 66, 0.24);
+  top: 22px;
+  transform: rotate(-45deg);
+  z-index: 4;
+}
+
+.ticketRibbon::after {
+  color: #ffe7aa;
+  content: "✦";
+  font-size: 15px;
+  position: absolute;
+  right: 31px;
+  top: 7px;
+}
+
+.ticketDecor {
+  color: rgba(239, 107, 145, 0.52);
+  font-family: "Yu Gothic UI", Meiryo, sans-serif;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+}
+
+.decorLeft {
+  font-size: 24px;
+  left: 104px;
+  top: 54px;
+}
+
+.decorRight {
+  font-size: 34px;
+  right: 72px;
+  top: 50px;
+}
+
+.decorBottom {
+  bottom: 38px;
+  color: rgba(245, 174, 97, 0.46);
+  font-size: 28px;
+  right: 116px;
 }
 
 .dateMultiPicker {
@@ -1737,6 +1857,51 @@ textarea {
 
   .notificationGuide {
     padding: 12px;
+  }
+
+  .nextRehearsalCard {
+    border-width: 2px;
+    min-height: 154px;
+    padding: 34px 18px 24px;
+  }
+
+  .nextRehearsalCard::before {
+    inset: 12px;
+  }
+
+  .ticketRibbon {
+    font-size: 16px;
+    left: -39px;
+    padding: 7px 48px;
+    top: 17px;
+  }
+
+  .ticketInner {
+    gap: 10px;
+  }
+
+  .ticketInner p::after {
+    margin-top: 10px;
+    width: 76%;
+  }
+
+  .ticketInner h2 {
+    gap: 7px;
+  }
+
+  .decorLeft {
+    left: 62px;
+    top: 54px;
+  }
+
+  .decorRight {
+    right: 36px;
+    top: 42px;
+  }
+
+  .decorBottom {
+    bottom: 26px;
+    right: 58px;
   }
 
   .statusCards:has(.notificationGuide.compact) {

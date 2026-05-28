@@ -976,6 +976,15 @@ function formatJapaneseDate(date) {
   });
 }
 
+function formatTicketDate(date) {
+  const parsed = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return date;
+  const weekday = parsed.toLocaleDateString("ja-JP", { weekday: "short" });
+  return `${date} (${weekday})`;
+}
+
+const ticketSymbols = ["♤", "❤︎", "♧", "♦︎"];
+
 function getNextRehearsal(rehearsals) {
   const today = new Date().toLocaleDateString("sv-SE");
   return rehearsals
@@ -1063,6 +1072,7 @@ function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
 function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visibleMembers, scenes }) {
   const rehearsal = rehearsals.find((item) => item.id === rehearsalId) ?? rehearsals[0];
   const nextRehearsal = getNextRehearsal(rehearsals);
+  const ticketSymbol = useMemo(() => ticketSymbols[Math.floor(Math.random() * ticketSymbols.length)], []);
   const grouped = groupAttendance(rehearsalId, attendances, visibleMembers);
   const attendancePersonRow = (row, prefix = "") => ({
     key: `${prefix}${row.member.id}-${row.attendance.status}`,
@@ -1079,10 +1089,14 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
     <section className="stack">
       {nextRehearsal && (
         <section className="panel nextRehearsalCard">
-          <p className="eyebrow">次回稽古日</p>
-          <h2>{formatJapaneseDate(nextRehearsal.date)}</h2>
-          <p>{formatTime(nextRehearsal.startTime)}-{formatTime(nextRehearsal.endTime)}</p>
-          {nextRehearsal.memo && <p className="note">{nextRehearsal.memo}</p>}
+          <span className="ticketRibbon">NEXT</span>
+          <span className="ticketDecor decorLeft">✦</span>
+          <span className="ticketDecor decorRight">♡</span>
+          <span className="ticketDecor decorBottom">♢</span>
+          <div className="ticketInner">
+            <p>次回稽古日</p>
+            <h2><span>{ticketSymbol}</span>{formatTicketDate(nextRehearsal.date)}</h2>
+          </div>
         </section>
       )}
       <DashboardCalendar rehearsals={rehearsals} selectedRehearsalId={rehearsalId} onSelect={setRehearsalId} />
