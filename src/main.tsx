@@ -2003,7 +2003,7 @@ function TodayScenesPanel({ rehearsal, scenes }) {
   return (
     <section className="panel todayScenesPanel">
       <h2 className="panelTitle"><span>★</span>選択日の稽古するシーン</h2>
-      <p>{allScenesSelected ? "ぜんぶ❣" : titles.map(sceneShortName).join("、")}</p>
+      <p>{allScenesSelected ? "全シーン" : titles.map(sceneShortName).join("、")}</p>
     </section>
   );
 }
