@@ -1640,20 +1640,21 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
           </div>
         </section>
       )}
-      <section className="panel highlight currentRehearsalCard currentRehearsalHero">
-        <div>
-          <h2>現在表示している稽古日</h2>
-          <div className="currentInfoMeta">
-            <span className="currentInfoDay">{formatDateWithWeekday(rehearsal.date)}</span>
-            <span className="currentInfoTime">{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</span>
-          </div>
-        </div>
-        <p>この日の情報をすべて表示しています</p>
-      </section>
       <div className="dashboardDateSwitch">
         <div className="dateSwitchSide">
           <DashboardCalendar rehearsals={rehearsals} selectedRehearsalId={rehearsalId} onSelect={setRehearsalId} />
           <RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} />
+          <section className="panel highlight currentRehearsalCard currentRehearsalHero">
+            <span className="currentHeroIcon">▣</span>
+            <div>
+              <h2>現在表示している稽古日</h2>
+              <div className="currentInfoMeta">
+                <span className="currentInfoDay">{formatDateWithWeekday(rehearsal.date)}</span>
+                <span className="currentInfoTime">{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</span>
+              </div>
+            </div>
+            <p>この日の情報をすべて表示しています</p>
+          </section>
         </div>
         <section className="selectedDayInfoList">
           <h2 className="panelTitle"><span>✦</span>{formatDateWithWeekday(rehearsal.date)}の情報一覧</h2>
