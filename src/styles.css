@@ -1212,6 +1212,23 @@ h3 {
   min-width: 34px;
 }
 
+.panelTitleImageIcon {
+  display: block;
+  height: 27px;
+  object-fit: contain;
+  width: 27px;
+}
+
+.panelTitle span:has(.panelTitleImageIcon) {
+  background: #fffaf6;
+  border-color: #f2b6a4;
+  color: #7a4c38;
+}
+
+.noticeIcon {
+  transform: translateX(1px);
+}
+
 .selectedDayInfoList .panel .panelTitle {
   color: #694737;
   font-size: 18px;

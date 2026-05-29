@@ -2429,12 +2429,19 @@ function renderPeopleRow(row) {
   return <span className={`personName ${roleClassName(row.role)}`}>{row.label}</span>;
 }
 
+function panelTitleIcon(title, tone) {
+  if (title === "連絡事項") {
+    return <img className="panelTitleImageIcon noticeIcon" src="./assets/notice-megaphone.png" alt="" />;
+  }
+  return tone === "warn" ? "?" : "♙";
+}
+
 function PeoplePanel({ title, rows, tone, collapsible = false, initialCollapsed = false, collapsedMessage = "" }) {
   const [collapsed, setCollapsed] = useState(initialCollapsed);
   return (
     <section className={`panel people ${tone ?? ""}`}>
       <div className="panelTitleRow">
-        <h2 className="panelTitle"><span>{tone === "warn" ? "?" : "♙"}</span>{title}</h2>
+        <h2 className="panelTitle"><span>{panelTitleIcon(title, tone)}</span>{title}</h2>
         {collapsible && (
           <button type="button" className="miniToggle" onClick={() => setCollapsed((current) => !current)}>
             {collapsed ? "開く" : "閉じる"}
