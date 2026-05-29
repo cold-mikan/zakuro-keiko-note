@@ -1565,7 +1565,7 @@ function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
   return (
     <section className="panel calendarPanel">
       <div className="calendarHeader">
-        <h2 className="panelTitle"><span><img className="calendarTitleIcon" src="./assets/calendar-moon-icon.png" alt="" /></span>カレンダー</h2>
+        <h2 className="panelTitle"><span><img className="calendarTitleIcon" src="./assets/calendar-cute-icon.png" alt="" /></span>カレンダー</h2>
         <div className="calendarMonthControls">
           <select value={monthKey} onChange={(event) => setMonthKey(event.target.value)} aria-label="表示する月">
             {monthOptions.map((month) => <option key={month} value={month}>{month.replace("-", "年")}月</option>)}
@@ -1645,7 +1645,7 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
           <DashboardCalendar rehearsals={rehearsals} selectedRehearsalId={rehearsalId} onSelect={setRehearsalId} />
           <RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} />
           <section className="panel highlight currentRehearsalCard currentRehearsalHero">
-            <span className="currentHeroIcon">▣</span>
+            <span className="currentHeroIcon"><img src="./assets/current-rehearsal-calendar.png" alt="" /></span>
             <div>
               <h2>現在表示している稽古日</h2>
               <div className="currentInfoMeta">
@@ -2034,7 +2034,7 @@ function TodayScenesPanel({ rehearsal, scenes }) {
   const allScenesSelected = scenes.length > 0 && scenes.every((scene) => selectedSceneIds.includes(scene.id));
   return (
     <section className="panel todayScenesPanel">
-      <h2 className="panelTitle"><span>★</span>稽古内容</h2>
+      <h2 className="panelTitle"><span><img className="panelTitleImageIcon sceneContentIcon" src="./assets/scene-checklist.png" alt="" /></span>稽古内容</h2>
       <p>{allScenesSelected ? "全シーン" : titles.map(sceneShortName).join("、")}</p>
     </section>
   );
@@ -2433,6 +2433,9 @@ function panelTitleIcon(title, tone) {
   if (title === "連絡事項") {
     return <img className="panelTitleImageIcon noticeIcon" src="./assets/notice-megaphone.png" alt="" />;
   }
+  if (title === "参加予定") {
+    return <img className="panelTitleImageIcon attendanceIcon" src="./assets/attendance-people.png" alt="" />;
+  }
   return tone === "warn" ? "?" : "♙";
 }
 
@@ -2459,7 +2462,7 @@ function AttendanceRatePanel({ members, attendances, rehearsals }) {
   return (
     <section className="panel">
       <div className="panelTitleRow">
-        <h2 className="panelTitle"><span>↗</span>出席状況</h2>
+        <h2 className="panelTitle"><span><img className="panelTitleImageIcon attendanceRateIcon" src="./assets/attendance-rate-icon.png" alt="" /></span>出席状況</h2>
         <button type="button" className="miniToggle" onClick={() => setCollapsed((current) => !current)}>
           {collapsed ? "開く" : "閉じる"}
         </button>

@@ -679,6 +679,13 @@ h3 {
   width: 72px;
 }
 
+.currentHeroIcon img {
+  display: block;
+  height: 56px;
+  object-fit: contain;
+  width: 56px;
+}
+
 .currentRehearsalHero p {
   align-items: center;
   border-top: 1px dashed #f4b5c4;
@@ -1227,6 +1234,21 @@ h3 {
 
 .noticeIcon {
   transform: translateX(1px);
+}
+
+.attendanceIcon {
+  height: 28px;
+  width: 28px;
+}
+
+.sceneContentIcon {
+  height: 28px;
+  width: 28px;
+}
+
+.attendanceRateIcon {
+  height: 29px;
+  width: 29px;
 }
 
 .selectedDayInfoList .panel .panelTitle {
