@@ -1,4 +1,4 @@
-const CACHE_NAME = "keiko-note-v8";
+const CACHE_NAME = "keiko-note-v9";
 const APP_SHELL = [
   "/manifest.webmanifest",
   "/assets/app-icon-192.png",
@@ -7,6 +7,13 @@ const APP_SHELL = [
   "/assets/pomegranate-clean.png",
   "/assets/sword-cropped.png",
   "/assets/title-line-v2-cropped.png",
+  "/assets/attendance-people.png",
+  "/assets/attendance-rate-icon.png",
+  "/assets/calendar-cute-icon.png",
+  "/assets/current-rehearsal-calendar.png",
+  "/assets/no-reply-icon.png",
+  "/assets/notice-megaphone.png",
+  "/assets/scene-checklist.png",
 ];
 
 self.addEventListener("install", (event) => {

@@ -2439,6 +2439,9 @@ function panelTitleIcon(title, tone) {
   if (title === "まだ回答していない人") {
     return <img className="panelTitleImageIcon noReplyIcon" src="./assets/no-reply-icon.png" alt="" />;
   }
+  if (title === "欠席・遅刻") {
+    return <img className="panelTitleImageIcon absenceLateIcon" src="./assets/absence-late-icon.png" alt="" />;
+  }
   return tone === "warn" ? "?" : "♙";
 }
 

@@ -1256,6 +1256,11 @@ h3 {
   width: 29px;
 }
 
+.absenceLateIcon {
+  height: 30px;
+  width: 30px;
+}
+
 .selectedDayInfoList .panel .panelTitle {
   color: #694737;
   font-size: 18px;
