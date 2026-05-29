@@ -876,13 +876,14 @@ h3 {
 }
 
 .calendarDay.hasMtg {
-  border-color: #c8a374;
-  background: #fff3df;
-  color: #875f31;
+  border-color: #b8d889;
+  background: #f6fde9;
+  color: #5d7f2f;
+  font-weight: 900;
 }
 
 .calendarDay.hasMtg i {
-  border-color: #c28b4f;
+  border-color: #8fbd4e;
 }
 
 .calendarDay.today {
@@ -906,15 +907,16 @@ h3 {
 }
 
 .calendarDay.today.hasMtg {
-  background: #fff8df;
-  border-color: #d9aa50;
-  color: #8b6325;
+  background: linear-gradient(135deg, #fff8df 0%, #f6fde9 72%);
+  border-color: #8fbd4e;
+  color: #5d7f2f;
+  box-shadow: 0 0 0 2px rgba(217, 170, 80, 0.2), 0 0 0 5px rgba(143, 189, 78, 0.14);
 }
 
 .calendarDay.hasMtg.selected {
-  background: #c99357;
-  border-color: #a56d35;
-  box-shadow: 0 0 0 4px rgba(201, 147, 87, 0.2), 0 10px 22px rgba(165, 109, 53, 0.25);
+  background: #82b93f;
+  border-color: #67972e;
+  box-shadow: 0 0 0 4px rgba(130, 185, 63, 0.2), 0 10px 22px rgba(103, 151, 46, 0.24);
   color: #fff;
 }
 
@@ -934,9 +936,9 @@ h3 {
 }
 
 .calendarDay.today.hasMtg.selected {
-  background: #b9793d;
-  border-color: #8f5b2f;
-  box-shadow: 0 0 0 4px rgba(217, 170, 80, 0.24), 0 0 0 8px rgba(201, 147, 87, 0.16), 0 10px 22px rgba(143, 91, 47, 0.26);
+  background: #6fa532;
+  border-color: #568426;
+  box-shadow: 0 0 0 4px rgba(217, 170, 80, 0.24), 0 0 0 8px rgba(130, 185, 63, 0.16), 0 10px 22px rgba(86, 132, 38, 0.24);
   color: #fff;
 }
 
@@ -978,7 +980,7 @@ h3 {
 }
 
 .mtgDot {
-  background: #d7b894;
+  background: #b8d889;
 }
 
 .nextRehearsalCard {
