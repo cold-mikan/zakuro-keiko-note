@@ -1259,8 +1259,8 @@ h3 {
 }
 
 .memberCard.staff {
-  background: linear-gradient(90deg, rgba(246, 250, 255, 0.92), rgba(255, 253, 249, 0.94));
-  border-left-color: #87a6c8;
+  background: linear-gradient(90deg, rgba(246, 253, 233, 0.92), rgba(255, 253, 249, 0.94));
+  border-left-color: #a8cf75;
 }
 
 .roleBadge {
@@ -1283,9 +1283,9 @@ h3 {
 }
 
 .roleBadge.staff {
-  background: #eef7ff;
-  border-color: #a8c5de;
-  color: #557b9a;
+  background: #f4fbe8;
+  border-color: #b8d889;
+  color: #5d7f2f;
 }
 
 .personName {
@@ -1302,8 +1302,8 @@ h3 {
 }
 
 .personName.staff {
-  background: rgba(238, 247, 255, 0.88);
-  color: #557b9a;
+  background: rgba(246, 253, 233, 0.9);
+  color: #5d7f2f;
 }
 
 .collapsedMessage {
