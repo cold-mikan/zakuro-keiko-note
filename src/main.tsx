@@ -2436,6 +2436,9 @@ function panelTitleIcon(title, tone) {
   if (title === "参加予定") {
     return <img className="panelTitleImageIcon attendanceIcon" src="./assets/attendance-people.png" alt="" />;
   }
+  if (title === "まだ回答していない人") {
+    return <img className="panelTitleImageIcon noReplyIcon" src="./assets/no-reply-icon.png" alt="" />;
+  }
   return tone === "warn" ? "?" : "♙";
 }
 
