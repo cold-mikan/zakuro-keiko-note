@@ -943,7 +943,8 @@ h3 {
 }
 
 .calendarDay.selected i {
-  border-width: 3px;
+  border-color: #fff;
+  border-width: 2px;
 }
 
 .calendarDay i {
