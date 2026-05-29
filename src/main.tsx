@@ -1620,6 +1620,8 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
     ...grouped.absent.map((row) => attendancePersonRow(row)),
     ...grouped.late.map((row) => attendancePersonRow(row, "遅刻：")),
   ];
+  const attendanceRows = [...grouped.present, ...grouped.late, ...grouped.early].map((row) => attendancePersonRow(row));
+  const isMeetingDay = rehearsal?.eventType === "MTG・打ち合わせ";
   if (!rehearsal) return <section className="panel emptyState">稽古日を追加してください。</section>;
   return (
     <section className="stack">
@@ -1663,13 +1665,21 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
           {absenceRows.length > 0 && <PeoplePanel title="欠席・遅刻" rows={absenceRows} tone="warn" />}
           <div className="grid two">
             <PeoplePanel
+              key={`attendance-${rehearsal.id}`}
               title="参加予定"
-              rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => attendancePersonRow(row))}
+              rows={attendanceRows}
               collapsible
-              initialCollapsed
+              initialCollapsed={attendanceRows.length > 4}
               collapsedMessage={(grouped.absent.length || grouped.noReply.length) ? ",,,1,2,,,いっぱい！" : "なんと全員大集合❣"}
             />
-            <PeoplePanel title="まだ回答していない人" rows={grouped.noReply.map(memberPersonRow)} tone="warn" />
+            <PeoplePanel
+              key={`no-reply-${rehearsal.id}`}
+              title="まだ回答していない人"
+              rows={grouped.noReply.map(memberPersonRow)}
+              tone="warn"
+              collapsible={isMeetingDay}
+              initialCollapsed={isMeetingDay}
+            />
           </div>
           <AttendanceRatePanel members={visibleMembers} attendances={attendances} rehearsals={rehearsals} />
         </section>
@@ -2447,6 +2457,9 @@ function panelTitleIcon(title, tone) {
 
 function PeoplePanel({ title, rows, tone, collapsible = false, initialCollapsed = false, collapsedMessage = "" }) {
   const [collapsed, setCollapsed] = useState(initialCollapsed);
+  useEffect(() => {
+    setCollapsed(initialCollapsed);
+  }, [initialCollapsed, title]);
   return (
     <section className={`panel people ${tone ?? ""}`}>
       <div className="panelTitleRow">
