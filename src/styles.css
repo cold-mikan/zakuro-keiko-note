@@ -611,12 +611,38 @@ h3 {
   gap: 14px;
 }
 
+.selectedDayInfoList {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.selectedDayInfoList > .panelTitle {
+  margin: 0 0 2px;
+}
+
+.selectedDayInfoList .two {
+  grid-template-columns: 1fr;
+}
+
+.selectedDayInfoList .panel {
+  min-height: 0;
+}
+
 .currentRehearsalCard {
   border-color: #f18aa7;
   border-radius: 18px;
   box-shadow: 0 14px 28px rgba(207, 63, 112, 0.14);
   overflow: hidden;
   position: relative;
+}
+
+.currentRehearsalHero {
+  align-items: center;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 0.7fr);
+  padding: 22px 26px;
 }
 
 .currentRehearsalCard::after {
@@ -626,6 +652,32 @@ h3 {
   position: absolute;
   right: 22px;
   top: 22px;
+}
+
+.currentRehearsalHero h2 {
+  color: #3e302c;
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+
+.currentRehearsalHero p {
+  align-items: center;
+  border-left: 2px dashed #f4b5c4;
+  color: #694737;
+  display: flex;
+  font-size: 16px;
+  font-weight: 900;
+  justify-content: center;
+  line-height: 1.7;
+  margin: 0;
+  min-height: 88px;
+  padding: 8px 42px 8px 24px;
+  text-align: center;
+}
+
+.currentRehearsalHero .currentInfoMeta {
+  display: grid;
+  gap: 6px;
 }
 
 .currentRehearsalCard .currentInfoTitle {
@@ -649,13 +701,13 @@ h3 {
 
 .currentRehearsalCard .currentInfoDay {
   color: #d74376;
-  font-size: 28px;
+  font-size: 30px;
   line-height: 1.12;
 }
 
 .currentRehearsalCard .currentInfoTime {
   color: #8a514f;
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.25;
 }
 
@@ -2081,9 +2133,42 @@ textarea {
     padding: 16px;
   }
 
+  .currentRehearsalHero {
+    gap: 14px;
+    grid-template-columns: 1fr;
+    padding: 18px 16px;
+  }
+
+  .currentRehearsalHero h2 {
+    font-size: 17px;
+    margin-bottom: 10px;
+  }
+
+  .currentRehearsalHero p {
+    border-left: 0;
+    border-top: 1px dashed #f4b5c4;
+    font-size: 13px;
+    justify-content: flex-start;
+    min-height: 0;
+    padding: 12px 30px 0 0;
+    text-align: left;
+  }
+
+  .currentRehearsalHero .currentInfoDay {
+    font-size: 24px;
+  }
+
+  .currentRehearsalHero .currentInfoTime {
+    font-size: 17px;
+  }
+
   .currentRehearsalCard::after {
     right: 18px;
     top: 18px;
+  }
+
+  .selectedDayInfoList {
+    gap: 10px;
   }
 
   .currentInfoTitle {

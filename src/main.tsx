@@ -1640,36 +1640,39 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
           </div>
         </section>
       )}
-      <div className="dashboardDateSwitch">
-        <DashboardCalendar rehearsals={rehearsals} selectedRehearsalId={rehearsalId} onSelect={setRehearsalId} />
-        <div className="dateSwitchSide">
-          <div className="panel highlight currentRehearsalCard">
-            <h2 className="sparkTitle currentInfoTitle">
-              <span className="currentInfoLabel">現在表示中</span>
-              <span className="currentInfoDate currentInfoMeta">
-                <span className="currentInfoDay">{formatDateWithWeekday(rehearsal.date)}</span>
-                <span className="currentInfoTime">{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</span>
-              </span>
-              <span>✦</span>
-            </h2>
+      <section className="panel highlight currentRehearsalCard currentRehearsalHero">
+        <div>
+          <h2>現在表示している稽古日</h2>
+          <div className="currentInfoMeta">
+            <span className="currentInfoDay">{formatDateWithWeekday(rehearsal.date)}</span>
+            <span className="currentInfoTime">{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</span>
           </div>
+        </div>
+        <p>この日の情報をすべて表示しています</p>
+      </section>
+      <div className="dashboardDateSwitch">
+        <div className="dateSwitchSide">
+          <DashboardCalendar rehearsals={rehearsals} selectedRehearsalId={rehearsalId} onSelect={setRehearsalId} />
           <RehearsalPicker rehearsals={rehearsals} value={rehearsalId} onChange={setRehearsalId} />
         </div>
+        <section className="selectedDayInfoList">
+          <h2 className="panelTitle"><span>✦</span>{formatDateWithWeekday(rehearsal.date)}の情報一覧</h2>
+          <ContactNotesPanel grouped={grouped} />
+          <TodayScenesPanel rehearsal={rehearsal} scenes={scenes} />
+          {absenceRows.length > 0 && <PeoplePanel title="欠席・遅刻" rows={absenceRows} tone="warn" />}
+          <div className="grid two">
+            <PeoplePanel
+              title="参加予定"
+              rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => attendancePersonRow(row))}
+              collapsible
+              initialCollapsed
+              collapsedMessage={(grouped.absent.length || grouped.noReply.length) ? ",,,1,2,,,いっぱい！" : "なんと全員大集合❣"}
+            />
+            <PeoplePanel title="まだ回答していない人" rows={grouped.noReply.map(memberPersonRow)} tone="warn" />
+          </div>
+          <AttendanceRatePanel members={visibleMembers} attendances={attendances} rehearsals={rehearsals} />
+        </section>
       </div>
-      <ContactNotesPanel grouped={grouped} />
-      <TodayScenesPanel rehearsal={rehearsal} scenes={scenes} />
-      {absenceRows.length > 0 && <PeoplePanel title="欠席・遅刻" rows={absenceRows} tone="warn" />}
-      <div className="grid two">
-        <PeoplePanel
-          title="参加予定"
-          rows={[...grouped.present, ...grouped.late, ...grouped.early].map((row) => attendancePersonRow(row))}
-          collapsible
-          initialCollapsed
-          collapsedMessage={(grouped.absent.length || grouped.noReply.length) ? ",,,1,2,,,いっぱい！" : "なんと全員大集合❣"}
-        />
-        <PeoplePanel title="まだ回答していない人" rows={grouped.noReply.map(memberPersonRow)} tone="warn" />
-      </div>
-      <AttendanceRatePanel members={visibleMembers} attendances={attendances} rehearsals={rehearsals} />
     </section>
   );
 }
