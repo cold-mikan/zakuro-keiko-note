@@ -1159,7 +1159,7 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
                 <span className="currentInfoTime">{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</span>
               </div>
             </div>
-            <p>この日の情報をすべて表示しています</p>
+            {rehearsal.memo && <p>{rehearsal.memo}</p>}
           </section>
         </div>
         <section className="selectedDayInfoList">
