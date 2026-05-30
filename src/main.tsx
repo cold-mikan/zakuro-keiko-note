@@ -2137,6 +2137,7 @@ function ScheduleOptionManager({ pollId, options, onAddOption, onUpdateOption, o
   return (
     <div className="scheduleOptionManager">
       <h3>候補日の管理</h3>
+      <p className="scheduleOptionSectionLabel">現在、登録されている日</p>
       <div className="scheduleOptionRows">
         {options.map((option) => {
           const draft = editing[option.id] ?? option;
@@ -2152,6 +2153,7 @@ function ScheduleOptionManager({ pollId, options, onAddOption, onUpdateOption, o
           );
         })}
       </div>
+      <p className="scheduleOptionSectionLabel">日付追加</p>
       <div className="scheduleOptionRow add">
         <input type="date" value={newOption.candidateDate} onChange={(event) => setNewOption((current) => ({ ...current, candidateDate: event.target.value }))} />
         <input type="time" value={newOption.startTime} onChange={(event) => setNewOption((current) => ({ ...current, startTime: event.target.value }))} />
