@@ -1468,6 +1468,7 @@ h3 {
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 12px 28px rgba(93, 59, 45, 0.06);
   padding: clamp(18px, 3vw, 28px);
+  overflow: hidden;
 }
 
 .scheduleCreatorIntro {
@@ -1618,14 +1619,14 @@ h3 {
 
 .scheduleCandidateLayout {
   display: grid;
-  grid-template-columns: minmax(320px, 1.35fr) minmax(250px, 0.75fr);
-  gap: clamp(16px, 3vw, 28px);
-  align-items: center;
+  grid-template-columns: minmax(320px, 1fr) minmax(220px, 0.55fr);
+  gap: clamp(14px, 2.5vw, 22px);
+  align-items: start;
 }
 
 .scheduleCalendarHeader {
   display: grid;
-  grid-template-columns: 44px 1fr 44px;
+  grid-template-columns: 38px 1fr 38px;
   align-items: center;
   gap: 8px;
 }
@@ -1637,7 +1638,7 @@ h3 {
 }
 
 .scheduleCalendarHeader button {
-  min-height: 38px;
+  min-height: 36px;
   border: 1px solid #f0b4c7;
   border-radius: 10px;
   background: #fff7f9;
@@ -1650,7 +1651,7 @@ h3 {
 .scheduleCalendarGrid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 7px;
+  gap: clamp(4px, 1vw, 7px);
 }
 
 .scheduleCalendarWeekdays span {
@@ -1663,7 +1664,7 @@ h3 {
 .scheduleCalendarGrid button,
 .scheduleCalendarGrid .blank {
   aspect-ratio: 1;
-  min-height: 42px;
+  min-height: 36px;
 }
 
 .scheduleCalendarGrid button {
@@ -1792,15 +1793,22 @@ h3 {
   border-bottom: 0;
 }
 
-.selectedCandidateItem button {
+.selectedCandidateItem .removeCandidateButton {
   width: 34px;
   height: 34px;
-  border: 1px solid #ec6b93;
+  border: 1px solid #f6a9bf;
   border-radius: 50%;
   background: #fff;
-  color: #ec6b93;
-  font-size: 1.1rem;
-  font-weight: 900;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+}
+
+.selectedCandidateItem .removeCandidateButton img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .selectedCandidateEmpty {
@@ -2131,11 +2139,11 @@ h3 {
 
 .simpleVoteButtons {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   justify-self: end;
   margin-left: auto;
-  width: min(300px, 100%);
+  width: min(430px, 100%);
 }
 
 .simpleVoteButtons button {
@@ -2168,6 +2176,11 @@ h3 {
 
 .simpleVoteButtons button.active.no {
   background: #fff7f9;
+}
+
+.simpleVoteButtons button.active.maybe {
+  border-color: #d9aa50;
+  background: #fff8df;
 }
 
 .simpleSaveButton {
@@ -2225,6 +2238,10 @@ h3 {
 
 .summaryCounts .yes {
   color: #ec6b93;
+}
+
+.summaryCounts .maybe {
+  color: #b7832f;
 }
 
 .summaryCounts .no {
@@ -2433,6 +2450,11 @@ h3 {
   font-weight: 900;
 }
 
+.maybeCell {
+  color: #b7832f !important;
+  font-weight: 900;
+}
+
 .scheduleAdminActions button {
   border: 1px solid #f0b4c7;
   border-radius: 999px;
@@ -2506,7 +2528,7 @@ h3 {
 
   .scheduleCalendarGrid button,
   .scheduleCalendarGrid .blank {
-    min-height: 38px;
+    min-height: 40px;
   }
 
   .selectedCandidatePanel {

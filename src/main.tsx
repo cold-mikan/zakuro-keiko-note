@@ -1306,7 +1306,8 @@ function App() {
 
   function addRehearsal(input: Omit<Rehearsal, "id">) {
     if (!guardOnlineWrite()) return;
-    const next = { ...input, id: `r${Date.now()}`, createdAt: new Date().toISOString(), updatedBy: actorName, updatedAt: new Date().toISOString() };
+    const uniqueId = `r${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const next = { ...input, id: uniqueId, createdAt: new Date().toISOString(), updatedBy: actorName, updatedAt: new Date().toISOString() };
     setRehearsalList((current) => [...current, next].sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`)));
     setSelectedRehearsalId(next.id);
     showToast("変更が完了しました。");
@@ -1956,7 +1957,9 @@ function SchedulePollCreator({ onCreatePoll }) {
                 {selectedDates.map((date) => (
                   <div key={date} className="selectedCandidateItem">
                     <span>{formatDateWithWeekday(date).replaceAll("-", "/")}</span>
-                    <button type="button" aria-label={`${date}を候補日から外す`} onClick={() => toggleCandidateDate(date)}>×</button>
+                    <button type="button" className="removeCandidateButton" aria-label={`${date}を候補日から外す`} onClick={() => toggleCandidateDate(date)}>
+                      <img src="/assets/remove-candidate-icon.png" alt="" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -2094,12 +2097,15 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
                   <div key={option.id} className="simpleVoteRow">
                     <div className="simpleVoteDate">
                       <strong>{formatChipDate(option.candidateDate)}</strong>
-                      <span>{option.startTime}〜{option.endTime}</span>
+                      <span>{formatTime(option.startTime)}〜{formatTime(option.endTime)}</span>
                       {option.memo && <small>{option.memo}</small>}
                     </div>
                     <div className="simpleVoteButtons">
                       <button type="button" className={draft[option.id] === "yes" ? "active yes" : ""} onClick={() => setDraft((current) => ({ ...current, [option.id]: "yes" }))}>
                         <strong>○</strong><span>参加できる</span>
+                      </button>
+                      <button type="button" className={draft[option.id] === "maybe" ? "active maybe" : ""} onClick={() => setDraft((current) => ({ ...current, [option.id]: "maybe" }))}>
+                        <strong>△</strong><span>未定・要相談</span>
                       </button>
                       <button type="button" className={draft[option.id] === "no" ? "active no" : ""} onClick={() => setDraft((current) => ({ ...current, [option.id]: "no" }))}>
                         <strong>×</strong><span>参加できない</span>
@@ -2124,10 +2130,11 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
               {optionStats.map((item) => (
                 <div key={item.option.id} className="summaryCard">
                   <strong>{formatChipDate(item.option.candidateDate)}</strong>
-                  <span>{item.option.startTime}〜{item.option.endTime}</span>
+                  <span>{formatTime(item.option.startTime)}〜{formatTime(item.option.endTime)}</span>
                   {item.option.memo && <small>{item.option.memo}</small>}
                   <div className="summaryCounts">
                     <span className="yes">○ {item.yes}人</span>
+                    <span className="maybe">△ {item.maybe}人</span>
                     <span className="no">× {item.no}人</span>
                   </div>
                 </div>
@@ -2142,7 +2149,7 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
                   <thead>
                     <tr>
                       <th>メンバー</th>
-                      {options.map((option) => <th key={option.id}>{formatChipDate(option.candidateDate)}<br /><small>{option.startTime}-{option.endTime}</small></th>)}
+                      {options.map((option) => <th key={option.id}>{formatChipDate(option.candidateDate)}<br /><small>{formatTime(option.startTime)}-{formatTime(option.endTime)}</small></th>)}
                       <th>コメント</th>
                     </tr>
                   </thead>
@@ -2152,7 +2159,7 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
                         <th>{participant.memberName}</th>
                         {options.map((option) => {
                           const status = responseMap.get(`${participant.id}:${option.id}`)?.status;
-                          return <td key={option.id} className={status === "yes" ? "yesCell" : status === "no" ? "noCell" : ""}>{status === "yes" ? "○" : status === "no" ? "×" : "-"}</td>;
+                          return <td key={option.id} className={status === "yes" ? "yesCell" : status === "no" ? "noCell" : status === "maybe" ? "maybeCell" : ""}>{status === "yes" ? "○" : status === "no" ? "×" : status === "maybe" ? "△" : "-"}</td>;
                         })}
                         <td>{participant.comment || "-"}</td>
                       </tr>
@@ -2281,7 +2288,7 @@ function LegacySchedulePollCard({ poll, options, participants, responses, member
           <div className="scheduleAnswerOptions">
             {options.map((option) => (
               <div key={option.id} className="scheduleAnswerOption">
-                <p>{formatDateWithWeekday(option.candidateDate)}<br /><small>{option.startTime}-{option.endTime}</small></p>
+                <p>{formatDateWithWeekday(option.candidateDate)}<br /><small>{formatTime(option.startTime)}-{formatTime(option.endTime)}</small></p>
                 {option.memo && <small>{option.memo}</small>}
                 <div className="yesNoButtons">
                   <button type="button" className={draft[option.id] === "yes" ? "active yes" : ""} onClick={() => setDraft((current) => ({ ...current, [option.id]: "yes" }))}>○</button>
@@ -2302,7 +2309,7 @@ function LegacySchedulePollCard({ poll, options, participants, responses, member
           <thead>
             <tr>
               <th>メンバー</th>
-              {options.map((option) => <th key={option.id}>{formatChipDate(option.candidateDate)}<br /><small>{option.startTime}-{option.endTime}</small></th>)}
+              {options.map((option) => <th key={option.id}>{formatChipDate(option.candidateDate)}<br /><small>{formatTime(option.startTime)}-{formatTime(option.endTime)}</small></th>)}
               <th>コメント</th>
             </tr>
           </thead>
@@ -2964,7 +2971,7 @@ function RehearsalEditor({ editingRehearsal, onAdd, onUpdate, onCancelEdit }) {
       className="panel form"
       onSubmit={(event) => {
         event.preventDefault();
-        const targetDates = isEditing ? [date] : selectedDates;
+        const targetDates = [...(isEditing ? [date] : selectedDates)];
         if (!targetDates.length || !startTime || !endTime) {
           alert("日付・開始時間・終了時間を入力してください。");
           return;
