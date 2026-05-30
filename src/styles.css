@@ -1658,6 +1658,316 @@ h3 {
   gap: 16px;
 }
 
+.schedulePollCardSimple {
+  display: grid;
+  gap: 16px;
+}
+
+.pollIntroCard,
+.voterNameCard,
+.pollTabsCard {
+  border: 1px solid #ead7ca;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 24px rgba(93, 59, 45, 0.06);
+  padding: clamp(16px, 3vw, 24px);
+}
+
+.pollIntroCard {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.pollIntroIcon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #fff0f6;
+  color: #ec6b93;
+  font-size: 1.4rem;
+  font-weight: 900;
+}
+
+.pollIntroText h2 {
+  margin: 0;
+  color: #2f2421;
+  font-size: clamp(1.45rem, 2.7vw, 2rem);
+}
+
+.pollIntroText p {
+  margin: 8px 0 0;
+  color: #6d554d;
+  line-height: 1.8;
+}
+
+.voterNameCard {
+  display: grid;
+  gap: 12px;
+}
+
+.voterNameCard label,
+.commentBox {
+  display: grid;
+  gap: 8px;
+}
+
+.voterNameCard span,
+.commentBox span {
+  color: #2f2421;
+  font-weight: 900;
+}
+
+.voterNameCard em {
+  display: inline-block;
+  margin-left: 8px;
+  border-radius: 999px;
+  background: #fff0f6;
+  color: #ec6b93;
+  font-size: 0.78rem;
+  font-style: normal;
+  padding: 2px 8px;
+}
+
+.voterNameCard input,
+.commentBox textarea {
+  width: 100%;
+  border: 1px solid #f0b4c7;
+  border-radius: 12px;
+  background: #fff;
+  color: #4b342e;
+  font: inherit;
+  padding: 13px 14px;
+}
+
+.commentBox {
+  position: relative;
+}
+
+.commentBox textarea {
+  min-height: 92px;
+  resize: vertical;
+  padding-bottom: 30px;
+}
+
+.commentBox small {
+  position: absolute;
+  right: 14px;
+  bottom: 10px;
+  color: #9c8b84;
+}
+
+.pollTabsCard {
+  padding-top: 0;
+}
+
+.pollViewTabs {
+  width: min(640px, 100%);
+  margin: -1px auto 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid #f0b4c7;
+  border-radius: 999px;
+  background: #fffaf7;
+  overflow: hidden;
+}
+
+.pollViewTabs button {
+  border: 0;
+  background: transparent;
+  color: #6d554d;
+  font-weight: 900;
+  padding: 13px 12px;
+}
+
+.pollViewTabs button.active {
+  background: linear-gradient(135deg, #fff0f6, #fff7fb);
+  color: #ec6b93;
+  box-shadow: inset 0 0 0 1px #f7bfd1;
+}
+
+.simpleVoteForm,
+.simpleSummary {
+  display: grid;
+  gap: 16px;
+}
+
+.simpleVoteIntro h3,
+.simpleSummary h3 {
+  margin: 0;
+  color: #2f2421;
+  font-size: 1.12rem;
+}
+
+.simpleVoteIntro p {
+  margin: 6px 0 0;
+  color: #7b655d;
+  line-height: 1.7;
+}
+
+.simpleVoteRows {
+  display: grid;
+  border: 1px solid #f4ded4;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.simpleVoteRow {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.75fr) minmax(280px, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border-bottom: 1px solid #f4ded4;
+}
+
+.simpleVoteRow:last-child {
+  border-bottom: 0;
+}
+
+.simpleVoteDate {
+  display: grid;
+  gap: 4px;
+  color: #2f2421;
+}
+
+.simpleVoteDate strong {
+  font-size: 1.05rem;
+}
+
+.simpleVoteDate span {
+  color: #4b342e;
+  font-weight: 800;
+}
+
+.simpleVoteDate small {
+  color: #8b766c;
+}
+
+.simpleVoteButtons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.simpleVoteButtons button {
+  min-height: 60px;
+  border: 1px solid #ead7ca;
+  border-radius: 12px;
+  background: #fff;
+  color: #6d554d;
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  font-weight: 900;
+}
+
+.simpleVoteButtons strong {
+  color: #ec6b93;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.simpleVoteButtons span {
+  font-size: 0.75rem;
+}
+
+.simpleVoteButtons button.active {
+  border-color: #ec6b93;
+  background: #fff0f6;
+  box-shadow: 0 8px 18px rgba(236, 107, 147, 0.14);
+}
+
+.simpleVoteButtons button.active.no {
+  background: #fff7f9;
+}
+
+.simpleVoteButtons button.active.maybe {
+  border-color: #d8c0af;
+  background: #fffaf2;
+}
+
+.simpleSaveButton {
+  width: 100%;
+  min-height: 54px;
+  font-size: 1.05rem;
+}
+
+.saveCaption,
+.closedPollMessage {
+  margin: -4px 0 0;
+  color: #7b655d;
+  text-align: center;
+  font-weight: 800;
+}
+
+.summaryCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.summaryCard {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #ead7ca;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fffdfb, #fff8fb);
+  padding: 14px;
+}
+
+.summaryCard strong {
+  color: #2f2421;
+  font-size: 1.08rem;
+}
+
+.summaryCard span,
+.summaryCard small {
+  color: #6d554d;
+}
+
+.summaryCounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.summaryCounts span {
+  border-radius: 999px;
+  background: #fff;
+  padding: 6px 9px;
+  font-weight: 900;
+}
+
+.summaryCounts .yes {
+  color: #ec6b93;
+}
+
+.summaryCounts .no {
+  color: #8b766c;
+}
+
+.summaryCounts .maybe,
+.maybeCell {
+  color: #b79767 !important;
+  font-weight: 900;
+}
+
+.detailToggleButton {
+  justify-self: start;
+  border: 1px solid #f0b4c7;
+  border-radius: 999px;
+  background: #fff;
+  color: #ec6b93;
+  padding: 10px 16px;
+  font-weight: 900;
+}
+
 .schedulePollHeader {
   display: flex;
   justify-content: space-between;
@@ -1929,6 +2239,23 @@ h3 {
 
   .scheduleTable {
     min-width: 560px;
+  }
+
+  .pollIntroCard {
+    grid-template-columns: auto 1fr;
+  }
+
+  .pollIntroCard .closedBadge {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .simpleVoteRow {
+    grid-template-columns: 1fr;
+  }
+
+  .simpleVoteButtons {
+    grid-template-columns: 1fr;
   }
 }
 
