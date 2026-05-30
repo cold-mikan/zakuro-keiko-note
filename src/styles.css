@@ -1873,6 +1873,13 @@ h3 {
   font-size: 1rem;
 }
 
+.scheduleOptionSectionLabel {
+  margin: 4px 0 -2px;
+  color: #7b655d;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
 .scheduleOptionRows {
   display: grid;
   gap: 8px;
