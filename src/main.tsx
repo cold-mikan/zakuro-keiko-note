@@ -2399,32 +2399,59 @@ function SceneAvailabilityBrowser({ rehearsals, rehearsalId, attendances, visibl
 }
 
 function ScenePage({ rehearsals, rehearsalId, attendances, visibleMembers, scenes, allMembers, onAdd, onUpdate, onDelete, onUpdateRehearsal, onAddMember, onUpdateMember, onDeleteMember, allowDelete }) {
+  const [adminSection, setAdminSection] = useState("scene");
   return (
     <AdminLock>
       <section className="stack">
-        <SceneAvailabilityBrowser
-          rehearsals={rehearsals}
-          rehearsalId={rehearsalId}
-          attendances={attendances}
-          visibleMembers={visibleMembers}
-          scenes={scenes}
-          onAdd={onAdd}
-          onUpdate={onUpdate}
-          onDelete={onDelete}
-          onUpdateRehearsal={onUpdateRehearsal}
-          allowDelete={allowDelete}
-        />
-        <MemberView
-          rehearsals={rehearsals}
-          attendances={attendances}
-          visibleMembers={visibleMembers}
-          onAdd={onAddMember}
-          onUpdate={onUpdateMember}
-          onDelete={onDeleteMember}
-          allowDelete={true}
-        />
-        <ExportTools rehearsals={rehearsals} members={allMembers} attendances={attendances} />
-        <NotionSyncPanel rehearsals={rehearsals} members={allMembers} attendances={attendances} scenes={scenes} />
+        <div className="adminSectionTabs" role="tablist" aria-label="管理者ページの表示切り替え">
+          {[
+            { id: "scene", label: "稽古日ごとのシーン可否" },
+            { id: "member", label: "メンバーを追加" },
+            { id: "export", label: "出力" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className={adminSection === tab.id ? "active" : ""}
+              onClick={() => setAdminSection(tab.id)}
+              role="tab"
+              aria-selected={adminSection === tab.id}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {adminSection === "scene" && (
+          <SceneAvailabilityBrowser
+            rehearsals={rehearsals}
+            rehearsalId={rehearsalId}
+            attendances={attendances}
+            visibleMembers={visibleMembers}
+            scenes={scenes}
+            onAdd={onAdd}
+            onUpdate={onUpdate}
+            onDelete={onDelete}
+            onUpdateRehearsal={onUpdateRehearsal}
+            allowDelete={allowDelete}
+          />
+        )}
+        {adminSection === "member" && (
+          <MemberView
+            rehearsals={rehearsals}
+            attendances={attendances}
+            visibleMembers={visibleMembers}
+            onAdd={onAddMember}
+            onUpdate={onUpdateMember}
+            onDelete={onDeleteMember}
+            allowDelete={true}
+          />
+        )}
+        {adminSection === "export" && (
+          <section className="stack">
+            <ExportTools rehearsals={rehearsals} members={allMembers} attendances={attendances} />
+            <NotionSyncPanel rehearsals={rehearsals} members={allMembers} attendances={attendances} scenes={scenes} />
+          </section>
+        )}
       </section>
     </AdminLock>
   );

@@ -1386,6 +1386,38 @@ h3 {
   gap: 14px;
 }
 
+.adminSectionTabs {
+  background: rgba(255, 250, 247, 0.96);
+  border: 1px solid #ead7ca;
+  border-radius: 18px;
+  box-shadow: 0 12px 24px rgba(104, 71, 55, 0.08);
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 8px;
+  position: sticky;
+  top: 8px;
+  z-index: 4;
+}
+
+.adminSectionTabs button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  color: #7b655d;
+  font-size: 14px;
+  font-weight: 900;
+  min-height: 44px;
+  padding: 10px 12px;
+}
+
+.adminSectionTabs button.active {
+  background: linear-gradient(135deg, #ec6b93, #ef7fa4);
+  border-color: #d85280;
+  box-shadow: 0 8px 18px rgba(216, 82, 128, 0.24);
+  color: #fff;
+}
+
 .todayScenesPanel p {
   color: #6b5a51;
   font-weight: 700;
@@ -2050,6 +2082,11 @@ textarea {
 
   .teamSwitch {
     border-radius: 18px;
+  }
+
+  .adminSectionTabs {
+    grid-template-columns: 1fr;
+    position: static;
   }
 
   .syncGuard {
