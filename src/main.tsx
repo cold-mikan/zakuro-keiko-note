@@ -1647,6 +1647,49 @@ function App() {
     }
   }
 
+  function confirmScheduleOptions(pollId, optionIds) {
+    if (!guardOnlineWrite()) return;
+    const poll = schedulePollList.find((item) => item.id === pollId);
+    const selectedOptions = scheduleOptionList.filter((item) => item.pollId === pollId && optionIds.includes(item.id));
+    if (!poll || selectedOptions.length === 0) return;
+    if (!confirm(`選択した${selectedOptions.length}件を稽古日に追加します。よろしいですか？`)) return;
+    const now = new Date().toISOString();
+    const nextRehearsals: Rehearsal[] = selectedOptions.map((option) => ({
+      id: `r-schedule-${option.id}`,
+      date: option.candidateDate,
+      startTime: option.startTime,
+      endTime: option.endTime,
+      place: "",
+      memo: option.memo || poll.title,
+      eventType: "稽古日",
+      rehearsalTeam: "共通",
+      selectedSceneIds: [],
+      createdAt: now,
+      updatedAt: now,
+    }));
+    const beforePoll = poll;
+    const nextPoll = { ...poll, isClosed: true, confirmedOptionId: optionIds.join(","), updatedAt: now };
+    const existingById = new Map(rehearsalList.map((rehearsal) => [rehearsal.id, rehearsal]));
+    setRehearsalList((current) => {
+      const nextMap = new Map(current.map((rehearsal) => [rehearsal.id, rehearsal]));
+      nextRehearsals.forEach((rehearsal) => {
+        nextMap.set(rehearsal.id, { ...(nextMap.get(rehearsal.id) ?? {}), ...rehearsal });
+      });
+      return Array.from(nextMap.values()).sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`));
+    });
+    setSchedulePollList((current) => current.map((item) => (item.id === pollId ? nextPoll : item)));
+    setSelectedRehearsalId(nextRehearsals[0].id);
+    showToast(`${nextRehearsals.length}件を稽古日として確定しました。`);
+    if (onlineReady) {
+      Promise.all([
+        ...nextRehearsals.map((rehearsal) => upsertSupabaseRow(supabaseConfig, actorName, "rehearsals", rehearsalToRow(supabaseConfig, rehearsal, actorName), existingById.get(rehearsal.id) ?? null, rehearsal)),
+        upsertSupabaseRow(supabaseConfig, actorName, "schedule_polls", schedulePollToRow(supabaseConfig, nextPoll, actorName), beforePoll, nextPoll),
+      ])
+        .then(() => setOnlineStatus("選択した稽古日をオンラインへ保存しました。"))
+        .catch(reportOnlineError);
+    }
+  }
+
   return (
     <main className="shell">
       <header className="appHeader">
@@ -1701,6 +1744,7 @@ function App() {
           onUpdatePoll={updateSchedulePoll}
           onDeletePoll={deleteSchedulePoll}
           onConfirmOption={confirmScheduleOption}
+          onConfirmOptions={confirmScheduleOptions}
           onAddOption={addScheduleOption}
           onUpdateOption={updateScheduleOption}
           onDeleteOption={deleteScheduleOption}
@@ -1746,7 +1790,7 @@ function App() {
   );
 }
 
-function ScheduleAdjustmentPage({ polls, options, participants, responses, members, onCreatePoll, onSaveAnswer, onClosePoll, onUpdatePoll, onDeletePoll, onConfirmOption, onAddOption, onUpdateOption, onDeleteOption }) {
+function ScheduleAdjustmentPage({ polls, options, participants, responses, members, onCreatePoll, onSaveAnswer, onClosePoll, onUpdatePoll, onDeletePoll, onConfirmOption, onConfirmOptions, onAddOption, onUpdateOption, onDeleteOption }) {
   const [view, setView] = useState("open");
   const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
@@ -1779,6 +1823,7 @@ function ScheduleAdjustmentPage({ polls, options, participants, responses, membe
             onUpdatePoll={onUpdatePoll}
             onDeletePoll={onDeletePoll}
             onConfirmOption={onConfirmOption}
+            onConfirmOptions={onConfirmOptions}
             onAddOption={onAddOption}
             onUpdateOption={onUpdateOption}
             onDeleteOption={onDeleteOption}
@@ -1995,13 +2040,14 @@ function SchedulePollCreator({ onCreatePoll }) {
   );
 }
 
-function SchedulePollCard({ poll, options, participants, responses, members, adminUnlocked, onSaveAnswer, onClosePoll, onUpdatePoll, onDeletePoll, onConfirmOption, onAddOption, onUpdateOption, onDeleteOption }) {
+function SchedulePollCard({ poll, options, participants, responses, members, adminUnlocked, onSaveAnswer, onClosePoll, onUpdatePoll, onDeletePoll, onConfirmOption, onConfirmOptions, onAddOption, onUpdateOption, onDeleteOption }) {
   const [memberName, setMemberName] = useState(members[0]?.name ?? "");
   const [comment, setComment] = useState("");
   const [draft, setDraft] = useState({});
   const [pollDraft, setPollDraft] = useState({ title: poll.title, description: poll.description ?? "" });
   const [activeVoteTab, setActiveVoteTab] = useState("answer");
   const [showDetailTable, setShowDetailTable] = useState(false);
+  const [selectedConfirmOptionIds, setSelectedConfirmOptionIds] = useState([]);
   const optionStats = getScheduleOptionStats(options, participants, responses);
   const existingAnswer = participants.find((participant) => participant.memberName === memberName);
   const responseMap = new Map(responses.map((response) => [`${response.participantId}:${response.optionId}`, response]));
@@ -2011,6 +2057,10 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
   useEffect(() => {
     setPollDraft({ title: poll.title, description: poll.description ?? "" });
   }, [poll.id, poll.title, poll.description]);
+
+  useEffect(() => {
+    setSelectedConfirmOptionIds((current) => current.filter((optionId) => options.some((option) => option.id === optionId)));
+  }, [poll.id, options.length]);
 
   useEffect(() => {
     const existing = participants.find((participant) => participant.memberName === memberName);
@@ -2032,6 +2082,21 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
       return;
     }
     onSaveAnswer({ pollId: poll.id, memberName: memberName.trim(), comment: comment.trim(), statuses: draft });
+  }
+
+  function toggleConfirmOption(optionId) {
+    setSelectedConfirmOptionIds((current) => (
+      current.includes(optionId) ? current.filter((id) => id !== optionId) : [...current, optionId]
+    ));
+  }
+
+  function submitConfirmOptions() {
+    if (!selectedConfirmOptionIds.length) {
+      alert("稽古日に確定する候補日を選択してください。");
+      return;
+    }
+    onConfirmOptions(poll.id, selectedConfirmOptionIds);
+    setSelectedConfirmOptionIds([]);
   }
 
   return (
@@ -2181,11 +2246,25 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
       {adminUnlocked && (
         <div className="scheduleAdminActions">
           {!poll.isClosed && <button type="button" onClick={() => onClosePoll(poll.id)}>回答受付終了</button>}
-          {options.map((option) => (
-            <button key={option.id} type="button" className="primary" onClick={() => onConfirmOption(poll.id, option.id)}>
-              {formatChipDate(option.candidateDate)} を稽古日に確定
+          <div className="scheduleConfirmOptions">
+            <p>稽古日に確定する候補日を選択してください。</p>
+            <div className="scheduleConfirmOptionList">
+              {options.map((option) => (
+                <label key={option.id} className={selectedConfirmOptionIds.includes(option.id) ? "selected" : ""}>
+                  <input
+                    type="checkbox"
+                    checked={selectedConfirmOptionIds.includes(option.id)}
+                    onChange={() => toggleConfirmOption(option.id)}
+                  />
+                  <span>{formatChipDate(option.candidateDate)}</span>
+                  <small>{formatTime(option.startTime)}-{formatTime(option.endTime)}</small>
+                </label>
+              ))}
+            </div>
+            <button type="button" className="primary" onClick={submitConfirmOptions}>
+              選択した日を稽古日に確定
             </button>
-          ))}
+          </div>
         </div>
       )}
       {adminUnlocked && (
@@ -3648,9 +3727,13 @@ function teamClassName(team) {
   return "teamCommon";
 }
 
+function memberColorClass(role, team) {
+  return role === "キャスト" ? teamClassName(team) : "staff";
+}
+
 function renderPeopleRow(row) {
   if (typeof row === "string") return row;
-  return <span className={`personName ${teamClassName(row.team)}`}>{row.label}</span>;
+  return <span className={`personName ${memberColorClass(row.role, row.team)}`}>{row.label}</span>;
 }
 
 function panelTitleIcon(title, tone) {
@@ -3704,7 +3787,7 @@ function AttendanceRatePanel({ members, attendances, rehearsals }) {
         <div className="rateList">
           {members.filter((member) => member.role === "キャスト").map((member) => (
             <div key={member.id} className="rateRow">
-              <span className={`personName ${teamClassName(member.team)}`}>{member.name}</span>
+              <span className={`personName ${memberColorClass(member.role, member.team)}`}>{member.name}</span>
               <strong>{attendanceRate(member.id, attendances, rehearsals)}%</strong>
             </div>
           ))}
@@ -3773,7 +3856,7 @@ function MemberView({ rehearsals, attendances, visibleMembers, onAdd, onUpdate, 
   const [editingId, setEditingId] = useState("");
   const editorRef = useRef(null);
   const editingMember = visibleMembers.find((member) => member.id === editingId);
-  const teamClass = teamClassName;
+  const memberClass = (member) => memberColorClass(member.role, member.team);
   const scrollToEditor = () => scrollToRef(editorRef);
 
   return (
@@ -3782,10 +3865,10 @@ function MemberView({ rehearsals, attendances, visibleMembers, onAdd, onUpdate, 
         <MemberEditor editingMember={editingMember} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => setEditingId("")} />
       </div>
       {visibleMembers.map((member) => (
-        <article key={member.id} className={`panel memberCard ${teamClass(member.team)}`}>
+        <article key={member.id} className={`panel memberCard ${memberClass(member)}`}>
           <div>
             <h2>{member.name}</h2>
-            <p><span className={`roleBadge ${teamClass(member.team)}`}>{member.role}</span> {member.team}{member.character ? ` / 役：${member.character}` : ""}</p>
+            <p><span className={`roleBadge ${memberClass(member)}`}>{member.role}</span> {member.team}{member.character ? ` / 役：${member.character}` : ""}</p>
             <p className="note">{member.memo}</p>
           </div>
           <div className="cardActions">

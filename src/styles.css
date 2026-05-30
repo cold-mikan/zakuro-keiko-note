@@ -2575,6 +2575,62 @@ h3 {
   padding: 10px 14px;
 }
 
+.scheduleConfirmOptions {
+  flex-basis: 100%;
+  display: grid;
+  gap: 10px;
+  border: 1px dashed #f0b4c7;
+  border-radius: 16px;
+  background: rgba(255, 247, 251, 0.82);
+  padding: 12px;
+}
+
+.scheduleConfirmOptions p {
+  margin: 0;
+  color: #7b655d;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.scheduleConfirmOptionList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scheduleConfirmOptionList label {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 4px 8px;
+  border: 1px solid #ead7ca;
+  border-radius: 14px;
+  background: #fff;
+  color: #5a4138;
+  cursor: pointer;
+  font-weight: 900;
+  padding: 9px 12px;
+}
+
+.scheduleConfirmOptionList label.selected {
+  border-color: #ec6b93;
+  background: #fff0f6;
+  color: #ec5f8d;
+  box-shadow: 0 8px 16px rgba(236, 107, 147, 0.13);
+}
+
+.scheduleConfirmOptionList input {
+  accent-color: #ec6b93;
+  width: 18px;
+  height: 18px;
+}
+
+.scheduleConfirmOptionList small {
+  grid-column: 2;
+  color: #8b766c;
+  font-weight: 800;
+}
+
 .scheduleOptionManager {
   display: grid;
   gap: 12px;
