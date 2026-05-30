@@ -1491,6 +1491,63 @@ function App() {
     }
   }
 
+  function updateSchedulePoll(input) {
+    if (!guardOnlineWrite()) return;
+    const before = schedulePollList.find((poll) => poll.id === input.id);
+    if (!before) return;
+    if (!input.title?.trim()) {
+      alert("タイトルを入力してください。");
+      return;
+    }
+    const next = {
+      ...before,
+      title: input.title.trim(),
+      description: input.description?.trim() ?? "",
+      updatedAt: new Date().toISOString(),
+    };
+    setSchedulePollList((current) => current.map((poll) => (poll.id === input.id ? next : poll)));
+    showToast("投票内容を更新しました。");
+    if (onlineReady) {
+      upsertSupabaseRow(supabaseConfig, actorName, "schedule_polls", schedulePollToRow(supabaseConfig, next, actorName), before, next)
+        .then((result) => setOnlineStatus(result.message))
+        .catch(reportOnlineError);
+    }
+  }
+
+  async function deleteSchedulePoll(pollId) {
+    if (!guardOnlineWrite()) return;
+    const poll = schedulePollList.find((item) => item.id === pollId);
+    if (!poll) return;
+    const confirmation = prompt("この投票を削除します。候補日・回答も削除されます。削除する場合は「削除」と入力してください。");
+    if (confirmation !== "削除") return;
+    const relatedOptions = scheduleOptionList.filter((option) => option.pollId === pollId);
+    const relatedParticipants = scheduleParticipantList.filter((participant) => participant.pollId === pollId);
+    const relatedResponses = scheduleResponseList.filter((response) => response.pollId === pollId);
+    if (onlineReady) {
+      try {
+        const client = getSupabaseClient(supabaseConfig);
+        if (client) {
+          await logEdit(client, supabaseConfig, actorName, "schedule_polls", pollId, "delete", {
+            poll,
+            options: relatedOptions,
+            participants: relatedParticipants,
+            responses: relatedResponses,
+          }, null);
+          const { error } = await client.from("schedule_polls").delete().eq("room_id", supabaseConfig.roomId).eq("id", pollId);
+          if (error) throw error;
+        }
+      } catch (error) {
+        reportOnlineError(error);
+        return;
+      }
+    }
+    setSchedulePollList((current) => current.filter((item) => item.id !== pollId));
+    setScheduleOptionList((current) => current.filter((option) => option.pollId !== pollId));
+    setScheduleParticipantList((current) => current.filter((participant) => participant.pollId !== pollId));
+    setScheduleResponseList((current) => current.filter((response) => response.pollId !== pollId));
+    showToast("投票を削除しました。");
+  }
+
   function addScheduleOption(pollId, input) {
     if (!guardOnlineWrite()) return;
     const next: SchedulePollOption = {
@@ -1647,6 +1704,8 @@ function App() {
           onCreatePoll={createSchedulePoll}
           onSaveAnswer={saveScheduleAnswer}
           onClosePoll={closeSchedulePoll}
+          onUpdatePoll={updateSchedulePoll}
+          onDeletePoll={deleteSchedulePoll}
           onConfirmOption={confirmScheduleOption}
           onAddOption={addScheduleOption}
           onUpdateOption={updateScheduleOption}
@@ -1693,7 +1752,7 @@ function App() {
   );
 }
 
-function ScheduleAdjustmentPage({ polls, options, participants, responses, members, onCreatePoll, onSaveAnswer, onClosePoll, onConfirmOption, onAddOption, onUpdateOption, onDeleteOption }) {
+function ScheduleAdjustmentPage({ polls, options, participants, responses, members, onCreatePoll, onSaveAnswer, onClosePoll, onUpdatePoll, onDeletePoll, onConfirmOption, onAddOption, onUpdateOption, onDeleteOption }) {
   const [view, setView] = useState("open");
   const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
@@ -1723,6 +1782,8 @@ function ScheduleAdjustmentPage({ polls, options, participants, responses, membe
             adminUnlocked={adminUnlocked}
             onSaveAnswer={onSaveAnswer}
             onClosePoll={onClosePoll}
+            onUpdatePoll={onUpdatePoll}
+            onDeletePoll={onDeletePoll}
             onConfirmOption={onConfirmOption}
             onAddOption={onAddOption}
             onUpdateOption={onUpdateOption}
@@ -1899,15 +1960,21 @@ function SchedulePollCreator({ onCreatePoll }) {
   );
 }
 
-function SchedulePollCard({ poll, options, participants, responses, members, adminUnlocked, onSaveAnswer, onClosePoll, onConfirmOption, onAddOption, onUpdateOption, onDeleteOption }) {
+function SchedulePollCard({ poll, options, participants, responses, members, adminUnlocked, onSaveAnswer, onClosePoll, onUpdatePoll, onDeletePoll, onConfirmOption, onAddOption, onUpdateOption, onDeleteOption }) {
   const [memberName, setMemberName] = useState(members[0]?.name ?? "");
   const [comment, setComment] = useState("");
   const [draft, setDraft] = useState({});
+  const [pollDraft, setPollDraft] = useState({ title: poll.title, description: poll.description ?? "" });
   const optionStats = getScheduleOptionStats(options, participants, responses);
   const ranking = [...optionStats].sort((a, b) => b.yes - a.yes || a.option.candidateDate.localeCompare(b.option.candidateDate));
   const best = ranking[0];
+  const existingAnswer = participants.find((participant) => participant.memberName === memberName);
   const participantById = new Map(participants.map((participant) => [participant.id, participant]));
   const responseMap = new Map(responses.map((response) => [`${response.participantId}:${response.optionId}`, response]));
+
+  useEffect(() => {
+    setPollDraft({ title: poll.title, description: poll.description ?? "" });
+  }, [poll.id, poll.title, poll.description]);
 
   useEffect(() => {
     const existing = participants.find((participant) => participant.memberName === memberName);
@@ -1940,6 +2007,22 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
         </div>
         {poll.isClosed && <span className="closedBadge">終了</span>}
       </div>
+      {adminUnlocked && (
+        <div className="schedulePollEditBox">
+          <label>
+            <span>投票タイトル</span>
+            <input value={pollDraft.title} onChange={(event) => setPollDraft((current) => ({ ...current, title: event.target.value }))} />
+          </label>
+          <label>
+            <span>説明文</span>
+            <textarea value={pollDraft.description} onChange={(event) => setPollDraft((current) => ({ ...current, description: event.target.value }))} placeholder="任意" />
+          </label>
+          <div className="schedulePollEditActions">
+            <button type="button" className="primary" onClick={() => onUpdatePoll({ id: poll.id, ...pollDraft })}>投票内容を保存</button>
+            <button type="button" className="dangerButton" onClick={() => onDeletePoll(poll.id)}>投票を削除</button>
+          </div>
+        </div>
+      )}
       {best && (
         <div className="bestSchedule">
           <strong>最も参加可能人数が多い日</strong>
@@ -1961,6 +2044,7 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
               {members.map((member) => <option key={member.id} value={member.name}>{member.name}</option>)}
             </select>
           </label>
+          {existingAnswer && <p className="scheduleAnswerHint">この名前は回答済みです。内容を変更して保存すると、前回の回答が更新されます。</p>}
           <div className="scheduleAnswerOptions">
             {options.map((option) => (
               <div key={option.id} className="scheduleAnswerOption">

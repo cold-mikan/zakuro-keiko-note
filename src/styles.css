@@ -1681,6 +1681,44 @@ h3 {
   white-space: nowrap;
 }
 
+.schedulePollEditBox {
+  display: grid;
+  gap: 10px;
+  border: 1px dashed #f0b4c7;
+  border-radius: 14px;
+  background: rgba(255, 247, 251, 0.78);
+  padding: 14px;
+}
+
+.schedulePollEditBox label {
+  display: grid;
+  gap: 6px;
+  color: #5a4138;
+  font-weight: 900;
+}
+
+.schedulePollEditBox input,
+.schedulePollEditBox textarea {
+  width: 100%;
+  border: 1px solid #f0b4c7;
+  border-radius: 12px;
+  background: #fff;
+  color: #4b342e;
+  font: inherit;
+  padding: 11px 12px;
+}
+
+.schedulePollEditBox textarea {
+  min-height: 86px;
+  resize: vertical;
+}
+
+.schedulePollEditActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .bestSchedule {
   display: grid;
   gap: 4px;
@@ -1726,6 +1764,17 @@ h3 {
 
 .scheduleAnswerOption small {
   color: #7b655d;
+}
+
+.scheduleAnswerHint {
+  margin: 0;
+  border: 1px solid #cfe7b8;
+  border-radius: 12px;
+  background: #f5fbef;
+  color: #6a8f4a;
+  font-size: 0.92rem;
+  font-weight: 900;
+  padding: 10px 12px;
 }
 
 .yesNoButtons {
