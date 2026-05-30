@@ -1733,6 +1733,7 @@ h3 {
 }
 
 .voterNameCard input,
+.voterNameCard select,
 .commentBox textarea {
   width: 100%;
   border: 1px solid #f0b4c7;
