@@ -2027,11 +2027,10 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
         <section className="voterNameCard">
           <label>
             <span>投票者のお名前 <em>必須</em></span>
-            <input list={`schedule-members-${poll.id}`} value={memberName} onChange={(event) => setMemberName(event.target.value)} placeholder="お名前を入力してください" />
+            <select value={memberName} onChange={(event) => setMemberName(event.target.value)}>
+              {members.map((member) => <option key={member.id} value={member.name}>{member.name}</option>)}
+            </select>
           </label>
-          <datalist id={`schedule-members-${poll.id}`}>
-            {members.map((member) => <option key={member.id} value={member.name} />)}
-          </datalist>
           {existingAnswer && <p className="scheduleAnswerHint">この名前は回答済みです。内容を変更して保存すると、前回の回答が更新されます。</p>}
         </section>
       )}
