@@ -1760,32 +1760,92 @@ function ScheduleAdjustmentPage({ polls, options, participants, responses, membe
   );
 }
 
+function ScheduleCandidateCalendar({ month, selectedDates, onMonthChange, onToggleDate }) {
+  const today = new Date().toLocaleDateString("sv-SE");
+  const [year, monthNumber] = month.split("-").map(Number);
+  const firstDay = new Date(year, monthNumber - 1, 1);
+  const daysInMonth = new Date(year, monthNumber, 0).getDate();
+  const leadingBlankCount = firstDay.getDay();
+  const calendarCells = [
+    ...Array.from({ length: leadingBlankCount }, (_, index) => ({ key: `blank-${index}`, blank: true })),
+    ...Array.from({ length: daysInMonth }, (_, index) => {
+      const day = index + 1;
+      const date = `${year}-${String(monthNumber).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      return { key: date, date, day };
+    }),
+  ];
+
+  function shiftMonth(diff) {
+    const next = new Date(year, monthNumber - 1 + diff, 1);
+    onMonthChange(next.toLocaleDateString("sv-SE").slice(0, 7));
+  }
+
+  return (
+    <div className="scheduleCandidateCalendar">
+      <div className="scheduleCalendarHeader">
+        <button type="button" onClick={() => shiftMonth(-1)}>‹</button>
+        <strong>{year}年{String(monthNumber).padStart(2, "0")}月</strong>
+        <button type="button" onClick={() => shiftMonth(1)}>›</button>
+      </div>
+      <div className="scheduleCalendarWeekdays" aria-hidden="true">
+        {["日", "月", "火", "水", "木", "金", "土"].map((weekday) => <span key={weekday}>{weekday}</span>)}
+      </div>
+      <div className="scheduleCalendarGrid">
+        {calendarCells.map((cell) => cell.blank ? (
+          <span key={cell.key} className="blank"></span>
+        ) : (
+          <button
+            key={cell.key}
+            type="button"
+            className={`${selectedDates.includes(cell.date) ? "selected" : ""} ${cell.date === today ? "today" : ""}`}
+            onClick={() => onToggleDate(cell.date)}
+          >
+            <span>{cell.day}</span>
+            {cell.date === today && <small>今日</small>}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SchedulePollCreator({ onCreatePoll }) {
   const today = new Date().toLocaleDateString("sv-SE");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [candidateDate, setCandidateDate] = useState(today);
+  const [calendarMonth, setCalendarMonth] = useState(today.slice(0, 7));
+  const [selectedDates, setSelectedDates] = useState([]);
   const [startTime, setStartTime] = useState("22:00");
   const [endTime, setEndTime] = useState("00:00");
   const [memo, setMemo] = useState("");
-  const [options, setOptions] = useState([]);
+  const [formError, setFormError] = useState("");
 
-  function addOption() {
-    if (!candidateDate || !startTime || !endTime) return;
-    setOptions((current) => [...current, { candidateDate, startTime, endTime, memo }].sort((a, b) => `${a.candidateDate}${a.startTime}`.localeCompare(`${b.candidateDate}${b.startTime}`)));
-    setMemo("");
+  function toggleCandidateDate(date) {
+    setFormError("");
+    setSelectedDates((current) =>
+      current.includes(date)
+        ? current.filter((item) => item !== date)
+        : [...current, date].sort((a, b) => a.localeCompare(b)),
+    );
   }
 
   function submit(event) {
     event.preventDefault();
-    if (!title.trim() || !options.length) {
-      alert("タイトルと候補日を入力してください。");
+    if (!title.trim()) {
+      setFormError("タイトルを入力してください。");
       return;
     }
+    if (!selectedDates.length) {
+      setFormError("候補日をカレンダーから1日以上選択してください。");
+      return;
+    }
+    const options = selectedDates.map((candidateDate) => ({ candidateDate, startTime, endTime, memo }));
     onCreatePoll({ title: title.trim(), description: description.trim(), options });
     setTitle("");
     setDescription("");
-    setOptions([]);
+    setMemo("");
+    setSelectedDates([]);
+    setFormError("");
   }
 
   return (
@@ -1798,11 +1858,13 @@ function SchedulePollCreator({ onCreatePoll }) {
         <span>説明文</span>
         <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="任意" />
       </label>
-      <div className="scheduleOptionEditor">
-        <label>
-          <span>候補日</span>
-          <input type="date" value={candidateDate} onChange={(event) => setCandidateDate(event.target.value)} />
-        </label>
+      <ScheduleCandidateCalendar
+        month={calendarMonth}
+        selectedDates={selectedDates}
+        onMonthChange={setCalendarMonth}
+        onToggleDate={toggleCandidateDate}
+      />
+      <div className="scheduleOptionEditor compact">
         <label>
           <span>開始</span>
           <input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} />
@@ -1815,18 +1877,19 @@ function SchedulePollCreator({ onCreatePoll }) {
           <span>メモ</span>
           <input value={memo} onChange={(event) => setMemo(event.target.value)} placeholder="任意" />
         </label>
-        <button type="button" onClick={addOption}>候補日を追加</button>
       </div>
-      {options.length > 0 && (
-        <div className="candidatePreview">
-          {options.map((option, index) => (
-            <span key={`${option.candidateDate}-${option.startTime}-${index}`}>
-              {formatDateWithWeekday(option.candidateDate)} {option.startTime}-{option.endTime}
-              <button type="button" onClick={() => setOptions((current) => current.filter((_, optionIndex) => optionIndex !== index))}>×</button>
+      {selectedDates.length > 0 && (
+        <div className="candidatePreview candidateDateList">
+          <strong>選択中の候補日：</strong>
+          {selectedDates.map((date) => (
+            <span key={date}>
+              {date.replaceAll("-", "/")}
+              <button type="button" onClick={() => toggleCandidateDate(date)}>×</button>
             </span>
           ))}
         </div>
       )}
+      {formError && <p className="formError">{formError}</p>}
       <button className="primary">投票を作成</button>
     </form>
   );

@@ -1517,6 +1517,115 @@ h3 {
   align-items: end;
 }
 
+.scheduleOptionEditor.compact {
+  grid-template-columns: 0.8fr 0.8fr 1.4fr;
+}
+
+.scheduleCandidateCalendar {
+  display: grid;
+  gap: 12px;
+  border: 1px solid #ead7ca;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255, 250, 247, 0.96), rgba(255, 244, 249, 0.78));
+  padding: 14px;
+}
+
+.scheduleCalendarHeader {
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+}
+
+.scheduleCalendarHeader strong {
+  text-align: center;
+  color: #4b342e;
+  font-size: 1.05rem;
+}
+
+.scheduleCalendarHeader button {
+  min-height: 38px;
+  border: 1px solid #f0b4c7;
+  border-radius: 999px;
+  background: #fff;
+  color: #ec6b93;
+  font-size: 1.4rem;
+  font-weight: 900;
+}
+
+.scheduleCalendarWeekdays,
+.scheduleCalendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.scheduleCalendarWeekdays span {
+  color: #8b766c;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.scheduleCalendarGrid button,
+.scheduleCalendarGrid .blank {
+  aspect-ratio: 1;
+  min-height: 42px;
+}
+
+.scheduleCalendarGrid button {
+  display: grid;
+  place-items: center;
+  gap: 0;
+  border: 1px solid #ead7ca;
+  border-radius: 50%;
+  background: #fffdfa;
+  color: #6d554d;
+  font-weight: 900;
+  position: relative;
+}
+
+.scheduleCalendarGrid button.today {
+  border-color: #d8b46a;
+  color: #9a7430;
+}
+
+.scheduleCalendarGrid button.selected {
+  background: #ec6b93;
+  border-color: #ec6b93;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(236, 107, 147, 0.25);
+}
+
+.scheduleCalendarGrid button small {
+  position: absolute;
+  bottom: -14px;
+  font-size: 0.66rem;
+  color: #c08a2d;
+}
+
+.scheduleCalendarGrid button.selected small {
+  color: #ec6b93;
+}
+
+.candidateDateList {
+  align-items: center;
+}
+
+.candidateDateList strong {
+  color: #5a4138;
+}
+
+.formError {
+  border: 1px solid #f0b4c7;
+  border-radius: 12px;
+  background: #fff0f6;
+  color: #d85280;
+  font-weight: 900;
+  margin: 0;
+  padding: 10px 12px;
+}
+
 .candidatePreview,
 .scheduleRanking,
 .scheduleStatsGrid,
@@ -1739,6 +1848,10 @@ h3 {
 
 @media (max-width: 720px) {
   .scheduleOptionEditor {
+    grid-template-columns: 1fr;
+  }
+
+  .scheduleOptionEditor.compact {
     grid-template-columns: 1fr;
   }
 
