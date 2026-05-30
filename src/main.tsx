@@ -1421,10 +1421,12 @@ function App() {
     setScheduleOptionList((current) => [...current, ...options].sort((a, b) => `${a.candidateDate}${a.startTime}`.localeCompare(`${b.candidateDate}${b.startTime}`)));
     showToast("稽古日調整を作成しました。");
     if (onlineReady) {
-      Promise.all([
-        upsertSupabaseRow(supabaseConfig, actorName, "schedule_polls", schedulePollToRow(supabaseConfig, poll, actorName), null, poll),
-        ...options.map((option) => upsertSupabaseRow(supabaseConfig, actorName, "schedule_poll_options", schedulePollOptionToRow(supabaseConfig, option, actorName), null, option)),
-      ])
+      (async () => {
+        await upsertSupabaseRow(supabaseConfig, actorName, "schedule_polls", schedulePollToRow(supabaseConfig, poll, actorName), null, poll);
+        await Promise.all(
+          options.map((option) => upsertSupabaseRow(supabaseConfig, actorName, "schedule_poll_options", schedulePollOptionToRow(supabaseConfig, option, actorName), null, option)),
+        );
+      })()
         .then(() => setOnlineStatus("稽古日調整をオンラインへ保存しました。"))
         .catch(reportOnlineError);
     }
@@ -1461,13 +1463,15 @@ function App() {
     showToast("回答を保存しました。");
     if (onlineReady) {
       const beforeParticipant = existingParticipant ?? null;
-      Promise.all([
-        upsertSupabaseRow(supabaseConfig, actorName, "schedule_poll_participants", schedulePollParticipantToRow(supabaseConfig, participant, actorName), beforeParticipant, participant),
-        ...responseRows.map((response) => {
-          const before = scheduleResponseList.find((row) => row.id === response.id) ?? null;
-          return upsertSupabaseRow(supabaseConfig, actorName, "schedule_poll_responses", schedulePollResponseToRow(supabaseConfig, response, actorName), before, response);
-        }),
-      ])
+      (async () => {
+        await upsertSupabaseRow(supabaseConfig, actorName, "schedule_poll_participants", schedulePollParticipantToRow(supabaseConfig, participant, actorName), beforeParticipant, participant);
+        await Promise.all(
+          responseRows.map((response) => {
+            const before = scheduleResponseList.find((row) => row.id === response.id) ?? null;
+            return upsertSupabaseRow(supabaseConfig, actorName, "schedule_poll_responses", schedulePollResponseToRow(supabaseConfig, response, actorName), before, response);
+          }),
+        );
+      })()
         .then(() => setOnlineStatus("稽古日調整の回答をオンラインへ保存しました。"))
         .catch(reportOnlineError);
     }
