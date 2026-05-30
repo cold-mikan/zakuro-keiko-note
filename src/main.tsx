@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { createClient } from "@supabase/supabase-js";
+import { CalendarDays, ClipboardList, Home, Settings } from "lucide-react";
 import "./styles.css";
 
 type AttendanceStatus = "出席" | "欠席" | "遅刻" | "早退" | "未定";
@@ -162,10 +163,10 @@ const deletedMemberMemo = "__deleted_member__";
 type TeamFilter = "全員" | "Aチーム" | "Bチーム";
 const teamFilters: TeamFilter[] = ["全員", "Aチーム", "Bチーム"];
 const tabs = [
-  { id: "dashboard", label: "ホーム", icon: "⌂" },
-  { id: "form", label: "参加予定の入力", icon: "＋" },
-  { id: "schedule", label: "稽古日調整", icon: "◇" },
-  { id: "scenes", label: "管理者", icon: "★" },
+  { id: "dashboard", label: "ホーム", Icon: Home },
+  { id: "form", label: "参加予定の入力", Icon: ClipboardList },
+  { id: "schedule", label: "稽古日調整", Icon: CalendarDays },
+  { id: "scenes", label: "管理者", Icon: Settings },
 ] as const;
 
 function getAttendanceFor(rehearsalId: string, attendances: Attendance[]) {
@@ -1662,15 +1663,9 @@ function App() {
         </div>
       </header>
       <nav className="tabs" aria-label="画面切り替え">
-        {tabs.map(({ id, label, icon }) => (
+        {tabs.map(({ id, label, Icon }) => (
           <button key={id} className={tab === id ? "active" : ""} onClick={() => setTab(id)}>
-            {icon === "member" ? (
-              <span className="memberGlyph" aria-hidden="true">
-                <span className="memberGlyphPerson main"></span>
-                <span className="memberGlyphPerson left"></span>
-                <span className="memberGlyphPerson right"></span>
-              </span>
-            ) : icon && <span className="tabIcon">{icon}</span>}
+            <Icon className="tabLucideIcon" aria-hidden="true" strokeWidth={2.2} />
             <span>{label}</span>
           </button>
         ))}
