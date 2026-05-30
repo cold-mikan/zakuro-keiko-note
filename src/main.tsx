@@ -2005,6 +2005,8 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
   const optionStats = getScheduleOptionStats(options, participants, responses);
   const existingAnswer = participants.find((participant) => participant.memberName === memberName);
   const responseMap = new Map(responses.map((response) => [`${response.participantId}:${response.optionId}`, response]));
+  const answeredMemberNames = new Set(participants.map((participant) => participant.memberName.trim()));
+  const unansweredMembers = members.filter((member) => !answeredMemberNames.has(member.name.trim()));
 
   useEffect(() => {
     setPollDraft({ title: poll.title, description: poll.description ?? "" });
@@ -2121,6 +2123,10 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
         ) : (
           <div className="simpleSummary">
             <h3>みんなの回答状況</h3>
+            <p className="unansweredSummary">
+              ※未回答者 {unansweredMembers.length}人
+              {unansweredMembers.length > 0 && `（${unansweredMembers.map((member) => member.name).join("、")}）`}
+            </p>
             <div className="summaryCards">
               {optionStats.map((item) => (
                 <div key={item.option.id} className="summaryCard">
@@ -2759,8 +2765,9 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
     key: `${prefix}${row.member.id}-${row.attendance.status}`,
     label: `${prefix}${formatAttendanceLine(row)}`,
     role: row.member.role,
+    team: row.member.team,
   });
-  const memberPersonRow = (member) => ({ key: member.id, label: member.name, role: member.role });
+  const memberPersonRow = (member) => ({ key: member.id, label: member.name, role: member.role, team: member.team });
   const absenceRows = [
     ...grouped.absent.map((row) => attendancePersonRow(row)),
     ...grouped.late.map((row) => attendancePersonRow(row, "遅刻：")),
@@ -3635,13 +3642,15 @@ function ScenePage({
   );
 }
 
-function roleClassName(role) {
-  return role === "キャスト" ? "cast" : "staff";
+function teamClassName(team) {
+  if (team === "Aチーム") return "teamA";
+  if (team === "Bチーム") return "teamB";
+  return "teamCommon";
 }
 
 function renderPeopleRow(row) {
   if (typeof row === "string") return row;
-  return <span className={`personName ${roleClassName(row.role)}`}>{row.label}</span>;
+  return <span className={`personName ${teamClassName(row.team)}`}>{row.label}</span>;
 }
 
 function panelTitleIcon(title, tone) {
@@ -3695,7 +3704,7 @@ function AttendanceRatePanel({ members, attendances, rehearsals }) {
         <div className="rateList">
           {members.filter((member) => member.role === "キャスト").map((member) => (
             <div key={member.id} className="rateRow">
-              <span className={`personName ${roleClassName(member.role)}`}>{member.name}</span>
+              <span className={`personName ${teamClassName(member.team)}`}>{member.name}</span>
               <strong>{attendanceRate(member.id, attendances, rehearsals)}%</strong>
             </div>
           ))}
@@ -3764,7 +3773,7 @@ function MemberView({ rehearsals, attendances, visibleMembers, onAdd, onUpdate, 
   const [editingId, setEditingId] = useState("");
   const editorRef = useRef(null);
   const editingMember = visibleMembers.find((member) => member.id === editingId);
-  const roleClass = roleClassName;
+  const teamClass = teamClassName;
   const scrollToEditor = () => scrollToRef(editorRef);
 
   return (
@@ -3773,10 +3782,10 @@ function MemberView({ rehearsals, attendances, visibleMembers, onAdd, onUpdate, 
         <MemberEditor editingMember={editingMember} onAdd={onAdd} onUpdate={onUpdate} onCancel={() => setEditingId("")} />
       </div>
       {visibleMembers.map((member) => (
-        <article key={member.id} className={`panel memberCard ${roleClass(member.role)}`}>
+        <article key={member.id} className={`panel memberCard ${teamClass(member.team)}`}>
           <div>
             <h2>{member.name}</h2>
-            <p><span className={`roleBadge ${roleClass(member.role)}`}>{member.role}</span> {member.team}{member.character ? ` / 役：${member.character}` : ""}</p>
+            <p><span className={`roleBadge ${teamClass(member.team)}`}>{member.role}</span> {member.team}{member.character ? ` / 役：${member.character}` : ""}</p>
             <p className="note">{member.memo}</p>
           </div>
           <div className="cardActions">
