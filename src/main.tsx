@@ -1963,6 +1963,207 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
   const [comment, setComment] = useState("");
   const [draft, setDraft] = useState({});
   const [pollDraft, setPollDraft] = useState({ title: poll.title, description: poll.description ?? "" });
+  const [activeVoteTab, setActiveVoteTab] = useState("answer");
+  const [showDetailTable, setShowDetailTable] = useState(false);
+  const optionStats = getScheduleOptionStats(options, participants, responses);
+  const existingAnswer = participants.find((participant) => participant.memberName === memberName);
+  const responseMap = new Map(responses.map((response) => [`${response.participantId}:${response.optionId}`, response]));
+
+  useEffect(() => {
+    setPollDraft({ title: poll.title, description: poll.description ?? "" });
+  }, [poll.id, poll.title, poll.description]);
+
+  useEffect(() => {
+    const existing = participants.find((participant) => participant.memberName === memberName);
+    setComment(existing?.comment ?? "");
+    const nextDraft = {};
+    if (existing) {
+      options.forEach((option) => {
+        const response = responses.find((row) => row.participantId === existing.id && row.optionId === option.id);
+        if (response) nextDraft[option.id] = response.status;
+      });
+    }
+    setDraft(nextDraft);
+  }, [memberName, poll.id, participants.length, responses.length, options.length]);
+
+  function submitAnswer(event) {
+    event.preventDefault();
+    if (!memberName.trim()) {
+      alert("名前を入力してください。");
+      return;
+    }
+    onSaveAnswer({ pollId: poll.id, memberName: memberName.trim(), comment: comment.trim(), statuses: draft });
+  }
+
+  return (
+    <article className={`schedulePollCardSimple ${poll.isClosed ? "closed" : ""}`}>
+      <section className="pollIntroCard">
+        <div className="pollIntroIcon" aria-hidden="true">□</div>
+        <div className="pollIntroText">
+          <h2>{poll.title}</h2>
+          {poll.description && <p>{poll.description}</p>}
+        </div>
+        {poll.isClosed && <span className="closedBadge">終了</span>}
+      </section>
+
+      {adminUnlocked && (
+        <section className="schedulePollEditBox">
+          <label>
+            <span>投票タイトル</span>
+            <input value={pollDraft.title} onChange={(event) => setPollDraft((current) => ({ ...current, title: event.target.value }))} />
+          </label>
+          <label>
+            <span>説明文</span>
+            <textarea value={pollDraft.description} onChange={(event) => setPollDraft((current) => ({ ...current, description: event.target.value }))} placeholder="任意" />
+          </label>
+          <div className="schedulePollEditActions">
+            <button type="button" className="primary" onClick={() => onUpdatePoll({ id: poll.id, ...pollDraft })}>投票内容を保存</button>
+            <button type="button" className="dangerButton" onClick={() => onDeletePoll(poll.id)}>投票を削除</button>
+          </div>
+        </section>
+      )}
+
+      {!poll.isClosed && (
+        <section className="voterNameCard">
+          <label>
+            <span>投票者のお名前 <em>必須</em></span>
+            <input list={`schedule-members-${poll.id}`} value={memberName} onChange={(event) => setMemberName(event.target.value)} placeholder="お名前を入力してください" />
+          </label>
+          <datalist id={`schedule-members-${poll.id}`}>
+            {members.map((member) => <option key={member.id} value={member.name} />)}
+          </datalist>
+          {existingAnswer && <p className="scheduleAnswerHint">この名前は回答済みです。内容を変更して保存すると、前回の回答が更新されます。</p>}
+        </section>
+      )}
+
+      <section className="pollTabsCard">
+        <div className="pollViewTabs" role="tablist" aria-label="投票画面の切り替え">
+          <button type="button" className={activeVoteTab === "answer" ? "active" : ""} onClick={() => setActiveVoteTab("answer")}>回答する</button>
+          <button type="button" className={activeVoteTab === "summary" ? "active" : ""} onClick={() => setActiveVoteTab("summary")}>みんなの回答状況</button>
+        </div>
+
+        {activeVoteTab === "answer" ? (
+          poll.isClosed ? (
+            <p className="closedPollMessage">この投票は回答受付を終了しています。回答状況のみ確認できます。</p>
+          ) : (
+            <form className="simpleVoteForm" onSubmit={submitAnswer}>
+              <div className="simpleVoteIntro">
+                <h3>あなたの回答</h3>
+                <p>各日程について、あなたの参加可否を選択してください。</p>
+              </div>
+              <div className="simpleVoteRows">
+                {options.map((option) => (
+                  <div key={option.id} className="simpleVoteRow">
+                    <div className="simpleVoteDate">
+                      <strong>{formatChipDate(option.candidateDate)}</strong>
+                      <span>{option.startTime}〜{option.endTime}</span>
+                      {option.memo && <small>{option.memo}</small>}
+                    </div>
+                    <div className="simpleVoteButtons">
+                      <button type="button" className={draft[option.id] === "yes" ? "active yes" : ""} onClick={() => setDraft((current) => ({ ...current, [option.id]: "yes" }))}>
+                        <strong>○</strong><span>参加できる</span>
+                      </button>
+                      <button type="button" className={draft[option.id] === "no" ? "active no" : ""} onClick={() => setDraft((current) => ({ ...current, [option.id]: "no" }))}>
+                        <strong>×</strong><span>参加できない</span>
+                      </button>
+                      <button type="button" className={draft[option.id] === "maybe" ? "active maybe" : ""} onClick={() => setDraft((current) => ({ ...current, [option.id]: "maybe" }))}>
+                        <strong>−</strong><span>未定</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <label className="commentBox">
+                <span>コメント（任意）</span>
+                <textarea maxLength={100} value={comment} onChange={(event) => setComment(event.target.value)} placeholder="例：22時以降なら可能です / この日は少し遅れるかもしれません など" />
+                <small>{comment.length} / 100</small>
+              </label>
+              <button className="primary simpleSaveButton">回答を保存する</button>
+              <p className="saveCaption">回答はいつでも変更できます</p>
+            </form>
+          )
+        ) : (
+          <div className="simpleSummary">
+            <h3>みんなの回答状況</h3>
+            <div className="summaryCards">
+              {optionStats.map((item) => (
+                <div key={item.option.id} className="summaryCard">
+                  <strong>{formatChipDate(item.option.candidateDate)}</strong>
+                  <span>{item.option.startTime}〜{item.option.endTime}</span>
+                  {item.option.memo && <small>{item.option.memo}</small>}
+                  <div className="summaryCounts">
+                    <span className="yes">○ {item.yes}人</span>
+                    <span className="no">× {item.no}人</span>
+                    <span className="maybe">− {item.maybe}人</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button type="button" className="detailToggleButton" onClick={() => setShowDetailTable((current) => !current)}>
+              {showDetailTable ? "詳細一覧を閉じる" : "詳細一覧を見る"}
+            </button>
+            {showDetailTable && (
+              <div className="scheduleTableWrap">
+                <table className="scheduleTable">
+                  <thead>
+                    <tr>
+                      <th>メンバー</th>
+                      {options.map((option) => <th key={option.id}>{formatChipDate(option.candidateDate)}<br /><small>{option.startTime}-{option.endTime}</small></th>)}
+                      <th>コメント</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {participants.map((participant) => (
+                      <tr key={participant.id}>
+                        <th>{participant.memberName}</th>
+                        {options.map((option) => {
+                          const status = responseMap.get(`${participant.id}:${option.id}`)?.status;
+                          return <td key={option.id} className={status === "yes" ? "yesCell" : status === "no" ? "noCell" : "maybeCell"}>{status === "yes" ? "○" : status === "no" ? "×" : status === "maybe" ? "−" : "-"}</td>;
+                        })}
+                        <td>{participant.comment || "-"}</td>
+                      </tr>
+                    ))}
+                    <tr className="summaryRow">
+                      <th>集計</th>
+                      {optionStats.map((item) => <td key={item.option.id}>○ {item.yes}</td>)}
+                      <td>-</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      {adminUnlocked && (
+        <div className="scheduleAdminActions">
+          {!poll.isClosed && <button type="button" onClick={() => onClosePoll(poll.id)}>回答受付終了</button>}
+          {options.map((option) => (
+            <button key={option.id} type="button" className="primary" onClick={() => onConfirmOption(poll.id, option.id)}>
+              {formatChipDate(option.candidateDate)} を稽古日に確定
+            </button>
+          ))}
+        </div>
+      )}
+      {adminUnlocked && (
+        <ScheduleOptionManager
+          pollId={poll.id}
+          options={options}
+          onAddOption={onAddOption}
+          onUpdateOption={onUpdateOption}
+          onDeleteOption={onDeleteOption}
+        />
+      )}
+    </article>
+  );
+}
+
+function LegacySchedulePollCard({ poll, options, participants, responses, members, adminUnlocked, onSaveAnswer, onClosePoll, onUpdatePoll, onDeletePoll, onConfirmOption, onAddOption, onUpdateOption, onDeleteOption }) {
+  const [memberName, setMemberName] = useState(members[0]?.name ?? "");
+  const [comment, setComment] = useState("");
+  const [draft, setDraft] = useState({});
+  const [pollDraft, setPollDraft] = useState({ title: poll.title, description: poll.description ?? "" });
   const optionStats = getScheduleOptionStats(options, participants, responses);
   const ranking = [...optionStats].sort((a, b) => b.yes - a.yes || a.option.candidateDate.localeCompare(b.option.candidateDate));
   const best = ranking[0];
@@ -2172,6 +2373,7 @@ function getScheduleOptionStats(options, participants, responses) {
       option,
       yes: optionResponses.filter((response) => response.status === "yes").length,
       no: optionResponses.filter((response) => response.status === "no").length,
+      maybe: participants.length - optionResponses.filter((response) => response.status === "yes").length - optionResponses.filter((response) => response.status === "no").length,
       total: participants.length,
     };
   });
