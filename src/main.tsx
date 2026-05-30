@@ -1829,14 +1829,16 @@ function ScheduleCandidateCalendar({ month, selectedDates, onMonthChange, onTogg
   const firstDay = new Date(year, monthNumber - 1, 1);
   const daysInMonth = new Date(year, monthNumber, 0).getDate();
   const leadingBlankCount = firstDay.getDay();
-  const calendarCells = [
-    ...Array.from({ length: leadingBlankCount }, (_, index) => ({ key: `blank-${index}`, blank: true })),
-    ...Array.from({ length: daysInMonth }, (_, index) => {
-      const day = index + 1;
-      const date = `${year}-${String(monthNumber).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      return { key: date, date, day };
-    }),
-  ];
+  const previousMonthDays = new Date(year, monthNumber - 1, 0).getDate();
+  const cellCount = Math.ceil((leadingBlankCount + daysInMonth) / 7) * 7;
+  const calendarCells = Array.from({ length: cellCount }, (_, index) => {
+    const dayOffset = index - leadingBlankCount + 1;
+    const cellDate = new Date(year, monthNumber - 1, dayOffset);
+    const date = cellDate.toLocaleDateString("sv-SE");
+    const inCurrentMonth = cellDate.getMonth() === monthNumber - 1;
+    const day = dayOffset < 1 ? previousMonthDays + dayOffset : dayOffset > daysInMonth ? dayOffset - daysInMonth : dayOffset;
+    return { key: date, date, day, inCurrentMonth };
+  });
 
   function shiftMonth(diff) {
     const next = new Date(year, monthNumber - 1 + diff, 1);
@@ -1846,27 +1848,30 @@ function ScheduleCandidateCalendar({ month, selectedDates, onMonthChange, onTogg
   return (
     <div className="scheduleCandidateCalendar">
       <div className="scheduleCalendarHeader">
-        <button type="button" onClick={() => shiftMonth(-1)}>‹</button>
+        <button type="button" aria-label="前の月へ" onClick={() => shiftMonth(-1)}>‹</button>
         <strong>{year}年{String(monthNumber).padStart(2, "0")}月</strong>
-        <button type="button" onClick={() => shiftMonth(1)}>›</button>
+        <button type="button" aria-label="次の月へ" onClick={() => shiftMonth(1)}>›</button>
       </div>
       <div className="scheduleCalendarWeekdays" aria-hidden="true">
         {["日", "月", "火", "水", "木", "金", "土"].map((weekday) => <span key={weekday}>{weekday}</span>)}
       </div>
       <div className="scheduleCalendarGrid">
-        {calendarCells.map((cell) => cell.blank ? (
-          <span key={cell.key} className="blank"></span>
-        ) : (
+        {calendarCells.map((cell) => (
           <button
             key={cell.key}
             type="button"
-            className={`${selectedDates.includes(cell.date) ? "selected" : ""} ${cell.date === today ? "today" : ""}`}
+            className={`${selectedDates.includes(cell.date) ? "selected" : ""} ${cell.date === today ? "today" : ""} ${cell.inCurrentMonth ? "" : "otherMonth"}`}
             onClick={() => onToggleDate(cell.date)}
           >
             <span>{cell.day}</span>
             {cell.date === today && <small>今日</small>}
           </button>
         ))}
+      </div>
+      <div className="scheduleCalendarLegend" aria-label="カレンダーの凡例">
+        <span><i className="selectedDot"></i>選択中</span>
+        <span><i className="todayDot"></i>今日</span>
+        <span><i className="otherDot"></i>他の月</span>
       </div>
     </div>
   );
@@ -1913,47 +1918,81 @@ function SchedulePollCreator({ onCreatePoll }) {
 
   return (
     <form className="scheduleCreator" onSubmit={submit}>
-      <label>
-        <span>タイトル</span>
-        <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="例：7月稽古日程調整" />
-      </label>
-      <label>
-        <span>説明文</span>
-        <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="任意" />
-      </label>
-      <ScheduleCandidateCalendar
-        month={calendarMonth}
-        selectedDates={selectedDates}
-        onMonthChange={setCalendarMonth}
-        onToggleDate={toggleCandidateDate}
-      />
-      <div className="scheduleOptionEditor compact">
+      <div className="scheduleCreatorIntro">
+        <h3><span>★</span>管理者用</h3>
+        <p>新しい稽古日調整の投票を作成します</p>
+      </div>
+
+      <div className="scheduleCreatorFields">
         <label>
-          <span>開始</span>
-          <input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} />
+          <span>タイトル</span>
+          <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="例：7月稽古日程調整" />
         </label>
         <label>
-          <span>終了</span>
-          <input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} />
-        </label>
-        <label>
-          <span>メモ</span>
-          <input value={memo} onChange={(event) => setMemo(event.target.value)} placeholder="任意" />
+          <span>説明文（任意）</span>
+          <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="例：7月の稽古日程をみんなで決めましょう！" />
         </label>
       </div>
-      {selectedDates.length > 0 && (
-        <div className="candidatePreview candidateDateList">
-          <strong>選択中の候補日：</strong>
-          {selectedDates.map((date) => (
-            <span key={date}>
-              {date.replaceAll("-", "/")}
-              <button type="button" onClick={() => toggleCandidateDate(date)}>×</button>
-            </span>
-          ))}
+
+      <div className="scheduleCandidateBlock">
+        <div className="scheduleCreatorLabel">
+          <strong>候補日を選択</strong>
+          <span>複数選択できます</span>
         </div>
-      )}
+        <div className="scheduleCandidateLayout">
+          <ScheduleCandidateCalendar
+            month={calendarMonth}
+            selectedDates={selectedDates}
+            onMonthChange={setCalendarMonth}
+            onToggleDate={toggleCandidateDate}
+          />
+          <aside className="selectedCandidatePanel">
+            <div className="selectedCandidateHeader">
+              <strong>選択中の候補日</strong>
+              <span>{selectedDates.length}日</span>
+            </div>
+            {selectedDates.length ? (
+              <div className="selectedCandidateList">
+                {selectedDates.map((date) => (
+                  <div key={date} className="selectedCandidateItem">
+                    <span>{formatDateWithWeekday(date).replaceAll("-", "/")}</span>
+                    <button type="button" aria-label={`${date}を候補日から外す`} onClick={() => toggleCandidateDate(date)}>×</button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="selectedCandidateEmpty">カレンダーの日付をタップしてください。</p>
+            )}
+            <p className="selectedCandidateHint">日付をタップすると選択・解除できます</p>
+          </aside>
+        </div>
+      </div>
+
+      <section className="scheduleCommonSettings">
+        <div className="scheduleCommonTitle">
+          <strong>共通設定</strong>
+          <span>すべての候補日に共通で適用されます</span>
+        </div>
+        <div className="scheduleCommonGrid">
+          <label>
+            <span>開始時間</span>
+            <input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} />
+          </label>
+          <label>
+            <span>終了時間</span>
+            <input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} />
+          </label>
+          <label>
+            <span>メモ（任意）</span>
+            <input value={memo} onChange={(event) => setMemo(event.target.value)} placeholder="オンライン稽古" />
+          </label>
+        </div>
+        <p>💡 選択したすべての日付に、上記の時間とメモが設定されます。</p>
+      </section>
+
       {formError && <p className="formError">{formError}</p>}
-      <button className="primary">投票を作成</button>
+      <button className="primary scheduleCreateButton">✨ 投票を作成する</button>
+      {!selectedDates.length && <p className="scheduleCreateNote">候補日を1つ以上選択してください</p>}
     </form>
   );
 }

@@ -1461,6 +1461,53 @@ h3 {
   gap: 14px;
 }
 
+.scheduleCreator {
+  gap: 22px;
+  border: 1px solid #ead7ca;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 28px rgba(93, 59, 45, 0.06);
+  padding: clamp(18px, 3vw, 28px);
+}
+
+.scheduleCreatorIntro {
+  display: grid;
+  gap: 6px;
+}
+
+.scheduleCreatorIntro h3 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  color: #2f2421;
+  font-size: clamp(1.45rem, 2.6vw, 2rem);
+}
+
+.scheduleCreatorIntro h3 span {
+  width: 44px;
+  height: 44px;
+  border: 2px solid #ec6b93;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #ec6b93;
+  background: #fff;
+  font-size: 1.25rem;
+}
+
+.scheduleCreatorIntro p {
+  margin: 0;
+  color: #6d554d;
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+.scheduleCreatorFields {
+  display: grid;
+  gap: 18px;
+}
+
 .scheduleAdminHeader {
   display: flex;
   align-items: center;
@@ -1504,10 +1551,22 @@ h3 {
   font: inherit;
 }
 
+.scheduleCreator input,
+.scheduleCreator textarea {
+  min-height: 56px;
+  border-color: #ead7ca;
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
 .scheduleCreator textarea,
 .scheduleAnswerForm textarea {
   min-height: 84px;
   resize: vertical;
+}
+
+.scheduleCreator textarea {
+  min-height: 110px;
 }
 
 .scheduleOptionEditor {
@@ -1526,8 +1585,42 @@ h3 {
   gap: 12px;
   border: 1px solid #ead7ca;
   border-radius: 18px;
-  background: linear-gradient(135deg, rgba(255, 250, 247, 0.96), rgba(255, 244, 249, 0.78));
-  padding: 14px;
+  background: #fff;
+  padding: clamp(14px, 2vw, 20px);
+}
+
+.scheduleCandidateBlock {
+  display: grid;
+  gap: 12px;
+}
+
+.scheduleCreatorLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.scheduleCreatorLabel strong {
+  color: #2f2421;
+  font-size: 1.05rem;
+}
+
+.scheduleCreatorLabel span,
+.selectedCandidateHeader span {
+  border-radius: 999px;
+  background: #fff0f6;
+  color: #ec6b93;
+  font-size: 0.82rem;
+  font-weight: 900;
+  padding: 4px 10px;
+}
+
+.scheduleCandidateLayout {
+  display: grid;
+  grid-template-columns: minmax(320px, 1.35fr) minmax(250px, 0.75fr);
+  gap: clamp(16px, 3vw, 28px);
+  align-items: center;
 }
 
 .scheduleCalendarHeader {
@@ -1546,8 +1639,8 @@ h3 {
 .scheduleCalendarHeader button {
   min-height: 38px;
   border: 1px solid #f0b4c7;
-  border-radius: 999px;
-  background: #fff;
+  border-radius: 10px;
+  background: #fff7f9;
   color: #ec6b93;
   font-size: 1.4rem;
   font-weight: 900;
@@ -1577,17 +1670,18 @@ h3 {
   display: grid;
   place-items: center;
   gap: 0;
-  border: 1px solid #ead7ca;
+  border: 1px solid transparent;
   border-radius: 50%;
-  background: #fffdfa;
-  color: #6d554d;
+  background: transparent;
+  color: #2f2421;
   font-weight: 900;
   position: relative;
 }
 
 .scheduleCalendarGrid button.today {
-  border-color: #d8b46a;
-  color: #9a7430;
+  border: 1px dashed #ec6b93;
+  color: #ec6b93;
+  background: #fff;
 }
 
 .scheduleCalendarGrid button.selected {
@@ -1601,11 +1695,179 @@ h3 {
   position: absolute;
   bottom: -14px;
   font-size: 0.66rem;
-  color: #c08a2d;
+  color: #ec6b93;
 }
 
 .scheduleCalendarGrid button.selected small {
   color: #ec6b93;
+}
+
+.scheduleCalendarGrid button.otherMonth {
+  color: #b9aaa4;
+}
+
+.scheduleCalendarLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  color: #5a4138;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.scheduleCalendarLegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.scheduleCalendarLegend i {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.scheduleCalendarLegend .selectedDot {
+  background: #ec6b93;
+}
+
+.scheduleCalendarLegend .todayDot {
+  border: 1px dashed #ec6b93;
+  background: #fff;
+}
+
+.scheduleCalendarLegend .otherDot {
+  background: #f6e8ed;
+}
+
+.selectedCandidatePanel {
+  align-self: stretch;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.selectedCandidateHeader,
+.scheduleCommonTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.selectedCandidateHeader {
+  border: 1px solid #f3d4dc;
+  border-radius: 16px 16px 0 0;
+  background: linear-gradient(135deg, #fff4f8, #fffaf7);
+  color: #ec6b93;
+  padding: 14px 16px;
+}
+
+.selectedCandidateList,
+.selectedCandidateEmpty {
+  border: 1px solid #f3d4dc;
+  border-top: 0;
+  border-radius: 0 0 16px 16px;
+  background: #fff;
+}
+
+.selectedCandidateList {
+  display: grid;
+}
+
+.selectedCandidateItem {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  color: #2f2421;
+  font-weight: 800;
+  padding: 13px 16px;
+  border-bottom: 1px solid #f4ded4;
+}
+
+.selectedCandidateItem:last-child {
+  border-bottom: 0;
+}
+
+.selectedCandidateItem button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #ec6b93;
+  border-radius: 50%;
+  background: #fff;
+  color: #ec6b93;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.selectedCandidateEmpty {
+  margin: 0;
+  color: #8b766c;
+  padding: 18px 16px;
+}
+
+.selectedCandidateHint {
+  margin: 0;
+  border: 1px solid #f3d4dc;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fffaf7, #fff0f6);
+  color: #6d554d;
+  font-weight: 800;
+  line-height: 1.8;
+  padding: 18px;
+  text-align: center;
+}
+
+.scheduleCommonSettings {
+  display: grid;
+  gap: 14px;
+  border: 1px solid #f3d4dc;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255, 250, 247, 0.98), rgba(255, 245, 249, 0.86));
+  padding: clamp(16px, 2.5vw, 22px);
+}
+
+.scheduleCommonTitle strong {
+  color: #2f2421;
+  font-size: 1.05rem;
+}
+
+.scheduleCommonTitle span {
+  color: #7b655d;
+  font-weight: 800;
+}
+
+.scheduleCommonGrid {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.8fr) minmax(130px, 0.8fr) minmax(200px, 1.5fr);
+  gap: 14px;
+}
+
+.scheduleCommonSettings p {
+  margin: 0;
+  border: 1px solid #f7bfd1;
+  border-radius: 12px;
+  background: rgba(255, 240, 246, 0.72);
+  color: #6d554d;
+  font-weight: 800;
+  line-height: 1.7;
+  padding: 13px 14px;
+}
+
+.scheduleCreateButton {
+  min-height: 64px;
+  border-radius: 14px;
+  font-size: 1.12rem;
+}
+
+.scheduleCreateNote {
+  margin: -8px 0 0;
+  color: #6d554d;
+  font-weight: 800;
+  text-align: center;
 }
 
 .candidateDateList {
@@ -1777,9 +2039,15 @@ h3 {
   gap: 16px;
 }
 
+.schedulePollCardSimple > .pollTabsCard {
+  border-top: 0;
+  margin-top: 20px;
+  padding-top: 0;
+}
+
 .pollViewTabs {
   width: min(640px, 100%);
-  margin: -1px auto 18px;
+  margin: 0 auto 18px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   border: 1px solid #f0b4c7;
@@ -2218,6 +2486,33 @@ h3 {
 }
 
 @media (max-width: 720px) {
+  .scheduleCreator {
+    padding: 18px;
+  }
+
+  .scheduleCreatorIntro h3 span {
+    width: 40px;
+    height: 40px;
+  }
+
+  .scheduleCandidateLayout,
+  .scheduleCommonGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .scheduleCandidateLayout {
+    gap: 16px;
+  }
+
+  .scheduleCalendarGrid button,
+  .scheduleCalendarGrid .blank {
+    min-height: 38px;
+  }
+
+  .selectedCandidatePanel {
+    align-self: auto;
+  }
+
   .scheduleOptionEditor {
     grid-template-columns: 1fr;
   }
