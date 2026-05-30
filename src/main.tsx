@@ -1592,8 +1592,6 @@ function App() {
         const client = getSupabaseClient(supabaseConfig);
         if (client) {
           await logEdit(client, supabaseConfig, actorName, "schedule_poll_options", optionId, "delete", before, null);
-          const { error: responseError } = await client.from("schedule_poll_responses").delete().eq("room_id", supabaseConfig.roomId).eq("option_id", optionId);
-          if (responseError) throw responseError;
           const { error } = await client.from("schedule_poll_options").delete().eq("room_id", supabaseConfig.roomId).eq("id", optionId);
           if (error) throw error;
         }
