@@ -2065,9 +2065,6 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
                       <button type="button" className={draft[option.id] === "no" ? "active no" : ""} onClick={() => setDraft((current) => ({ ...current, [option.id]: "no" }))}>
                         <strong>×</strong><span>参加できない</span>
                       </button>
-                      <button type="button" className={draft[option.id] === "maybe" ? "active maybe" : ""} onClick={() => setDraft((current) => ({ ...current, [option.id]: "maybe" }))}>
-                        <strong>−</strong><span>未定</span>
-                      </button>
                     </div>
                   </div>
                 ))}
@@ -2093,7 +2090,6 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
                   <div className="summaryCounts">
                     <span className="yes">○ {item.yes}人</span>
                     <span className="no">× {item.no}人</span>
-                    <span className="maybe">− {item.maybe}人</span>
                   </div>
                 </div>
               ))}
@@ -2117,7 +2113,7 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
                         <th>{participant.memberName}</th>
                         {options.map((option) => {
                           const status = responseMap.get(`${participant.id}:${option.id}`)?.status;
-                          return <td key={option.id} className={status === "yes" ? "yesCell" : status === "no" ? "noCell" : "maybeCell"}>{status === "yes" ? "○" : status === "no" ? "×" : status === "maybe" ? "−" : "-"}</td>;
+                          return <td key={option.id} className={status === "yes" ? "yesCell" : status === "no" ? "noCell" : ""}>{status === "yes" ? "○" : status === "no" ? "×" : "-"}</td>;
                         })}
                         <td>{participant.comment || "-"}</td>
                       </tr>
