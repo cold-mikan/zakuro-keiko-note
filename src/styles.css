@@ -1851,7 +1851,7 @@ h3 {
 
 .simpleVoteButtons {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -1885,11 +1885,6 @@ h3 {
 
 .simpleVoteButtons button.active.no {
   background: #fff7f9;
-}
-
-.simpleVoteButtons button.active.maybe {
-  border-color: #d8c0af;
-  background: #fffaf2;
 }
 
 .simpleSaveButton {
@@ -1951,12 +1946,6 @@ h3 {
 
 .summaryCounts .no {
   color: #8b766c;
-}
-
-.summaryCounts .maybe,
-.maybeCell {
-  color: #b79767 !important;
-  font-weight: 900;
 }
 
 .detailToggleButton {
