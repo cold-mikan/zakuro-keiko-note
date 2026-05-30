@@ -45,6 +45,44 @@ type Scene = {
   memo?: string;
 };
 
+type SchedulePoll = {
+  id: string;
+  title: string;
+  description?: string;
+  isClosed: boolean;
+  confirmedOptionId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+type SchedulePollOption = {
+  id: string;
+  pollId: string;
+  candidateDate: string;
+  startTime: string;
+  endTime: string;
+  memo?: string;
+};
+
+type SchedulePollParticipant = {
+  id: string;
+  pollId: string;
+  memberName: string;
+  comment?: string;
+  updatedAt?: string;
+};
+
+type SchedulePollResponseStatus = "yes" | "no" | "maybe";
+
+type SchedulePollResponse = {
+  id: string;
+  pollId: string;
+  optionId: string;
+  participantId: string;
+  status: SchedulePollResponseStatus;
+  updatedAt?: string;
+};
+
 const members: Member[] = [
   { id: "m1", name: "おはよう真夜中", role: "キャスト", team: "共通" },
   { id: "m2", name: "黒崎こぎん", role: "キャスト", team: "共通" },
@@ -105,6 +143,11 @@ const seedAttendances: Attendance[] = [
   { id: "a14", rehearsalId: "r3", memberId: "m6", status: "出席" },
 ];
 
+const schedulePolls: SchedulePoll[] = [];
+const schedulePollOptions: SchedulePollOption[] = [];
+const schedulePollParticipants: SchedulePollParticipant[] = [];
+const schedulePollResponses: SchedulePollResponse[] = [];
+
 const activeStatuses: AttendanceStatus[] = ["出席", "遅刻", "早退"];
 const statusOptions: AttendanceStatus[] = ["出席", "欠席", "遅刻", "早退", "未定"];
 const roleOptions = ["キャスト", "演出", "演出助手", "制作", "音響", "照明"];
@@ -120,8 +163,8 @@ type TeamFilter = "全員" | "Aチーム" | "Bチーム";
 const teamFilters: TeamFilter[] = ["全員", "Aチーム", "Bチーム"];
 const tabs = [
   { id: "dashboard", label: "ホーム", icon: "⌂" },
-  { id: "rehearsals", label: "稽古日の登録", icon: "▣" },
   { id: "form", label: "参加予定の入力", icon: "＋" },
+  { id: "schedule", label: "稽古日調整", icon: "◇" },
   { id: "scenes", label: "管理者", icon: "★" },
 ] as const;
 
@@ -622,6 +665,104 @@ function attendanceFromRow(row) {
   };
 }
 
+function schedulePollToRow(config, poll, actorName) {
+  return withRoom(config, {
+    id: poll.id,
+    title: poll.title,
+    description: poll.description ?? "",
+    is_closed: Boolean(poll.isClosed),
+    confirmed_option_id: poll.confirmedOptionId ?? "",
+    created_at: poll.createdAt ?? new Date().toISOString(),
+    updated_by: actorName,
+    updated_at: new Date().toISOString(),
+  });
+}
+
+function schedulePollFromRow(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description ?? "",
+    isClosed: Boolean(row.is_closed),
+    confirmedOptionId: row.confirmed_option_id ?? "",
+    createdAt: row.created_at,
+    updatedBy: row.updated_by,
+    updatedAt: row.updated_at,
+  };
+}
+
+function schedulePollOptionToRow(config, option, actorName) {
+  return withRoom(config, {
+    id: option.id,
+    poll_id: option.pollId,
+    candidate_date: option.candidateDate,
+    start_time: option.startTime,
+    end_time: option.endTime,
+    memo: option.memo ?? "",
+    updated_by: actorName,
+    updated_at: new Date().toISOString(),
+  });
+}
+
+function schedulePollOptionFromRow(row) {
+  return {
+    id: row.id,
+    pollId: row.poll_id,
+    candidateDate: row.candidate_date,
+    startTime: row.start_time,
+    endTime: row.end_time,
+    memo: row.memo ?? "",
+    updatedBy: row.updated_by,
+    updatedAt: row.updated_at,
+  };
+}
+
+function schedulePollParticipantToRow(config, participant, actorName) {
+  return withRoom(config, {
+    id: participant.id,
+    poll_id: participant.pollId,
+    member_name: participant.memberName,
+    comment: participant.comment ?? "",
+    updated_by: actorName,
+    updated_at: new Date().toISOString(),
+  });
+}
+
+function schedulePollParticipantFromRow(row) {
+  return {
+    id: row.id,
+    pollId: row.poll_id,
+    memberName: row.member_name,
+    comment: row.comment ?? "",
+    updatedBy: row.updated_by,
+    updatedAt: row.updated_at,
+  };
+}
+
+function schedulePollResponseToRow(config, response, actorName) {
+  return withRoom(config, {
+    id: response.id,
+    poll_id: response.pollId,
+    option_id: response.optionId,
+    participant_id: response.participantId,
+    status: response.status,
+    updated_by: actorName,
+    updated_at: new Date().toISOString(),
+  });
+}
+
+function schedulePollResponseFromRow(row) {
+  return {
+    id: row.id,
+    pollId: row.poll_id,
+    optionId: row.option_id,
+    participantId: row.participant_id,
+    status: row.status,
+    updatedBy: row.updated_by,
+    updatedAt: row.updated_at,
+  };
+}
+
 async function logEdit(client, config, actorName, tableName, recordId, action, beforeData, afterData) {
   await client.from("edit_logs").insert({
     room_id: config.roomId,
@@ -637,7 +778,12 @@ async function logEdit(client, config, actorName, tableName, recordId, action, b
 async function upsertSupabaseRow(config, actorName, tableName, row, beforeData, afterData) {
   const client = getSupabaseClient(config);
   if (!client) return { ok: false, message: "Supabase未接続のため、この端末内だけに保存しました。" };
-  const onConflict = tableName === "attendances" ? "room_id,rehearsal_id,member_id" : "id";
+  const conflictKeys = {
+    attendances: "room_id,rehearsal_id,member_id",
+    schedule_poll_participants: "room_id,poll_id,member_name",
+    schedule_poll_responses: "room_id,poll_id,option_id,participant_id",
+  };
+  const onConflict = conflictKeys[tableName] ?? "id";
   const { error } = await client.from(tableName).upsert(row, { onConflict });
   if (error) throw error;
   await logEdit(client, config, actorName, tableName, row.id, beforeData ? "update" : "insert", beforeData, afterData);
@@ -703,11 +849,39 @@ async function loadSupabaseState(config) {
   ]);
   const failed = [memberRows, rehearsalRows, sceneRows, attendanceRows].find((result) => result.error);
   if (failed?.error) throw failed.error;
+  const scheduleState = await loadSchedulePollState(client, config);
   return {
     members: memberRows.data.map(memberFromRow),
     rehearsals: rehearsalRows.data.map(rehearsalFromRow),
     scenes: sceneRows.data.map(sceneFromRow),
     attendances: attendanceRows.data.map(attendanceFromRow),
+    ...scheduleState,
+  };
+}
+
+async function loadSchedulePollState(client, config) {
+  const empty = {
+    schedulePolls: [],
+    schedulePollOptions: [],
+    schedulePollParticipants: [],
+    schedulePollResponses: [],
+  };
+  const [pollRows, optionRows, participantRows, responseRows] = await Promise.all([
+    client.from("schedule_polls").select("*").eq("room_id", config.roomId).order("created_at", { ascending: false }),
+    client.from("schedule_poll_options").select("*").eq("room_id", config.roomId).order("candidate_date").order("start_time"),
+    client.from("schedule_poll_participants").select("*").eq("room_id", config.roomId).order("member_name"),
+    client.from("schedule_poll_responses").select("*").eq("room_id", config.roomId).order("updated_at", { ascending: false }),
+  ]);
+  const failed = [pollRows, optionRows, participantRows, responseRows].find((result) => result.error);
+  if (failed?.error) {
+    console.warn("稽古日調整テーブルを読み込めませんでした。supabase-schema.sql の再実行が必要です。", failed.error);
+    return empty;
+  }
+  return {
+    schedulePolls: pollRows.data.map(schedulePollFromRow),
+    schedulePollOptions: optionRows.data.map(schedulePollOptionFromRow),
+    schedulePollParticipants: participantRows.data.map(schedulePollParticipantFromRow),
+    schedulePollResponses: responseRows.data.map(schedulePollResponseFromRow),
   };
 }
 
@@ -717,17 +891,21 @@ function getStateCounts(state) {
     rehearsals: state.rehearsals?.length ?? 0,
     scenes: state.scenes?.length ?? 0,
     attendances: state.attendances?.length ?? 0,
+    schedulePolls: state.schedulePolls?.length ?? 0,
+    schedulePollOptions: state.schedulePollOptions?.length ?? 0,
+    schedulePollParticipants: state.schedulePollParticipants?.length ?? 0,
+    schedulePollResponses: state.schedulePollResponses?.length ?? 0,
   };
 }
 
 function hasStateData(state) {
   const counts = getStateCounts(state);
-  return counts.members > 0 || counts.rehearsals > 0 || counts.scenes > 0 || counts.attendances > 0;
+  return counts.members > 0 || counts.rehearsals > 0 || counts.scenes > 0 || counts.attendances > 0 || counts.schedulePolls > 0 || counts.schedulePollOptions > 0 || counts.schedulePollParticipants > 0 || counts.schedulePollResponses > 0;
 }
 
 function describeStateCounts(state) {
   const counts = getStateCounts(state);
-  return `メンバー${counts.members}件、稽古日${counts.rehearsals}件、シーン${counts.scenes}件、出欠${counts.attendances}件`;
+  return `メンバー${counts.members}件、稽古日${counts.rehearsals}件、シーン${counts.scenes}件、出欠${counts.attendances}件、稽古日調整${counts.schedulePolls}件`;
 }
 
 async function seedSupabaseState(config, actorName, state, options = { requireEmpty: true }) {
@@ -744,6 +922,10 @@ async function seedSupabaseState(config, actorName, state, options = { requireEm
     ["rehearsals", state.rehearsals.map((rehearsal) => rehearsalToRow(config, rehearsal, actorName))],
     ["scenes", state.scenes.map((scene) => sceneToRow(config, scene, actorName))],
     ["attendances", state.attendances.map((attendance) => attendanceToRow(config, attendance, actorName))],
+    ["schedule_polls", (state.schedulePolls ?? []).map((poll) => schedulePollToRow(config, poll, actorName))],
+    ["schedule_poll_options", (state.schedulePollOptions ?? []).map((option) => schedulePollOptionToRow(config, option, actorName))],
+    ["schedule_poll_participants", (state.schedulePollParticipants ?? []).map((participant) => schedulePollParticipantToRow(config, participant, actorName))],
+    ["schedule_poll_responses", (state.schedulePollResponses ?? []).map((response) => schedulePollResponseToRow(config, response, actorName))],
   ];
   for (const [tableName, tableRows] of rows) {
     if (!tableRows.length) continue;
@@ -755,6 +937,7 @@ async function seedSupabaseState(config, actorName, state, options = { requireEm
     rehearsals: state.rehearsals.length,
     scenes: state.scenes.length,
     attendances: state.attendances.length,
+    schedulePolls: state.schedulePolls?.length ?? 0,
   });
 }
 
@@ -769,6 +952,10 @@ function App() {
     return readScenes();
   });
   const [attendances, setAttendances] = useState<Attendance[]>(() => readStorage("keiko.attendances", seedAttendances));
+  const [schedulePollList, setSchedulePollList] = useState<SchedulePoll[]>(() => readStorage("keiko.schedulePolls", schedulePolls));
+  const [scheduleOptionList, setScheduleOptionList] = useState<SchedulePollOption[]>(() => readStorage("keiko.schedulePollOptions", schedulePollOptions));
+  const [scheduleParticipantList, setScheduleParticipantList] = useState<SchedulePollParticipant[]>(() => readStorage("keiko.schedulePollParticipants", schedulePollParticipants));
+  const [scheduleResponseList, setScheduleResponseList] = useState<SchedulePollResponse[]>(() => readStorage("keiko.schedulePollResponses", schedulePollResponses));
   const [supabaseConfig, setSupabaseConfig] = useState(() => getSupabaseConfig());
   const [actorName, setActorName] = useState(() => getActorName());
   const [notificationMemberId, setNotificationMemberId] = useState(() => getNotificationMemberId());
@@ -808,6 +995,22 @@ function App() {
   }, [attendances]);
 
   useEffect(() => {
+    localStorage.setItem("keiko.schedulePolls", JSON.stringify(schedulePollList));
+  }, [schedulePollList]);
+
+  useEffect(() => {
+    localStorage.setItem("keiko.schedulePollOptions", JSON.stringify(scheduleOptionList));
+  }, [scheduleOptionList]);
+
+  useEffect(() => {
+    localStorage.setItem("keiko.schedulePollParticipants", JSON.stringify(scheduleParticipantList));
+  }, [scheduleParticipantList]);
+
+  useEffect(() => {
+    localStorage.setItem("keiko.schedulePollResponses", JSON.stringify(scheduleResponseList));
+  }, [scheduleResponseList]);
+
+  useEffect(() => {
     saveSupabaseConfig(supabaseConfig);
   }, [supabaseConfig]);
 
@@ -834,6 +1037,10 @@ function App() {
     setRehearsalList(data.rehearsals);
     setSceneList(data.scenes);
     setAttendances(data.attendances);
+    setSchedulePollList(data.schedulePolls ?? []);
+    setScheduleOptionList(data.schedulePollOptions ?? []);
+    setScheduleParticipantList(data.schedulePollParticipants ?? []);
+    setScheduleResponseList(data.schedulePollResponses ?? []);
     setSelectedRehearsalId(data.rehearsals[0]?.id ?? "");
   }
 
@@ -843,6 +1050,10 @@ function App() {
       rehearsals: rehearsalList,
       scenes: sceneList,
       attendances,
+      schedulePolls: schedulePollList,
+      schedulePollOptions: scheduleOptionList,
+      schedulePollParticipants: scheduleParticipantList,
+      schedulePollResponses: scheduleResponseList,
     };
   }
 
@@ -930,7 +1141,7 @@ function App() {
     setOnlineStatus("オンラインから読み込み中です...");
     try {
       const data = await loadSupabaseState(supabaseConfig);
-      if (!data.members.length && !data.rehearsals.length && !data.scenes.length && !data.attendances.length) {
+      if (!hasStateData(data)) {
         setOnlineStatus("オンラインデータがまだありません。先に保存してください。");
         return;
       }
@@ -968,7 +1179,7 @@ function App() {
       }
     };
 
-    ["members", "rehearsals", "scenes", "attendances"].forEach((table) => {
+    ["members", "rehearsals", "scenes", "attendances", "schedule_polls", "schedule_poll_options", "schedule_poll_participants", "schedule_poll_responses"].forEach((table) => {
       channel.on(
         "postgres_changes",
         {
@@ -1186,6 +1397,195 @@ function App() {
     saveAttendanceBatch([input]);
   }
 
+  function createSchedulePoll(input) {
+    if (!guardOnlineWrite()) return;
+    const timestamp = Date.now();
+    const poll: SchedulePoll = {
+      id: `sp${timestamp}`,
+      title: input.title,
+      description: input.description ?? "",
+      isClosed: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    const options = input.options.map((option, index) => ({
+      id: `spo${timestamp}-${index}`,
+      pollId: poll.id,
+      candidateDate: option.candidateDate,
+      startTime: option.startTime,
+      endTime: option.endTime,
+      memo: option.memo ?? "",
+      updatedAt: new Date().toISOString(),
+    }));
+    setSchedulePollList((current) => [poll, ...current]);
+    setScheduleOptionList((current) => [...current, ...options].sort((a, b) => `${a.candidateDate}${a.startTime}`.localeCompare(`${b.candidateDate}${b.startTime}`)));
+    showToast("稽古日調整を作成しました。");
+    if (onlineReady) {
+      Promise.all([
+        upsertSupabaseRow(supabaseConfig, actorName, "schedule_polls", schedulePollToRow(supabaseConfig, poll, actorName), null, poll),
+        ...options.map((option) => upsertSupabaseRow(supabaseConfig, actorName, "schedule_poll_options", schedulePollOptionToRow(supabaseConfig, option, actorName), null, option)),
+      ])
+        .then(() => setOnlineStatus("稽古日調整をオンラインへ保存しました。"))
+        .catch(reportOnlineError);
+    }
+  }
+
+  function saveScheduleAnswer(input) {
+    if (!guardOnlineWrite()) return;
+    const timestamp = Date.now();
+    const existingParticipant = scheduleParticipantList.find((participant) => participant.pollId === input.pollId && participant.memberName === input.memberName);
+    const participant: SchedulePollParticipant = existingParticipant
+      ? { ...existingParticipant, comment: input.comment ?? "", updatedAt: new Date().toISOString() }
+      : { id: `spp${timestamp}`, pollId: input.pollId, memberName: input.memberName, comment: input.comment ?? "", updatedAt: new Date().toISOString() };
+    const responseRows = Object.entries(input.statuses).map(([optionId, status], index) => {
+      const existing = scheduleResponseList.find((response) => response.pollId === input.pollId && response.optionId === optionId && response.participantId === participant.id);
+      return existing
+        ? { ...existing, status, updatedAt: new Date().toISOString() }
+        : { id: `spr${timestamp}-${index}`, pollId: input.pollId, optionId, participantId: participant.id, status, updatedAt: new Date().toISOString() };
+    });
+    setScheduleParticipantList((current) => {
+      const next = current.some((row) => row.id === participant.id)
+        ? current.map((row) => (row.id === participant.id ? participant : row))
+        : [...current, participant];
+      return next.sort((a, b) => a.memberName.localeCompare(b.memberName, "ja"));
+    });
+    setScheduleResponseList((current) => {
+      let next = [...current];
+      responseRows.forEach((response) => {
+        next = next.some((row) => row.id === response.id)
+          ? next.map((row) => (row.id === response.id ? response : row))
+          : [...next, response];
+      });
+      return next;
+    });
+    showToast("回答を保存しました。");
+    if (onlineReady) {
+      const beforeParticipant = existingParticipant ?? null;
+      Promise.all([
+        upsertSupabaseRow(supabaseConfig, actorName, "schedule_poll_participants", schedulePollParticipantToRow(supabaseConfig, participant, actorName), beforeParticipant, participant),
+        ...responseRows.map((response) => {
+          const before = scheduleResponseList.find((row) => row.id === response.id) ?? null;
+          return upsertSupabaseRow(supabaseConfig, actorName, "schedule_poll_responses", schedulePollResponseToRow(supabaseConfig, response, actorName), before, response);
+        }),
+      ])
+        .then(() => setOnlineStatus("稽古日調整の回答をオンラインへ保存しました。"))
+        .catch(reportOnlineError);
+    }
+  }
+
+  function closeSchedulePoll(pollId) {
+    if (!guardOnlineWrite()) return;
+    const before = schedulePollList.find((poll) => poll.id === pollId);
+    if (!before) return;
+    const next = { ...before, isClosed: true, updatedAt: new Date().toISOString() };
+    setSchedulePollList((current) => current.map((poll) => (poll.id === pollId ? next : poll)));
+    showToast("回答受付を終了しました。");
+    if (onlineReady) {
+      upsertSupabaseRow(supabaseConfig, actorName, "schedule_polls", schedulePollToRow(supabaseConfig, next, actorName), before, next)
+        .then((result) => setOnlineStatus(result.message))
+        .catch(reportOnlineError);
+    }
+  }
+
+  function addScheduleOption(pollId, input) {
+    if (!guardOnlineWrite()) return;
+    const next: SchedulePollOption = {
+      id: `spo${Date.now()}`,
+      pollId,
+      candidateDate: input.candidateDate,
+      startTime: input.startTime,
+      endTime: input.endTime,
+      memo: input.memo ?? "",
+      updatedAt: new Date().toISOString(),
+    };
+    setScheduleOptionList((current) => [...current, next].sort((a, b) => `${a.candidateDate}${a.startTime}`.localeCompare(`${b.candidateDate}${b.startTime}`)));
+    showToast("候補日を追加しました。");
+    if (onlineReady) {
+      upsertSupabaseRow(supabaseConfig, actorName, "schedule_poll_options", schedulePollOptionToRow(supabaseConfig, next, actorName), null, next)
+        .then((result) => setOnlineStatus(result.message))
+        .catch(reportOnlineError);
+    }
+  }
+
+  function updateScheduleOption(input) {
+    if (!guardOnlineWrite()) return;
+    const before = scheduleOptionList.find((option) => option.id === input.id);
+    if (!before) return;
+    const next = { ...before, ...input, updatedAt: new Date().toISOString() };
+    setScheduleOptionList((current) => current.map((option) => (option.id === input.id ? next : option)).sort((a, b) => `${a.candidateDate}${a.startTime}`.localeCompare(`${b.candidateDate}${b.startTime}`)));
+    showToast("候補日を更新しました。");
+    if (onlineReady) {
+      upsertSupabaseRow(supabaseConfig, actorName, "schedule_poll_options", schedulePollOptionToRow(supabaseConfig, next, actorName), before, next)
+        .then((result) => setOnlineStatus(result.message))
+        .catch(reportOnlineError);
+    }
+  }
+
+  async function deleteScheduleOption(optionId) {
+    if (!guardOnlineWrite()) return;
+    if (!confirm("この候補日を削除しますか？")) return;
+    const before = scheduleOptionList.find((option) => option.id === optionId);
+    if (!before) return;
+    if (onlineReady) {
+      try {
+        const client = getSupabaseClient(supabaseConfig);
+        if (client) {
+          await logEdit(client, supabaseConfig, actorName, "schedule_poll_options", optionId, "delete", before, null);
+          const { error: responseError } = await client.from("schedule_poll_responses").delete().eq("room_id", supabaseConfig.roomId).eq("option_id", optionId);
+          if (responseError) throw responseError;
+          const { error } = await client.from("schedule_poll_options").delete().eq("room_id", supabaseConfig.roomId).eq("id", optionId);
+          if (error) throw error;
+        }
+      } catch (error) {
+        reportOnlineError(error);
+        return;
+      }
+    }
+    setScheduleOptionList((current) => current.filter((option) => option.id !== optionId));
+    setScheduleResponseList((current) => current.filter((response) => response.optionId !== optionId));
+    showToast("候補日を削除しました。");
+  }
+
+  function confirmScheduleOption(pollId, optionId) {
+    if (!guardOnlineWrite()) return;
+    const poll = schedulePollList.find((item) => item.id === pollId);
+    const option = scheduleOptionList.find((item) => item.id === optionId);
+    if (!poll || !option) return;
+    const nextRehearsal: Rehearsal = {
+      id: `r-schedule-${option.id}`,
+      date: option.candidateDate,
+      startTime: option.startTime,
+      endTime: option.endTime,
+      place: "",
+      memo: option.memo || poll.title,
+      eventType: "稽古日",
+      rehearsalTeam: "共通",
+      selectedSceneIds: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    const beforePoll = poll;
+    const nextPoll = { ...poll, isClosed: true, confirmedOptionId: optionId, updatedAt: new Date().toISOString() };
+    const existingRehearsal = rehearsalList.find((rehearsal) => rehearsal.id === nextRehearsal.id);
+    setRehearsalList((current) => {
+      const next = existingRehearsal
+        ? current.map((rehearsal) => (rehearsal.id === nextRehearsal.id ? { ...rehearsal, ...nextRehearsal } : rehearsal))
+        : [...current, nextRehearsal];
+      return next.sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`));
+    });
+    setSchedulePollList((current) => current.map((item) => (item.id === pollId ? nextPoll : item)));
+    setSelectedRehearsalId(nextRehearsal.id);
+    showToast("稽古日として確定しました。");
+    if (onlineReady) {
+      Promise.all([
+        upsertSupabaseRow(supabaseConfig, actorName, "rehearsals", rehearsalToRow(supabaseConfig, nextRehearsal, actorName), existingRehearsal ?? null, nextRehearsal),
+        upsertSupabaseRow(supabaseConfig, actorName, "schedule_polls", schedulePollToRow(supabaseConfig, nextPoll, actorName), beforePoll, nextPoll),
+      ])
+        .then(() => setOnlineStatus("確定した稽古日をオンラインへ保存しました。"))
+        .catch(reportOnlineError);
+    }
+  }
+
   return (
     <main className="shell">
       <header className="appHeader">
@@ -1232,8 +1632,23 @@ function App() {
       </div>
       {toast && <div className={`toastNotice ${toast.tone}`} role="status">{toast.message}</div>}
       {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} scenes={sceneList} />}
-      {tab === "rehearsals" && <RehearsalList rehearsals={rehearsalList} selectedRehearsalId={selectedRehearsalId} setSelectedRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} onAdd={addRehearsal} onUpdate={updateRehearsal} onDelete={deleteRehearsal} allowDelete={true} openAdmin={() => setTab("admin")} />}
       {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} onSaveBatch={saveAttendanceBatch} />}
+      {tab === "schedule" && (
+        <ScheduleAdjustmentPage
+          polls={schedulePollList}
+          options={scheduleOptionList}
+          participants={scheduleParticipantList}
+          responses={scheduleResponseList}
+          members={memberList}
+          onCreatePoll={createSchedulePoll}
+          onSaveAnswer={saveScheduleAnswer}
+          onClosePoll={closeSchedulePoll}
+          onConfirmOption={confirmScheduleOption}
+          onAddOption={addScheduleOption}
+          onUpdateOption={updateScheduleOption}
+          onDeleteOption={deleteScheduleOption}
+        />
+      )}
       {tab === "admin" && (
         <AdminView
           rehearsals={rehearsalList}
@@ -1263,11 +1678,346 @@ function App() {
           onAddMember={addMember}
           onUpdateMember={updateMember}
           onDeleteMember={deleteMember}
+          setSelectedRehearsalId={setSelectedRehearsalId}
+          onAddRehearsal={addRehearsal}
+          onUpdateRehearsalItem={updateRehearsal}
+          onDeleteRehearsal={deleteRehearsal}
           allowDelete={!onlineReady}
         />
       )}
     </main>
   );
+}
+
+function ScheduleAdjustmentPage({ polls, options, participants, responses, members, onCreatePoll, onSaveAnswer, onClosePoll, onConfirmOption, onAddOption, onUpdateOption, onDeleteOption }) {
+  const [view, setView] = useState("open");
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const shownPolls = polls
+    .filter((poll) => (view === "open" ? !poll.isClosed : poll.isClosed))
+    .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+
+  return (
+    <section className="schedulePage">
+      <div className="panel scheduleHero">
+        <h2 className="panelTitle"><span>◇</span>稽古日調整</h2>
+        <p>みんなの予定を集めて稽古日を決めましょう</p>
+      </div>
+      <div className="scheduleTabs" role="tablist" aria-label="稽古日調整の表示切り替え">
+        <button className={view === "open" ? "active" : ""} onClick={() => setView("open")}>募集中</button>
+        <button className={view === "closed" ? "active" : ""} onClick={() => setView("closed")}>終了</button>
+      </div>
+      <section className="panel scheduleAdminPanel">
+        <h2 className="panelTitle"><span>★</span>管理者用</h2>
+        {!adminUnlocked ? (
+          <form
+            className="scheduleAdminUnlock"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const value = new FormData(event.currentTarget).get("adminPassword");
+              if (value === "つらこ") setAdminUnlocked(true);
+            }}
+          >
+            <label>
+              <span>パスワードを入力してください。</span>
+              <input name="adminPassword" type="password" autoComplete="off" />
+            </label>
+            <button className="primary">管理者機能を開く</button>
+          </form>
+        ) : (
+          <SchedulePollCreator onCreatePoll={onCreatePoll} />
+        )}
+      </section>
+      <div className="schedulePollList">
+        {shownPolls.length ? shownPolls.map((poll) => (
+          <SchedulePollCard
+            key={poll.id}
+            poll={poll}
+            options={options.filter((option) => option.pollId === poll.id)}
+            participants={participants.filter((participant) => participant.pollId === poll.id)}
+            responses={responses.filter((response) => response.pollId === poll.id)}
+            members={members}
+            adminUnlocked={adminUnlocked}
+            onSaveAnswer={onSaveAnswer}
+            onClosePoll={onClosePoll}
+            onConfirmOption={onConfirmOption}
+            onAddOption={onAddOption}
+            onUpdateOption={onUpdateOption}
+            onDeleteOption={onDeleteOption}
+          />
+        )) : (
+          <section className="panel emptyPanel">
+            <p>{view === "open" ? "募集中の稽古日調整はありません。" : "終了した稽古日調整はありません。"}</p>
+          </section>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function SchedulePollCreator({ onCreatePoll }) {
+  const today = new Date().toLocaleDateString("sv-SE");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [candidateDate, setCandidateDate] = useState(today);
+  const [startTime, setStartTime] = useState("22:00");
+  const [endTime, setEndTime] = useState("00:00");
+  const [memo, setMemo] = useState("");
+  const [options, setOptions] = useState([]);
+
+  function addOption() {
+    if (!candidateDate || !startTime || !endTime) return;
+    setOptions((current) => [...current, { candidateDate, startTime, endTime, memo }].sort((a, b) => `${a.candidateDate}${a.startTime}`.localeCompare(`${b.candidateDate}${b.startTime}`)));
+    setMemo("");
+  }
+
+  function submit(event) {
+    event.preventDefault();
+    if (!title.trim() || !options.length) {
+      alert("タイトルと候補日を入力してください。");
+      return;
+    }
+    onCreatePoll({ title: title.trim(), description: description.trim(), options });
+    setTitle("");
+    setDescription("");
+    setOptions([]);
+  }
+
+  return (
+    <form className="scheduleCreator" onSubmit={submit}>
+      <label>
+        <span>タイトル</span>
+        <input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="例：7月稽古日程調整" />
+      </label>
+      <label>
+        <span>説明文</span>
+        <textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="任意" />
+      </label>
+      <div className="scheduleOptionEditor">
+        <label>
+          <span>候補日</span>
+          <input type="date" value={candidateDate} onChange={(event) => setCandidateDate(event.target.value)} />
+        </label>
+        <label>
+          <span>開始</span>
+          <input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} />
+        </label>
+        <label>
+          <span>終了</span>
+          <input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} />
+        </label>
+        <label>
+          <span>メモ</span>
+          <input value={memo} onChange={(event) => setMemo(event.target.value)} placeholder="任意" />
+        </label>
+        <button type="button" onClick={addOption}>候補日を追加</button>
+      </div>
+      {options.length > 0 && (
+        <div className="candidatePreview">
+          {options.map((option, index) => (
+            <span key={`${option.candidateDate}-${option.startTime}-${index}`}>
+              {formatDateWithWeekday(option.candidateDate)} {option.startTime}-{option.endTime}
+              <button type="button" onClick={() => setOptions((current) => current.filter((_, optionIndex) => optionIndex !== index))}>×</button>
+            </span>
+          ))}
+        </div>
+      )}
+      <button className="primary">投票を作成</button>
+    </form>
+  );
+}
+
+function SchedulePollCard({ poll, options, participants, responses, members, adminUnlocked, onSaveAnswer, onClosePoll, onConfirmOption, onAddOption, onUpdateOption, onDeleteOption }) {
+  const [memberName, setMemberName] = useState(members[0]?.name ?? "");
+  const [comment, setComment] = useState("");
+  const [draft, setDraft] = useState({});
+  const optionStats = getScheduleOptionStats(options, participants, responses);
+  const ranking = [...optionStats].sort((a, b) => b.yes - a.yes || a.option.candidateDate.localeCompare(b.option.candidateDate));
+  const best = ranking[0];
+  const participantById = new Map(participants.map((participant) => [participant.id, participant]));
+  const responseMap = new Map(responses.map((response) => [`${response.participantId}:${response.optionId}`, response]));
+
+  useEffect(() => {
+    const existing = participants.find((participant) => participant.memberName === memberName);
+    setComment(existing?.comment ?? "");
+    const nextDraft = {};
+    if (existing) {
+      options.forEach((option) => {
+        const response = responses.find((row) => row.participantId === existing.id && row.optionId === option.id);
+        if (response) nextDraft[option.id] = response.status;
+      });
+    }
+    setDraft(nextDraft);
+  }, [memberName, poll.id, participants.length, responses.length, options.length]);
+
+  function submitAnswer(event) {
+    event.preventDefault();
+    if (!memberName.trim()) {
+      alert("名前を選んでください。");
+      return;
+    }
+    onSaveAnswer({ pollId: poll.id, memberName: memberName.trim(), comment: comment.trim(), statuses: draft });
+  }
+
+  return (
+    <article className={`panel schedulePollCard ${poll.isClosed ? "closed" : ""}`}>
+      <div className="schedulePollHeader">
+        <div>
+          <h2>{poll.title}</h2>
+          {poll.description && <p>{poll.description}</p>}
+        </div>
+        {poll.isClosed && <span className="closedBadge">終了</span>}
+      </div>
+      {best && (
+        <div className="bestSchedule">
+          <strong>最も参加可能人数が多い日</strong>
+          <span>{formatDateWithWeekday(best.option.candidateDate)}（{participants.length}人中{best.yes}人参加可能）</span>
+        </div>
+      )}
+      <div className="scheduleRanking">
+        {ranking.map((item, index) => (
+          <span key={item.option.id} className={index === 0 ? "top" : ""}>
+            {["🥇", "🥈", "🥉"][index] ?? `${index + 1}.`} {formatChipDate(item.option.candidateDate)}（{item.yes}人）
+          </span>
+        ))}
+      </div>
+      {!poll.isClosed && (
+        <form className="scheduleAnswerForm" onSubmit={submitAnswer}>
+          <label>
+            <span>お名前</span>
+            <select value={memberName} onChange={(event) => setMemberName(event.target.value)}>
+              {members.map((member) => <option key={member.id} value={member.name}>{member.name}</option>)}
+            </select>
+          </label>
+          <div className="scheduleAnswerOptions">
+            {options.map((option) => (
+              <div key={option.id} className="scheduleAnswerOption">
+                <p>{formatDateWithWeekday(option.candidateDate)}<br /><small>{option.startTime}-{option.endTime}</small></p>
+                {option.memo && <small>{option.memo}</small>}
+                <div className="yesNoButtons">
+                  <button type="button" className={draft[option.id] === "yes" ? "active yes" : ""} onClick={() => setDraft((current) => ({ ...current, [option.id]: "yes" }))}>○</button>
+                  <button type="button" className={draft[option.id] === "no" ? "active no" : ""} onClick={() => setDraft((current) => ({ ...current, [option.id]: "no" }))}>×</button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <label>
+            <span>コメント</span>
+            <textarea value={comment} onChange={(event) => setComment(event.target.value)} placeholder="例：22時以降なら可能です" />
+          </label>
+          <button className="primary">回答を保存</button>
+        </form>
+      )}
+      <div className="scheduleTableWrap">
+        <table className="scheduleTable">
+          <thead>
+            <tr>
+              <th>メンバー</th>
+              {options.map((option) => <th key={option.id}>{formatChipDate(option.candidateDate)}<br /><small>{option.startTime}-{option.endTime}</small></th>)}
+              <th>コメント</th>
+            </tr>
+          </thead>
+          <tbody>
+            {participants.map((participant) => (
+              <tr key={participant.id}>
+                <th>{participant.memberName}</th>
+                {options.map((option) => {
+                  const status = responseMap.get(`${participant.id}:${option.id}`)?.status;
+                  return <td key={option.id} className={status === "yes" ? "yesCell" : status === "no" ? "noCell" : ""}>{status === "yes" ? "○" : status === "no" ? "×" : "-"}</td>;
+                })}
+                <td>{participant.comment || "-"}</td>
+              </tr>
+            ))}
+            <tr className="summaryRow">
+              <th>集計</th>
+              {optionStats.map((item) => <td key={item.option.id}>{item.yes}</td>)}
+              <td>-</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div className="scheduleStatsGrid">
+        {optionStats.map((item) => (
+          <div key={item.option.id} className={best?.option.id === item.option.id ? "best" : ""}>
+            <strong>{formatDateWithWeekday(item.option.candidateDate)}</strong>
+            <span>○ {item.yes} / × {item.no}</span>
+          </div>
+        ))}
+      </div>
+      {adminUnlocked && (
+        <div className="scheduleAdminActions">
+          {!poll.isClosed && <button type="button" onClick={() => onClosePoll(poll.id)}>回答受付終了</button>}
+          {options.map((option) => (
+            <button key={option.id} type="button" className="primary" onClick={() => onConfirmOption(poll.id, option.id)}>
+              {formatChipDate(option.candidateDate)}を稽古日に確定
+            </button>
+          ))}
+        </div>
+      )}
+      {adminUnlocked && (
+        <ScheduleOptionManager
+          pollId={poll.id}
+          options={options}
+          onAddOption={onAddOption}
+          onUpdateOption={onUpdateOption}
+          onDeleteOption={onDeleteOption}
+        />
+      )}
+    </article>
+  );
+}
+
+function ScheduleOptionManager({ pollId, options, onAddOption, onUpdateOption, onDeleteOption }) {
+  const today = new Date().toLocaleDateString("sv-SE");
+  const [newOption, setNewOption] = useState({ candidateDate: today, startTime: "22:00", endTime: "00:00", memo: "" });
+  const [editing, setEditing] = useState({});
+
+  useEffect(() => {
+    const next = {};
+    options.forEach((option) => {
+      next[option.id] = { ...option };
+    });
+    setEditing(next);
+  }, [options.length]);
+
+  return (
+    <div className="scheduleOptionManager">
+      <h3>候補日の管理</h3>
+      <div className="scheduleOptionRows">
+        {options.map((option) => {
+          const draft = editing[option.id] ?? option;
+          return (
+            <div key={option.id} className="scheduleOptionRow">
+              <input type="date" value={draft.candidateDate} onChange={(event) => setEditing((current) => ({ ...current, [option.id]: { ...draft, candidateDate: event.target.value } }))} />
+              <input type="time" value={draft.startTime} onChange={(event) => setEditing((current) => ({ ...current, [option.id]: { ...draft, startTime: event.target.value } }))} />
+              <input type="time" value={draft.endTime} onChange={(event) => setEditing((current) => ({ ...current, [option.id]: { ...draft, endTime: event.target.value } }))} />
+              <input value={draft.memo ?? ""} onChange={(event) => setEditing((current) => ({ ...current, [option.id]: { ...draft, memo: event.target.value } }))} placeholder="メモ" />
+              <button type="button" onClick={() => onUpdateOption(draft)}>保存</button>
+              <button type="button" className="dangerButton" onClick={() => onDeleteOption(option.id)}>削除</button>
+            </div>
+          );
+        })}
+      </div>
+      <div className="scheduleOptionRow add">
+        <input type="date" value={newOption.candidateDate} onChange={(event) => setNewOption((current) => ({ ...current, candidateDate: event.target.value }))} />
+        <input type="time" value={newOption.startTime} onChange={(event) => setNewOption((current) => ({ ...current, startTime: event.target.value }))} />
+        <input type="time" value={newOption.endTime} onChange={(event) => setNewOption((current) => ({ ...current, endTime: event.target.value }))} />
+        <input value={newOption.memo} onChange={(event) => setNewOption((current) => ({ ...current, memo: event.target.value }))} placeholder="メモ" />
+        <button type="button" onClick={() => onAddOption(pollId, newOption)}>候補日を追加</button>
+      </div>
+    </div>
+  );
+}
+
+function getScheduleOptionStats(options, participants, responses) {
+  return options.map((option) => {
+    const optionResponses = responses.filter((response) => response.optionId === option.id);
+    return {
+      option,
+      yes: optionResponses.filter((response) => response.status === "yes").length,
+      no: optionResponses.filter((response) => response.status === "no").length,
+      total: participants.length,
+    };
+  });
 }
 
 function SyncGuardNotice({ configured, onlineReady, onlineStatus, realtimeStatus }) {
@@ -2398,13 +3148,33 @@ function SceneAvailabilityBrowser({ rehearsals, rehearsalId, attendances, visibl
   );
 }
 
-function ScenePage({ rehearsals, rehearsalId, attendances, visibleMembers, scenes, allMembers, onAdd, onUpdate, onDelete, onUpdateRehearsal, onAddMember, onUpdateMember, onDeleteMember, allowDelete }) {
+function ScenePage({
+  rehearsals,
+  rehearsalId,
+  attendances,
+  visibleMembers,
+  scenes,
+  allMembers,
+  onAdd,
+  onUpdate,
+  onDelete,
+  onUpdateRehearsal,
+  onAddMember,
+  onUpdateMember,
+  onDeleteMember,
+  setSelectedRehearsalId,
+  onAddRehearsal,
+  onUpdateRehearsalItem,
+  onDeleteRehearsal,
+  allowDelete,
+}) {
   const [adminSection, setAdminSection] = useState("scene");
   return (
     <AdminLock>
       <section className="stack">
         <div className="adminSectionTabs" role="tablist" aria-label="管理者ページの表示切り替え">
           {[
+            { id: "rehearsal", label: "稽古日の追加" },
             { id: "scene", label: "稽古日ごとのシーン可否" },
             { id: "member", label: "メンバーを追加" },
             { id: "export", label: "出力" },
@@ -2421,6 +3191,19 @@ function ScenePage({ rehearsals, rehearsalId, attendances, visibleMembers, scene
             </button>
           ))}
         </div>
+        {adminSection === "rehearsal" && (
+          <RehearsalList
+            rehearsals={rehearsals}
+            selectedRehearsalId={rehearsalId}
+            setSelectedRehearsalId={setSelectedRehearsalId}
+            attendances={attendances}
+            visibleMembers={visibleMembers}
+            onAdd={onAddRehearsal}
+            onUpdate={onUpdateRehearsalItem}
+            onDelete={onDeleteRehearsal}
+            allowDelete={true}
+          />
+        )}
         {adminSection === "scene" && (
           <SceneAvailabilityBrowser
             rehearsals={rehearsals}

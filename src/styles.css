@@ -1393,7 +1393,7 @@ h3 {
   box-shadow: 0 12px 24px rgba(104, 71, 55, 0.08);
   display: grid;
   gap: 8px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   padding: 8px;
   position: sticky;
   top: 8px;
@@ -1416,6 +1416,327 @@ h3 {
   border-color: #d85280;
   box-shadow: 0 8px 18px rgba(216, 82, 128, 0.24);
   color: #fff;
+}
+
+.schedulePage {
+  display: grid;
+  gap: 16px;
+}
+
+.scheduleHero p,
+.schedulePollHeader p {
+  color: #7b655d;
+  margin: 6px 0 0;
+}
+
+.scheduleTabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #ead7ca;
+  border-radius: 999px;
+  background: rgba(255, 250, 246, 0.9);
+}
+
+.scheduleTabs button {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 16px;
+  background: transparent;
+  color: #7b655d;
+  font-weight: 900;
+}
+
+.scheduleTabs button.active {
+  background: linear-gradient(135deg, #ec6b93, #ef7fa4);
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(233, 91, 139, 0.22);
+}
+
+.scheduleAdminUnlock,
+.scheduleCreator,
+.scheduleAnswerForm {
+  display: grid;
+  gap: 14px;
+}
+
+.scheduleCreator label,
+.scheduleAnswerForm label,
+.scheduleAdminUnlock label {
+  display: grid;
+  gap: 7px;
+  color: #5a4138;
+  font-weight: 800;
+}
+
+.scheduleCreator input,
+.scheduleCreator textarea,
+.scheduleAnswerForm textarea,
+.scheduleAnswerForm select,
+.scheduleAdminUnlock input {
+  width: 100%;
+  border: 1px solid #f0b4c7;
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px 14px;
+  color: #4b342e;
+  font: inherit;
+}
+
+.scheduleCreator textarea,
+.scheduleAnswerForm textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.scheduleOptionEditor {
+  display: grid;
+  grid-template-columns: 1.1fr 0.75fr 0.75fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.candidatePreview,
+.scheduleRanking,
+.scheduleStatsGrid,
+.scheduleAdminActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.candidatePreview span,
+.scheduleRanking span,
+.scheduleStatsGrid div {
+  border: 1px solid #ead7ca;
+  border-radius: 14px;
+  background: #fffaf7;
+  color: #5a4138;
+  padding: 10px 12px;
+}
+
+.candidatePreview button {
+  border: 0;
+  background: transparent;
+  color: #ec6b93;
+  font-weight: 900;
+}
+
+.schedulePollList,
+.schedulePollCard {
+  display: grid;
+  gap: 16px;
+}
+
+.schedulePollHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.schedulePollHeader h2 {
+  margin: 0;
+  color: #4b342e;
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+}
+
+.closedBadge {
+  border-radius: 999px;
+  border: 1px solid #f0b4c7;
+  background: #fff0f6;
+  color: #ec6b93;
+  padding: 6px 12px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.bestSchedule {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #f3c1cf;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fff7fb, #fffdf9);
+  color: #ec6b93;
+  padding: 14px;
+}
+
+.bestSchedule strong {
+  color: #4b342e;
+}
+
+.scheduleRanking .top,
+.scheduleStatsGrid .best {
+  border-color: #ec6b93;
+  background: #fff0f6;
+  color: #ec6b93;
+  font-weight: 900;
+}
+
+.scheduleAnswerOptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.scheduleAnswerOption {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #ead7ca;
+  border-radius: 14px;
+  background: #fffaf7;
+  padding: 12px;
+}
+
+.scheduleAnswerOption p {
+  margin: 0;
+  color: #4b342e;
+  font-weight: 900;
+}
+
+.scheduleAnswerOption small {
+  color: #7b655d;
+}
+
+.yesNoButtons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.yesNoButtons button {
+  min-height: 48px;
+  border: 1px solid #f0b4c7;
+  border-radius: 12px;
+  background: #fff;
+  color: #4b342e;
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.yesNoButtons button.active.yes {
+  background: #eff9ec;
+  border-color: #93c47d;
+  color: #4f8b3d;
+}
+
+.yesNoButtons button.active.no {
+  background: #fff0f4;
+  border-color: #ec6b93;
+  color: #ec6b93;
+}
+
+.scheduleTableWrap {
+  overflow-x: auto;
+  border: 1px solid #ead7ca;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.scheduleTable {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+}
+
+.scheduleTable th,
+.scheduleTable td {
+  border-bottom: 1px solid #ead7ca;
+  padding: 11px 12px;
+  text-align: center;
+  color: #4b342e;
+  white-space: nowrap;
+}
+
+.scheduleTable th:first-child,
+.scheduleTable td:first-child {
+  text-align: left;
+}
+
+.scheduleTable thead th,
+.summaryRow th,
+.summaryRow td {
+  background: #fff7fb;
+  color: #ec6b93;
+  font-weight: 900;
+}
+
+.yesCell {
+  color: #4f8b3d !important;
+  font-weight: 900;
+}
+
+.noCell {
+  color: #ec6b93 !important;
+  font-weight: 900;
+}
+
+.scheduleAdminActions button {
+  border: 1px solid #f0b4c7;
+  border-radius: 999px;
+  background: #fff;
+  color: #5a4138;
+  padding: 10px 14px;
+}
+
+.scheduleOptionManager {
+  display: grid;
+  gap: 12px;
+  border: 1px dashed #f0b4c7;
+  border-radius: 14px;
+  background: rgba(255, 247, 251, 0.75);
+  padding: 14px;
+}
+
+.scheduleOptionManager h3 {
+  margin: 0;
+  color: #5a4138;
+  font-size: 1rem;
+}
+
+.scheduleOptionRows {
+  display: grid;
+  gap: 8px;
+}
+
+.scheduleOptionRow {
+  display: grid;
+  grid-template-columns: 1fr 0.72fr 0.72fr 1.2fr auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.scheduleOptionRow input {
+  min-width: 0;
+  border: 1px solid #f0b4c7;
+  border-radius: 10px;
+  background: #fff;
+  color: #4b342e;
+  font: inherit;
+  padding: 10px;
+}
+
+@media (max-width: 720px) {
+  .scheduleOptionEditor {
+    grid-template-columns: 1fr;
+  }
+
+  .scheduleOptionRow {
+    grid-template-columns: 1fr;
+  }
+
+  .schedulePollHeader {
+    display: grid;
+  }
+
+  .scheduleAnswerOptions {
+    grid-template-columns: 1fr;
+  }
+
+  .scheduleTable {
+    min-width: 560px;
+  }
 }
 
 .todayScenesPanel p {
