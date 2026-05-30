@@ -1692,6 +1692,7 @@ function App() {
 function ScheduleAdjustmentPage({ polls, options, participants, responses, members, onCreatePoll, onSaveAnswer, onClosePoll, onConfirmOption, onAddOption, onUpdateOption, onDeleteOption }) {
   const [view, setView] = useState("open");
   const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const shownPolls = polls
     .filter((poll) => (view === "open" ? !poll.isClosed : poll.isClosed))
     .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
@@ -1706,27 +1707,6 @@ function ScheduleAdjustmentPage({ polls, options, participants, responses, membe
         <button className={view === "open" ? "active" : ""} onClick={() => setView("open")}>募集中</button>
         <button className={view === "closed" ? "active" : ""} onClick={() => setView("closed")}>終了</button>
       </div>
-      <section className="panel scheduleAdminPanel">
-        <h2 className="panelTitle"><span>★</span>管理者用</h2>
-        {!adminUnlocked ? (
-          <form
-            className="scheduleAdminUnlock"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const value = new FormData(event.currentTarget).get("adminPassword");
-              if (value === "つらこ") setAdminUnlocked(true);
-            }}
-          >
-            <label>
-              <span>パスワードを入力してください。</span>
-              <input name="adminPassword" type="password" autoComplete="off" />
-            </label>
-            <button className="primary">管理者機能を開く</button>
-          </form>
-        ) : (
-          <SchedulePollCreator onCreatePoll={onCreatePoll} />
-        )}
-      </section>
       <div className="schedulePollList">
         {shownPolls.length ? shownPolls.map((poll) => (
           <SchedulePollCard
@@ -1750,6 +1730,32 @@ function ScheduleAdjustmentPage({ polls, options, participants, responses, membe
           </section>
         )}
       </div>
+      <section className="panel scheduleAdminPanel">
+        <div className="scheduleAdminHeader">
+          <h2 className="panelTitle"><span>★</span>管理者用</h2>
+          <button type="button" onClick={() => setShowAdminPanel((current) => !current)}>
+            {showAdminPanel ? "閉じる" : "投票を作成・管理する"}
+          </button>
+        </div>
+        {showAdminPanel && (!adminUnlocked ? (
+          <form
+            className="scheduleAdminUnlock"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const value = new FormData(event.currentTarget).get("adminPassword");
+              if (value === "つらこ") setAdminUnlocked(true);
+            }}
+          >
+            <label>
+              <span>パスワードを入力してください。</span>
+              <input name="adminPassword" type="password" autoComplete="off" />
+            </label>
+            <button className="primary">管理者機能を開く</button>
+          </form>
+        ) : (
+          <SchedulePollCreator onCreatePoll={onCreatePoll} />
+        ))}
+      </section>
     </section>
   );
 }
