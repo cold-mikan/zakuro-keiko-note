@@ -1748,7 +1748,7 @@ function ScheduleAdjustmentPage({ polls, options, participants, responses, membe
           >
             <label>
               <span>パスワードを入力してください。</span>
-              <input name="adminPassword" type="password" autoComplete="off" />
+              <input name="adminPassword" type="text" autoComplete="off" inputMode="text" />
             </label>
             <button className="primary">管理者機能を開く</button>
           </form>
