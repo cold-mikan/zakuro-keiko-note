@@ -3267,8 +3267,10 @@ function RehearsalEditor({ rehearsals = [], editingRehearsal, onAdd, onUpdate, o
 }
 
 function AttendanceForm({ members, rehearsals, attendances, defaultRehearsalId, onSave, onSaveBatch }) {
+  const [viewMode, setViewMode] = useState("input");
   const [mode, setMode] = useState("single");
   const [memberId, setMemberId] = useState(members[0]?.id ?? "");
+  const [statusMemberId, setStatusMemberId] = useState(members[0]?.id ?? "");
   const [selectedMemberIds, setSelectedMemberIds] = useState([]);
   const upcomingRehearsals = rehearsals.filter(isRehearsalStillSelectable);
   const [rehearsalId, setRehearsalId] = useState(
@@ -3290,6 +3292,8 @@ function AttendanceForm({ members, rehearsals, attendances, defaultRehearsalId, 
   const selectedMembers = mode === "bulk"
     ? members.filter((member) => selectedMemberIds.includes(member.id))
     : members.filter((member) => member.id === memberId);
+  const statusMembers = selectedMembers.length ? selectedMembers : members;
+  const statusMember = statusMembers.find((member) => member.id === statusMemberId) ?? statusMembers[0];
   const getMemberAttendance = (targetMemberId, targetRehearsalId) =>
     attendances.find((attendance) => attendance.memberId === targetMemberId && attendance.rehearsalId === targetRehearsalId);
   const formatAttendanceStatus = (attendance) => {
@@ -3311,6 +3315,13 @@ function AttendanceForm({ members, rehearsals, attendances, defaultRehearsalId, 
   useEffect(() => {
     if (!memberId && members[0]?.id) setMemberId(members[0].id);
   }, [members, memberId]);
+
+  useEffect(() => {
+    const selectableStatusIds = statusMembers.map((member) => member.id);
+    if (!selectableStatusIds.includes(statusMemberId)) {
+      setStatusMemberId(selectableStatusIds[0] ?? "");
+    }
+  }, [statusMembers, statusMemberId]);
 
   useEffect(() => {
     const selectableIds = upcomingRehearsals.map((rehearsal) => rehearsal.id);
@@ -3381,8 +3392,13 @@ function AttendanceForm({ members, rehearsals, attendances, defaultRehearsalId, 
   }
 
   return (
-    <>
-      <form
+    <section className="stack attendanceEntryPage">
+      <div className="formModeSwitch attendancePageSwitch" aria-label="表示内容">
+        <button type="button" className={viewMode === "input" ? "active" : ""} onClick={() => setViewMode("input")}>参加予定を入力</button>
+        <button type="button" className={viewMode === "status" ? "active" : ""} onClick={() => setViewMode("status")}>入力状況を見る</button>
+      </div>
+      {viewMode === "input" && (
+        <form
         className="panel form"
         onSubmit={(event) => {
           event.preventDefault();
@@ -3441,19 +3457,33 @@ function AttendanceForm({ members, rehearsals, attendances, defaultRehearsalId, 
       <label className="field">理由・連絡事項<textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="例：仕事後に向かいます" /></label>
       <button className="primary">{mode === "bulk" ? (selectedMemberIds.length ? `${selectedMemberIds.length}人分をまとめて登録する` : "まとめて登録する") : (selectedRehearsalIds.length > 1 ? `${selectedRehearsalIds.length}日分を登録する` : "登録する")}</button>
     </form>
-    <section className="panel attendanceStatusPanel" aria-label="選択したメンバーの入力状況">
+      )}
+      {viewMode === "status" && (
+      <section className="panel attendanceStatusPanel" aria-label="選択したメンバーの入力状況">
         <div className="attendanceStatusHeader">
           <h3>選択したメンバーの入力状況</h3>
-          <span>{selectedMembers.length ? `${selectedMembers.length}人` : "未選択"}</span>
+          <span>{statusMembers.length ? `${statusMembers.length}人` : "未選択"}</span>
         </div>
-        {!selectedMembers.length ? (
+        <div className="attendanceStatusTabs" aria-label="表示するメンバー">
+          {statusMembers.map((member) => (
+            <button
+              key={member.id}
+              type="button"
+              className={`${statusMember?.id === member.id ? "active" : ""} ${memberColorClass(member.role, member.team)}`}
+              onClick={() => setStatusMemberId(member.id)}
+            >
+              {member.name}
+            </button>
+          ))}
+        </div>
+        {!statusMember ? (
           <p className="note">名前を選ぶと、今日以降の稽古日に対する入力状況を確認できます。</p>
-        ) : selectedMembers.length === 1 ? (
+        ) : (
           <div className="attendanceStatusDetail">
-            <p className={`personName ${memberColorClass(selectedMembers[0].role, selectedMembers[0].team)}`}>{selectedMembers[0].name}</p>
+            <p className={`personName ${memberColorClass(statusMember.role, statusMember.team)}`}>{statusMember.name}</p>
             <div className="attendanceStatusList">
               {upcomingRehearsals.map((rehearsal) => {
-                const attendance = getMemberAttendance(selectedMembers[0].id, rehearsal.id);
+                const attendance = getMemberAttendance(statusMember.id, rehearsal.id);
                 const label = formatAttendanceStatus(attendance);
                 return (
                   <div key={rehearsal.id} className="attendanceStatusRow">
@@ -3468,21 +3498,10 @@ function AttendanceForm({ members, rehearsals, attendances, defaultRehearsalId, 
               })}
             </div>
           </div>
-        ) : (
-          <div className="attendanceStatusSummary">
-            {selectedMembers.map((member) => {
-              const answeredCount = upcomingRehearsals.filter((rehearsal) => getMemberAttendance(member.id, rehearsal.id)).length;
-              return (
-                <div key={member.id} className="attendanceStatusMember">
-                  <span className={`personName ${memberColorClass(member.role, member.team)}`}>{member.name}</span>
-                  <strong>回答済み {answeredCount} / {upcomingRehearsals.length}</strong>
-                </div>
-              );
-            })}
-          </div>
         )}
       </section>
-    </>
+      )}
+    </section>
   );
 }
 
