@@ -1730,7 +1730,7 @@ function App() {
       </div>
       {toast && <div className={`toastNotice ${toast.tone}`} role="status">{toast.message}</div>}
       {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} scenes={sceneList} />}
-      {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} onSaveBatch={saveAttendanceBatch} />}
+      {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} attendances={attendances} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} onSaveBatch={saveAttendanceBatch} />}
       {tab === "schedule" && (
         <ScheduleAdjustmentPage
           polls={schedulePollList}
@@ -3115,7 +3115,7 @@ function RehearsalEditor({ rehearsals = [], editingRehearsal, onAdd, onUpdate, o
   );
 }
 
-function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSaveBatch }) {
+function AttendanceForm({ members, rehearsals, attendances, defaultRehearsalId, onSave, onSaveBatch }) {
   const [mode, setMode] = useState("single");
   const [memberId, setMemberId] = useState(members[0]?.id ?? "");
   const [selectedMemberIds, setSelectedMemberIds] = useState([]);
@@ -3137,6 +3137,26 @@ function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSav
   const [arrivalTime, setArrivalTime] = useState("");
   const [leaveTime, setLeaveTime] = useState("");
   const [note, setNote] = useState("");
+  const selectedMembers = mode === "bulk"
+    ? members.filter((member) => selectedMemberIds.includes(member.id))
+    : members.filter((member) => member.id === memberId);
+  const getMemberAttendance = (targetMemberId, targetRehearsalId) =>
+    attendances.find((attendance) => attendance.memberId === targetMemberId && attendance.rehearsalId === targetRehearsalId);
+  const formatAttendanceStatus = (attendance) => {
+    if (!attendance) return "未回答";
+    const details = [];
+    if (attendance.arrivalTime) details.push(`${formatTime(attendance.arrivalTime)}到着`);
+    if (attendance.leaveTime) details.push(`${formatTime(attendance.leaveTime)}早退`);
+    return [attendance.status, ...details].join(" ");
+  };
+  const statusClassName = (status) => {
+    if (status === "出席") return "present";
+    if (status === "欠席") return "absent";
+    if (status === "遅刻") return "late";
+    if (status === "早退") return "early";
+    if (status === "未定") return "undecided";
+    return "noReply";
+  };
 
   useEffect(() => {
     if (!memberId && members[0]?.id) setMemberId(members[0].id);
@@ -3239,6 +3259,43 @@ function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSav
           ))}
         </div>
       </fieldset>
+      <section className="attendanceStatusPanel" aria-label="選択したメンバーの入力状況">
+        <div className="attendanceStatusHeader">
+          <h3>選択したメンバーの入力状況</h3>
+          <span>{selectedMembers.length ? `${selectedMembers.length}人` : "未選択"}</span>
+        </div>
+        {!selectedMembers.length ? (
+          <p className="note">名前を選ぶと、今日以降の稽古日に対する入力状況を確認できます。</p>
+        ) : selectedMembers.length === 1 ? (
+          <div className="attendanceStatusDetail">
+            <p className={`personName ${memberColorClass(selectedMembers[0].role, selectedMembers[0].team)}`}>{selectedMembers[0].name}</p>
+            <div className="attendanceStatusList">
+              {upcomingRehearsals.map((rehearsal) => {
+                const attendance = getMemberAttendance(selectedMembers[0].id, rehearsal.id);
+                const label = formatAttendanceStatus(attendance);
+                return (
+                  <div key={rehearsal.id} className="attendanceStatusRow">
+                    <span>{formatTicketDate(rehearsal.date)} <small>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</small></span>
+                    <strong className={`attendanceStatusChip ${statusClassName(attendance?.status ?? "未回答")}`}>{label}</strong>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="attendanceStatusSummary">
+            {selectedMembers.map((member) => {
+              const answeredCount = upcomingRehearsals.filter((rehearsal) => getMemberAttendance(member.id, rehearsal.id)).length;
+              return (
+                <div key={member.id} className="attendanceStatusMember">
+                  <span className={`personName ${memberColorClass(member.role, member.team)}`}>{member.name}</span>
+                  <strong>回答済み {answeredCount} / {upcomingRehearsals.length}</strong>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
       <fieldset className="choiceGroup">
         <legend>{mode === "bulk" ? "稽古日" : "稽古日（複数選択できます）"}</legend>
         <div className="choiceGrid rehearsals">
