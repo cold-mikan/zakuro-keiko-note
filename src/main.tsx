@@ -3292,7 +3292,7 @@ function AttendanceForm({ members, rehearsals, attendances, defaultRehearsalId, 
   const selectedMembers = mode === "bulk"
     ? members.filter((member) => selectedMemberIds.includes(member.id))
     : members.filter((member) => member.id === memberId);
-  const statusMembers = selectedMembers.length ? selectedMembers : members;
+  const statusMembers = members;
   const statusMember = statusMembers.find((member) => member.id === statusMemberId) ?? statusMembers[0];
   const getMemberAttendance = (targetMemberId, targetRehearsalId) =>
     attendances.find((attendance) => attendance.memberId === targetMemberId && attendance.rehearsalId === targetRehearsalId);
