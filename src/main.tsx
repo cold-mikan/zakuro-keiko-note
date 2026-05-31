@@ -2757,16 +2757,27 @@ function scrollToRef(ref) {
 
 function RehearsalPicker({ rehearsals, value, onChange }) {
   const chipRefs = useRef(new Map());
+  const chipListRef = useRef(null);
+  const didMountRef = useRef(false);
 
   useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+
     const selectedChip = chipRefs.current.get(value);
-    selectedChip?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    const chipList = chipListRef.current;
+    if (!selectedChip || !chipList) return;
+
+    const targetLeft = selectedChip.offsetLeft - (chipList.clientWidth - selectedChip.clientWidth) / 2;
+    chipList.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" });
   }, [value]);
 
   return (
     <div className="rehearsalPicker" role="group" aria-label="表示する稽古日の変更">
       <p className="rehearsalPickerHelp">他の日を見る</p>
-      <div className="rehearsalChipList">
+      <div className="rehearsalChipList" ref={chipListRef}>
         {rehearsals.map((rehearsal) => {
           const selected = rehearsal.id === value;
           return (
