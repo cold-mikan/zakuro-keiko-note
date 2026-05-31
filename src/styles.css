@@ -1218,6 +1218,76 @@ h3 {
   cursor: pointer;
 }
 
+.calendarDay.hasExistingSchedule {
+  position: relative;
+}
+
+.calendarDay.hasExistingRehearsal:not(.selected) {
+  background: #fff1f5;
+  border-color: #f29aaf;
+  color: #bc526c;
+}
+
+.calendarDay.hasExistingMtg:not(.selected) {
+  background: #f6fde9;
+  border-color: #b8d889;
+  color: #5d7f2f;
+}
+
+.calendarExistingMark {
+  border-radius: 50%;
+  bottom: 5px;
+  display: block;
+  height: 6px;
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  width: 6px;
+}
+
+.calendarDay.hasExistingRehearsal .calendarExistingMark {
+  background: #f05f8d;
+}
+
+.calendarDay.hasExistingMtg .calendarExistingMark {
+  background: #8fbd4e;
+}
+
+.calendarDay.selected .calendarExistingMark {
+  background: #fff;
+}
+
+.dateMultiLegend {
+  align-items: center;
+  color: #8b766c;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 10px 14px;
+}
+
+.dateMultiLegend span {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+}
+
+.dateMultiLegend i {
+  border-radius: 50%;
+  display: inline-block;
+  height: 9px;
+  width: 9px;
+}
+
+.existingRehearsalDot {
+  background: #f05f8d;
+}
+
+.existingMtgDot {
+  background: #8fbd4e;
+}
+
 .toastNotice {
   border-radius: 16px;
   font-weight: 800;

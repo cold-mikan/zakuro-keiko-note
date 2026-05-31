@@ -1697,8 +1697,8 @@ function App() {
           <img src="./assets/pomegranate-clean.png" alt="" />
         </div>
         <div className="headerTitle">
-          <p className="eyebrow">10月公演 ザクロ 稽古管理</p>
-          <h1>稽古出欠ノート</h1>
+          <p className="eyebrow">10月公演 スケジュール管理</p>
+          <h1>ザクロ連絡帳</h1>
           <img className="titleLine" src="./assets/title-line-v2-cropped.png" alt="" />
         </div>
         <div className="cutlery" aria-hidden="true">
@@ -2666,6 +2666,13 @@ function scrollToRef(ref) {
 }
 
 function RehearsalPicker({ rehearsals, value, onChange }) {
+  const chipRefs = useRef(new Map());
+
+  useEffect(() => {
+    const selectedChip = chipRefs.current.get(value);
+    selectedChip?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [value]);
+
   return (
     <div className="rehearsalPicker" role="group" aria-label="表示する稽古日の変更">
       <p className="rehearsalPickerHelp">他の日を見る</p>
@@ -2678,6 +2685,10 @@ function RehearsalPicker({ rehearsals, value, onChange }) {
               type="button"
               className={`rehearsalDateChip ${selected ? "selected" : ""}`}
               aria-pressed={selected}
+              ref={(element) => {
+                if (element) chipRefs.current.set(rehearsal.id, element);
+                else chipRefs.current.delete(rehearsal.id);
+              }}
               onClick={() => onChange(rehearsal.id)}
             >
               <span>{formatChipDate(rehearsal.date)}</span>
@@ -2927,6 +2938,7 @@ function RehearsalList({ rehearsals, selectedRehearsalId, setSelectedRehearsalId
     <section className="stack">
       <div ref={editorRef} className="scrollAnchor">
         <RehearsalEditor
+          rehearsals={rehearsals}
           editingRehearsal={editingRehearsal}
           onAdd={onAdd}
           onUpdate={onUpdate}
@@ -2959,10 +2971,18 @@ function RehearsalList({ rehearsals, selectedRehearsalId, setSelectedRehearsalId
   );
 }
 
-function DateMultiPicker({ selectedDates, onChange, single = false }) {
+function DateMultiPicker({ selectedDates, onChange, single = false, scheduledDates = [] }) {
   const today = new Date();
   const defaultMonth = selectedDates[0]?.slice(0, 7) ?? today.toLocaleDateString("sv-SE").slice(0, 7);
   const [monthKey, setMonthKey] = useState(defaultMonth);
+  const scheduledByDate = useMemo(() => {
+    const grouped = new Map();
+    scheduledDates.forEach((rehearsal) => {
+      if (!grouped.has(rehearsal.date)) grouped.set(rehearsal.date, []);
+      grouped.get(rehearsal.date).push(rehearsal);
+    });
+    return grouped;
+  }, [scheduledDates]);
   const monthOptions = Array.from({ length: 8 }, (_, index) => {
     const date = new Date(today.getFullYear(), today.getMonth() + index, 1);
     return date.toLocaleDateString("sv-SE").slice(0, 7);
@@ -2995,24 +3015,33 @@ function DateMultiPicker({ selectedDates, onChange, single = false }) {
           if (!day) return <span key={`blank-${index}`} className="calendarDay blank"></span>;
           const selected = selectedDates.includes(day.date);
           const isToday = day.date === new Date().toLocaleDateString("sv-SE");
+          const scheduled = scheduledByDate.get(day.date) ?? [];
+          const hasScheduled = scheduled.length > 0;
+          const hasMtg = scheduled.some((rehearsal) => rehearsal.eventType === "MTG・打ち合わせ");
           return (
             <button
               key={day.date}
               type="button"
-              className={`calendarDay selectable ${selected ? "selected" : ""} ${isToday ? "today" : ""}`}
+              className={`calendarDay selectable ${selected ? "selected" : ""} ${isToday ? "today" : ""} ${hasScheduled ? "hasExistingSchedule" : ""} ${hasScheduled && hasMtg ? "hasExistingMtg" : ""} ${hasScheduled && !hasMtg ? "hasExistingRehearsal" : ""}`}
+              title={scheduled.map((rehearsal) => `${rehearsal.eventType ?? "稽古日"} ${formatTime(rehearsal.startTime)}-${formatTime(rehearsal.endTime)}`).join("\n")}
               onClick={() => toggleDate(day.date)}
             >
               <span>{day.day}</span>
+              {hasScheduled && <em className="calendarExistingMark" aria-label={hasMtg ? "登録済みのMTG・打ち合わせ" : "登録済みの稽古日"}></em>}
             </button>
           );
         })}
+      </div>
+      <div className="dateMultiLegend" aria-label="登録済み予定の凡例">
+        <span><i className="existingRehearsalDot"></i>登録済みの稽古日</span>
+        <span><i className="existingMtgDot"></i>登録済みのMTG・打ち合わせ</span>
       </div>
       {selectedDates.length > 0 && <p className="note">選択中：{selectedDates.join("、")}</p>}
     </div>
   );
 }
 
-function RehearsalEditor({ editingRehearsal, onAdd, onUpdate, onCancelEdit }) {
+function RehearsalEditor({ rehearsals = [], editingRehearsal, onAdd, onUpdate, onCancelEdit }) {
   const [date, setDate] = useState("");
   const [selectedDates, setSelectedDates] = useState([]);
   const [startTime, setStartTime] = useState("19:00");
@@ -3069,7 +3098,7 @@ function RehearsalEditor({ editingRehearsal, onAdd, onUpdate, onCancelEdit }) {
     >
       <h2 className="panelTitle"><span>{isEditing ? "✎" : "＋"}</span>{isEditing ? "稽古日を編集" : "稽古日を追加"}</h2>
       <div className="grid rehearsalEditorTop">
-        <label className="field datePickerField">カレンダーから日付を選んでください。<DateMultiPicker selectedDates={isEditing ? (date ? [date] : []) : selectedDates} onChange={(dates) => { setSelectedDates(dates); setDate(dates[0] ?? ""); }} single={isEditing} /></label>
+        <label className="field datePickerField">カレンダーから日付を選んでください。<DateMultiPicker selectedDates={isEditing ? (date ? [date] : []) : selectedDates} onChange={(dates) => { setSelectedDates(dates); setDate(dates[0] ?? ""); }} single={isEditing} scheduledDates={rehearsals} /></label>
         <div className="rehearsalEditorSide">
           <label className="field">予定の種類<select value={eventType} onChange={(event) => setEventType(event.target.value)}>{eventTypeOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
           <label className="field">開始<input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} /></label>
@@ -3224,7 +3253,7 @@ function AttendanceForm({ members, rehearsals, defaultRehearsalId, onSave, onSav
                 checked={mode === "bulk" ? rehearsalId === rehearsal.id : selectedRehearsalIds.includes(rehearsal.id)}
                 onChange={() => (mode === "bulk" ? setRehearsalId(rehearsal.id) : toggleSingleRehearsal(rehearsal.id))}
               />
-              <span>{rehearsal.date}</span>
+              <span>{formatTicketDate(rehearsal.date)}</span>
               <small>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</small>
             </label>
           ))}
@@ -3548,30 +3577,33 @@ function AdminLock({ children }) {
 }
 
 function SceneAvailabilityBrowser({ rehearsals, rehearsalId, attendances, visibleMembers, scenes, onAdd, onUpdate, onDelete, onUpdateRehearsal, allowDelete }) {
-  const [selectedId, setSelectedId] = useState(rehearsalId || rehearsals[0]?.id || "");
-  const selected = rehearsals.find((rehearsal) => rehearsal.id === selectedId) ?? rehearsals[0];
-  const monthOptions = useMemo(() => Array.from(new Set(rehearsals.map((rehearsal) => rehearsal.date.slice(0, 7)))).sort(), [rehearsals]);
+  const sceneRehearsals = useMemo(() => rehearsals.filter((rehearsal) => rehearsal.eventType !== "MTG・打ち合わせ"), [rehearsals]);
+  const [selectedId, setSelectedId] = useState(
+    sceneRehearsals.some((rehearsal) => rehearsal.id === rehearsalId) ? rehearsalId : sceneRehearsals[0]?.id || "",
+  );
+  const selected = sceneRehearsals.find((rehearsal) => rehearsal.id === selectedId) ?? sceneRehearsals[0];
+  const monthOptions = useMemo(() => Array.from(new Set(sceneRehearsals.map((rehearsal) => rehearsal.date.slice(0, 7)))).sort(), [sceneRehearsals]);
   const [monthKey, setMonthKey] = useState(selected?.date.slice(0, 7) || monthOptions[0] || "");
 
   useEffect(() => {
-    if (!rehearsals.some((rehearsal) => rehearsal.id === selectedId)) {
-      const nextRehearsal = (rehearsalId && rehearsals.find((rehearsal) => rehearsal.id === rehearsalId)) || rehearsals[0];
+    if (!sceneRehearsals.some((rehearsal) => rehearsal.id === selectedId)) {
+      const nextRehearsal = (rehearsalId && sceneRehearsals.find((rehearsal) => rehearsal.id === rehearsalId)) || sceneRehearsals[0];
       setSelectedId(nextRehearsal?.id || "");
       setMonthKey(nextRehearsal?.date.slice(0, 7) || "");
       return;
     }
-    const current = rehearsals.find((rehearsal) => rehearsal.id === selectedId);
+    const current = sceneRehearsals.find((rehearsal) => rehearsal.id === selectedId);
     if (current && (!monthKey || !monthOptions.includes(monthKey))) {
       setMonthKey(current.date.slice(0, 7));
     }
-  }, [rehearsals, rehearsalId, selectedId, monthKey, monthOptions]);
+  }, [sceneRehearsals, rehearsalId, selectedId, monthKey, monthOptions]);
 
-  const monthRehearsals = rehearsals.filter((rehearsal) => rehearsal.date.startsWith(monthKey));
+  const monthRehearsals = sceneRehearsals.filter((rehearsal) => rehearsal.date.startsWith(monthKey));
   const selectMonth = (nextMonth) => {
     setMonthKey(nextMonth);
-    const current = rehearsals.find((rehearsal) => rehearsal.id === selectedId);
+    const current = sceneRehearsals.find((rehearsal) => rehearsal.id === selectedId);
     if (!current || !current.date.startsWith(nextMonth)) {
-      const firstInMonth = rehearsals.find((rehearsal) => rehearsal.date.startsWith(nextMonth));
+      const firstInMonth = sceneRehearsals.find((rehearsal) => rehearsal.date.startsWith(nextMonth));
       if (firstInMonth) setSelectedId(firstInMonth.id);
     }
   };
