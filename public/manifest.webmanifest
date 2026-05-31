@@ -1,7 +1,7 @@
 {
-  "name": "稽古出欠ノート",
-  "short_name": "稽古ノート",
-  "description": "10月公演 ザクロ 稽古管理",
+  "name": "ザクロ連絡帳",
+  "short_name": "ザクロ連絡帳",
+  "description": "10月公演 スケジュール管理",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#fff8f2",

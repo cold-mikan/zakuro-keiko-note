@@ -3365,6 +3365,10 @@ textarea {
   gap: 9px;
 }
 
+.attendanceStatusList {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .attendanceStatusDetail > .personName {
   justify-self: start;
 }
@@ -3375,6 +3379,13 @@ textarea {
   border: 1px solid #efdfd4;
   border-radius: 12px;
   padding: 10px 12px;
+}
+
+.attendanceStatusRow {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
 }
 
 .attendanceStatusRow > span {
@@ -3391,6 +3402,7 @@ textarea {
 }
 
 .attendanceStatusChip {
+  align-self: flex-start;
   border-radius: 999px;
   border: 1px solid #ead7ca;
   font-size: 12px;

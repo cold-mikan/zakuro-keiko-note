@@ -3259,6 +3259,27 @@ function AttendanceForm({ members, rehearsals, attendances, defaultRehearsalId, 
           ))}
         </div>
       </fieldset>
+      <fieldset className="choiceGroup">
+        <legend>{mode === "bulk" ? "稽古日" : "稽古日（複数選択できます）"}</legend>
+        <div className="choiceGrid rehearsals">
+          {upcomingRehearsals.map((rehearsal) => (
+            <label
+              key={rehearsal.id}
+              className={`choiceCard ${(mode === "bulk" ? rehearsalId === rehearsal.id : selectedRehearsalIds.includes(rehearsal.id)) ? "selected" : ""}`}
+            >
+              <input
+                type={mode === "bulk" ? "radio" : "checkbox"}
+                name={mode === "bulk" ? "attendance-rehearsal" : `attendance-rehearsal-${rehearsal.id}`}
+                checked={mode === "bulk" ? rehearsalId === rehearsal.id : selectedRehearsalIds.includes(rehearsal.id)}
+                onChange={() => (mode === "bulk" ? setRehearsalId(rehearsal.id) : toggleSingleRehearsal(rehearsal.id))}
+              />
+              <span>{formatTicketDate(rehearsal.date)}</span>
+              <small>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</small>
+            </label>
+          ))}
+        </div>
+        {!upcomingRehearsals.length && <p className="note">今日以降の稽古日がありません。必要な場合は稽古日を追加してください。</p>}
+      </fieldset>
       <section className="attendanceStatusPanel" aria-label="選択したメンバーの入力状況">
         <div className="attendanceStatusHeader">
           <h3>選択したメンバーの入力状況</h3>
@@ -3296,27 +3317,6 @@ function AttendanceForm({ members, rehearsals, attendances, defaultRehearsalId, 
           </div>
         )}
       </section>
-      <fieldset className="choiceGroup">
-        <legend>{mode === "bulk" ? "稽古日" : "稽古日（複数選択できます）"}</legend>
-        <div className="choiceGrid rehearsals">
-          {upcomingRehearsals.map((rehearsal) => (
-            <label
-              key={rehearsal.id}
-              className={`choiceCard ${(mode === "bulk" ? rehearsalId === rehearsal.id : selectedRehearsalIds.includes(rehearsal.id)) ? "selected" : ""}`}
-            >
-              <input
-                type={mode === "bulk" ? "radio" : "checkbox"}
-                name={mode === "bulk" ? "attendance-rehearsal" : `attendance-rehearsal-${rehearsal.id}`}
-                checked={mode === "bulk" ? rehearsalId === rehearsal.id : selectedRehearsalIds.includes(rehearsal.id)}
-                onChange={() => (mode === "bulk" ? setRehearsalId(rehearsal.id) : toggleSingleRehearsal(rehearsal.id))}
-              />
-              <span>{formatTicketDate(rehearsal.date)}</span>
-              <small>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</small>
-            </label>
-          ))}
-        </div>
-        {!upcomingRehearsals.length && <p className="note">今日以降の稽古日がありません。必要な場合は稽古日を追加してください。</p>}
-      </fieldset>
       <label className="field">出欠ステータス<select value={status} onChange={(event) => setStatus(event.target.value)}>{statusOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
       <div className="grid two">
         <label className="field">到着予定時間<input type="time" value={arrivalTime} onChange={(event) => setArrivalTime(event.target.value)} /></label>
