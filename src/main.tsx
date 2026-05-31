@@ -151,7 +151,7 @@ const schedulePollResponses: SchedulePollResponse[] = [];
 
 const activeStatuses: AttendanceStatus[] = ["出席", "遅刻", "早退"];
 const statusOptions: AttendanceStatus[] = ["出席", "欠席", "遅刻", "早退", "未定"];
-const roleOptions = ["キャスト", "演出", "演出助手", "制作", "音響", "照明"];
+const roleOptions = ["キャスト", "演出", "演出助手", "制作", "音響", "照明", "技術・美術"];
 const memberTeamOptions = ["Aチーム", "Bチーム", "共通"];
 const eventTypeOptions = ["稽古日", "MTG・打ち合わせ"];
 const rehearsalTeamOptions = ["共通", "Aチーム", "Bチーム"];
