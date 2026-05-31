@@ -2102,7 +2102,9 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
   return (
     <article className={`schedulePollCardSimple ${poll.isClosed ? "closed" : ""}`}>
       <section className="pollIntroCard">
-        <div className="pollIntroIcon" aria-hidden="true">□</div>
+        <div className="pollIntroIcon" aria-hidden="true">
+          <img src="./assets/schedule-poll-book-icon.png" alt="" />
+        </div>
         <div className="pollIntroText">
           <h2>{poll.title}</h2>
           {poll.description && <p>{poll.description}</p>}
@@ -2723,6 +2725,24 @@ function formatTime(time) {
   return String(time ?? "").slice(0, 5);
 }
 
+function getRehearsalEndDateTime(rehearsal) {
+  const start = new Date(`${rehearsal.date}T${formatTime(rehearsal.startTime) || "00:00"}:00`);
+  const end = new Date(`${rehearsal.date}T${formatTime(rehearsal.endTime) || "23:59"}:00`);
+  if (!Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && end <= start) {
+    end.setDate(end.getDate() + 1);
+  }
+  return end;
+}
+
+function isRehearsalStillSelectable(rehearsal) {
+  const end = getRehearsalEndDateTime(rehearsal);
+  if (Number.isNaN(end.getTime())) {
+    const today = new Date().toLocaleDateString("sv-SE");
+    return rehearsal.date >= today;
+  }
+  return end > new Date();
+}
+
 function formatJapaneseDate(date) {
   const parsed = new Date(`${date}T00:00:00`);
   if (Number.isNaN(parsed.getTime())) return date;
@@ -2763,9 +2783,10 @@ const ticketSymbols = ["♤", "❤︎", "♧", "♦︎"];
 
 function getNextRehearsal(rehearsals) {
   const today = new Date().toLocaleDateString("sv-SE");
-  return rehearsals
+  const rehearsalOnly = rehearsals.filter((rehearsal) => rehearsal.eventType !== "MTG・打ち合わせ");
+  return rehearsalOnly
     .filter((rehearsal) => rehearsal.date >= today)
-    .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`))[0] ?? rehearsals[0];
+    .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`))[0] ?? rehearsalOnly[0];
 }
 
 function getSceneCounts(sceneId, rehearsals) {
@@ -3119,8 +3140,7 @@ function AttendanceForm({ members, rehearsals, attendances, defaultRehearsalId, 
   const [mode, setMode] = useState("single");
   const [memberId, setMemberId] = useState(members[0]?.id ?? "");
   const [selectedMemberIds, setSelectedMemberIds] = useState([]);
-  const todayKey = new Date().toLocaleDateString("sv-SE");
-  const upcomingRehearsals = rehearsals.filter((rehearsal) => rehearsal.date >= todayKey);
+  const upcomingRehearsals = rehearsals.filter(isRehearsalStillSelectable);
   const [rehearsalId, setRehearsalId] = useState(
     upcomingRehearsals.some((rehearsal) => rehearsal.id === defaultRehearsalId)
       ? defaultRehearsalId
@@ -3231,13 +3251,14 @@ function AttendanceForm({ members, rehearsals, attendances, defaultRehearsalId, 
   }
 
   return (
-    <form
-      className="panel form"
-      onSubmit={(event) => {
-        event.preventDefault();
-        submitAttendance();
-      }}
-    >
+    <>
+      <form
+        className="panel form"
+        onSubmit={(event) => {
+          event.preventDefault();
+          submitAttendance();
+        }}
+      >
       <h2>参加予定の入力</h2>
       <div className="formModeSwitch" aria-label="登録方法">
         <button type="button" className={mode === "single" ? "active" : ""} onClick={() => setMode("single")}>ひとりずつ登録</button>
@@ -3260,7 +3281,7 @@ function AttendanceForm({ members, rehearsals, attendances, defaultRehearsalId, 
         </div>
       </fieldset>
       <fieldset className="choiceGroup">
-        <legend>{mode === "bulk" ? "稽古日" : "稽古日（複数選択できます）"}</legend>
+        <legend>{mode === "bulk" ? "稽古日" : "日時（複数選択できます）"}</legend>
         <div className="choiceGrid rehearsals">
           {upcomingRehearsals.map((rehearsal) => (
             <label
@@ -3274,13 +3295,23 @@ function AttendanceForm({ members, rehearsals, attendances, defaultRehearsalId, 
                 onChange={() => (mode === "bulk" ? setRehearsalId(rehearsal.id) : toggleSingleRehearsal(rehearsal.id))}
               />
               <span>{formatTicketDate(rehearsal.date)}</span>
+              <em className={`eventTypePill ${getEventKind(rehearsal)}`}>{rehearsal.eventType ?? "稽古日"}</em>
               <small>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</small>
             </label>
           ))}
         </div>
         {!upcomingRehearsals.length && <p className="note">今日以降の稽古日がありません。必要な場合は稽古日を追加してください。</p>}
       </fieldset>
-      <section className="attendanceStatusPanel" aria-label="選択したメンバーの入力状況">
+      <label className="field">出欠ステータス<select value={status} onChange={(event) => setStatus(event.target.value)}>{statusOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+      <div className="grid two">
+        <label className="field">到着予定時間<input type="time" value={arrivalTime} onChange={(event) => setArrivalTime(event.target.value)} /></label>
+        <label className="field">早退予定時間<input type="time" value={leaveTime} onChange={(event) => setLeaveTime(event.target.value)} /></label>
+      </div>
+      {mode === "bulk" && <p className="note">まとめて登録では、選んだ全員に同じステータス・時間・連絡事項が入ります。個別の理由はあとからひとりずつ編集できます。</p>}
+      <label className="field">理由・連絡事項<textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="例：仕事後に向かいます" /></label>
+      <button className="primary">{mode === "bulk" ? (selectedMemberIds.length ? `${selectedMemberIds.length}人分をまとめて登録する` : "まとめて登録する") : (selectedRehearsalIds.length > 1 ? `${selectedRehearsalIds.length}日分を登録する` : "登録する")}</button>
+    </form>
+    <section className="panel attendanceStatusPanel" aria-label="選択したメンバーの入力状況">
         <div className="attendanceStatusHeader">
           <h3>選択したメンバーの入力状況</h3>
           <span>{selectedMembers.length ? `${selectedMembers.length}人` : "未選択"}</span>
@@ -3296,7 +3327,11 @@ function AttendanceForm({ members, rehearsals, attendances, defaultRehearsalId, 
                 const label = formatAttendanceStatus(attendance);
                 return (
                   <div key={rehearsal.id} className="attendanceStatusRow">
-                    <span>{formatTicketDate(rehearsal.date)} <small>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</small></span>
+                    <span>
+                      {formatTicketDate(rehearsal.date)}
+                      <em className={`eventTypePill ${getEventKind(rehearsal)}`}>{rehearsal.eventType ?? "稽古日"}</em>
+                      <small>{formatTime(rehearsal.startTime)}-{formatTime(rehearsal.endTime)}</small>
+                    </span>
                     <strong className={`attendanceStatusChip ${statusClassName(attendance?.status ?? "未回答")}`}>{label}</strong>
                   </div>
                 );
@@ -3317,15 +3352,7 @@ function AttendanceForm({ members, rehearsals, attendances, defaultRehearsalId, 
           </div>
         )}
       </section>
-      <label className="field">出欠ステータス<select value={status} onChange={(event) => setStatus(event.target.value)}>{statusOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
-      <div className="grid two">
-        <label className="field">到着予定時間<input type="time" value={arrivalTime} onChange={(event) => setArrivalTime(event.target.value)} /></label>
-        <label className="field">早退予定時間<input type="time" value={leaveTime} onChange={(event) => setLeaveTime(event.target.value)} /></label>
-      </div>
-      {mode === "bulk" && <p className="note">まとめて登録では、選んだ全員に同じステータス・時間・連絡事項が入ります。個別の理由はあとからひとりずつ編集できます。</p>}
-      <label className="field">理由・連絡事項<textarea value={note} onChange={(event) => setNote(event.target.value)} placeholder="例：仕事後に向かいます" /></label>
-      <button className="primary">{mode === "bulk" ? (selectedMemberIds.length ? `${selectedMemberIds.length}人分をまとめて登録する` : "まとめて登録する") : (selectedRehearsalIds.length > 1 ? `${selectedRehearsalIds.length}日分を登録する` : "登録する")}</button>
-    </form>
+    </>
   );
 }
 
