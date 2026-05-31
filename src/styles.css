@@ -1163,6 +1163,72 @@ h3 {
   display: none;
 }
 
+.nextMeetingCard {
+  align-items: center;
+  background: linear-gradient(90deg, #f8fff0, #fffdf3);
+  border: 1px solid #b8d889;
+  border-radius: 16px;
+  box-shadow: 0 8px 18px rgba(128, 174, 78, 0.12);
+  color: #6b9850;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto 1fr auto;
+  min-height: 54px;
+  padding: 10px 16px;
+}
+
+.nextMeetingIntro {
+  align-items: center;
+  border-right: 1px dashed rgba(107, 152, 80, 0.48);
+  display: inline-flex;
+  gap: 8px;
+  padding-right: 16px;
+  white-space: nowrap;
+}
+
+.nextMeetingIntro span {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.nextMeetingIntro strong {
+  font-size: 14px;
+}
+
+.nextMeetingMeta {
+  align-items: center;
+  color: #5d4a40;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  justify-content: center;
+  min-width: 0;
+}
+
+.nextMeetingMeta span {
+  align-items: center;
+  display: inline-flex;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.nextMeetingMeta b {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.nextMeetingCard em {
+  background: #f4ffe0;
+  border: 1px solid #a6d36a;
+  border-radius: 999px;
+  color: #5f9a2f;
+  font-style: normal;
+  font-weight: 800;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
 .decorLeft {
   font-size: 24px;
   left: 104px;
@@ -3464,6 +3530,144 @@ textarea {
   border-radius: 10px;
 }
 
+.adminSceneEditor {
+  display: grid;
+  gap: 14px;
+}
+
+.sceneScopeBlock {
+  background: #fffaf7;
+  border: 1px solid #f1dcd2;
+  border-radius: 16px;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.sceneScopeLabel {
+  color: #6f564a;
+  font-weight: 700;
+}
+
+.sceneScopeTabs {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.sceneScopeTab {
+  background: #fff;
+  border: 1px solid #efd8ce;
+  border-radius: 999px;
+  color: #8b766c;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  min-height: 42px;
+  padding: 10px 12px;
+}
+
+.sceneScopeTab.active {
+  box-shadow: 0 10px 20px rgba(236, 101, 148, 0.18);
+}
+
+.sceneScopeTab.common.active {
+  background: #f06598;
+  border-color: #f06598;
+  color: #fff;
+}
+
+.sceneScopeTab.teamA.active {
+  background: #e9fbf1;
+  border-color: #85cda2;
+  color: #4f8f62;
+}
+
+.sceneScopeTab.teamB.active {
+  background: #f4edff;
+  border-color: #cbb7f5;
+  color: #8a6fd1;
+}
+
+.sceneScopeDescription {
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0;
+  padding: 10px 12px;
+}
+
+.sceneScopeDescription.common {
+  background: #fff1f7;
+  color: #bd4e78;
+}
+
+.sceneScopeDescription.teamA {
+  background: #f3fff6;
+  color: #4f8f62;
+}
+
+.sceneScopeDescription.teamB {
+  background: #f7f1ff;
+  color: #8a6fd1;
+}
+
+.sceneScopeSummary {
+  background: #fff;
+  border: 1px dashed #efb7ca;
+  border-radius: 16px;
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.sceneScopeSummary > strong {
+  color: #6f564a;
+}
+
+.sceneScopeSummaryRows {
+  display: grid;
+  gap: 8px;
+}
+
+.sceneScopeSummaryRow {
+  align-items: center;
+  border-radius: 999px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 86px 1fr;
+  margin: 0;
+  padding: 9px 12px;
+}
+
+.sceneScopeSummaryRow span {
+  font-weight: 700;
+}
+
+.sceneScopeSummaryRow b {
+  font-weight: 600;
+}
+
+.sceneScopeSummaryRow.common {
+  background: #fff1f7;
+  color: #bd4e78;
+}
+
+.sceneScopeSummaryRow.teamA {
+  background: #f3fff6;
+  color: #4f8f62;
+}
+
+.sceneScopeSummaryRow.teamB {
+  background: #f7f1ff;
+  color: #8a6fd1;
+}
+
+.sceneScopeEmpty {
+  color: #9a7b70;
+  margin: 0;
+}
+
 .scene {
   align-items: stretch;
   border-radius: 10px;
@@ -3819,6 +4023,37 @@ textarea {
 
   .ticketInner h2 {
     gap: 7px;
+  }
+
+  .nextMeetingCard {
+    gap: 8px;
+    grid-template-columns: 1fr auto;
+    min-height: 50px;
+    padding: 10px 12px;
+  }
+
+  .nextMeetingIntro {
+    border-right: 0;
+    grid-column: 1 / -1;
+    padding-right: 0;
+  }
+
+  .nextMeetingIntro strong {
+    font-size: 13px;
+  }
+
+  .nextMeetingMeta {
+    gap: 6px 10px;
+    justify-content: flex-start;
+  }
+
+  .nextMeetingMeta span {
+    font-size: 12px;
+  }
+
+  .nextMeetingCard em {
+    font-size: 12px;
+    padding: 5px 9px;
   }
 
   .dashboardDateSwitch {

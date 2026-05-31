@@ -238,6 +238,94 @@ function sceneShortName(title = "") {
   return match?.[0] ?? title;
 }
 
+const sceneScopeOptions = [
+  {
+    id: "common",
+    label: "共通",
+    className: "common",
+    description: "共通に設定中：選択したシーンは Aチーム・Bチーム両方に反映されます。",
+  },
+  {
+    id: "team_a",
+    label: "Aチーム",
+    className: "teamA",
+    description: "Aチームに設定中：選択したシーンは Aチームだけに反映されます。",
+  },
+  {
+    id: "team_b",
+    label: "Bチーム",
+    className: "teamB",
+    description: "Bチームに設定中：選択したシーンは Bチームだけに反映されます。",
+  },
+] as const;
+
+const sceneScopeLabels = {
+  common: "共通",
+  team_a: "Aチーム",
+  team_b: "Bチーム",
+};
+
+const validSceneScopes = new Set(sceneScopeOptions.map((option) => option.id));
+
+function parseScopedSceneId(value = "") {
+  const [maybeScope, ...rest] = String(value).split(":");
+  const sceneId = rest.join(":");
+  if (validSceneScopes.has(maybeScope) && sceneId) {
+    return { scope: maybeScope, sceneId };
+  }
+  return { scope: "common", sceneId: value };
+}
+
+function makeScopedSceneId(scope, sceneId) {
+  return `${scope}:${sceneId}`;
+}
+
+function getSceneSelectionMap(rehearsal) {
+  const map = {
+    common: new Set(),
+    team_a: new Set(),
+    team_b: new Set(),
+  };
+  (rehearsal?.selectedSceneIds ?? []).forEach((value) => {
+    const { scope, sceneId } = parseScopedSceneId(value);
+    if (sceneId) map[scope].add(sceneId);
+  });
+  return map;
+}
+
+function serializeSceneSelectionMap(map) {
+  return sceneScopeOptions.flatMap((option) =>
+    Array.from(map[option.id] ?? []).map((sceneId) => makeScopedSceneId(option.id, sceneId)),
+  );
+}
+
+function getSelectedSceneIdsForScope(rehearsal, scope) {
+  return Array.from(getSceneSelectionMap(rehearsal)[scope] ?? []);
+}
+
+function getEffectiveSceneIdsForTeam(rehearsal, teamFilter = "全員") {
+  const map = getSceneSelectionMap(rehearsal);
+  const ids = new Set(map.common);
+  if (teamFilter === "Aチーム") {
+    map.team_a.forEach((sceneId) => ids.add(sceneId));
+    return Array.from(ids);
+  }
+  if (teamFilter === "Bチーム") {
+    map.team_b.forEach((sceneId) => ids.add(sceneId));
+    return Array.from(ids);
+  }
+  map.team_a.forEach((sceneId) => ids.add(sceneId));
+  map.team_b.forEach((sceneId) => ids.add(sceneId));
+  return Array.from(ids);
+}
+
+function getSceneTitlesForScope(rehearsal, scenes, scope) {
+  const sceneById = new Map(scenes.map((scene) => [scene.id, scene.title]));
+  return getSelectedSceneIdsForScope(rehearsal, scope)
+    .map((sceneId) => sceneById.get(sceneId))
+    .filter(Boolean);
+}
+
 function attendanceRate(memberId: string, attendances: Attendance[], rehearsalSource = rehearsals) {
   const rows = rehearsalSource
     .map((rehearsal) => attendances.find((attendance) => attendance.rehearsalId === rehearsal.id && attendance.memberId === memberId))
@@ -410,7 +498,7 @@ function buildNotionSyncRows(rehearsalSource, memberSource, attendanceSource, sc
     .map((rehearsal) => {
       const summary = getAttendanceSummary(rehearsal, memberSource, attendanceSource);
       const selectedScenes = sceneSource
-        .filter((scene) => rehearsal.selectedSceneIds?.includes(scene.id))
+        .filter((scene) => getEffectiveSceneIdsForTeam(rehearsal).includes(scene.id))
         .map((scene) => scene.title);
       return {
         id: rehearsal.id,
@@ -1729,7 +1817,7 @@ function App() {
         />
       </div>
       {toast && <div className={`toastNotice ${toast.tone}`} role="status">{toast.message}</div>}
-      {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} scenes={sceneList} />}
+      {tab === "dashboard" && <Dashboard rehearsalId={selectedRehearsalId} rehearsals={rehearsalList} setRehearsalId={setSelectedRehearsalId} attendances={attendances} visibleMembers={visibleMembers} scenes={sceneList} teamFilter={teamFilter} />}
       {tab === "form" && <AttendanceForm members={memberList} rehearsals={rehearsalList} attendances={attendances} defaultRehearsalId={selectedRehearsalId} onSave={saveAttendance} onSaveBatch={saveAttendanceBatch} />}
       {tab === "schedule" && (
         <ScheduleAdjustmentPage
@@ -2789,13 +2877,40 @@ function getNextRehearsal(rehearsals) {
     .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`))[0] ?? rehearsalOnly[0];
 }
 
+function getNextMeeting(rehearsals) {
+  const today = new Date().toLocaleDateString("sv-SE");
+  return rehearsals
+    .filter((rehearsal) => rehearsal.eventType === "MTG・打ち合わせ" && rehearsal.date >= today)
+    .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`))[0];
+}
+
+function formatShortDateWithWeekday(date) {
+  const parsed = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return date;
+  const weekday = parsed.toLocaleDateString("ja-JP", { weekday: "short" });
+  return `${parsed.getMonth() + 1}/${parsed.getDate()}(${weekday})`;
+}
+
+function getDaysUntil(date) {
+  const today = new Date(new Date().toLocaleDateString("sv-SE"));
+  const target = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(target.getTime())) return "";
+  const days = Math.ceil((target.getTime() - today.getTime()) / 86400000);
+  if (days <= 0) return "本日";
+  return `あと${days}日`;
+}
+
 function getSceneCounts(sceneId, rehearsals) {
   return rehearsals.reduce(
     (counts, rehearsal) => {
-      if (!rehearsal.selectedSceneIds?.includes(sceneId)) return counts;
+      const selectionMap = getSceneSelectionMap(rehearsal);
+      const inCommon = selectionMap.common.has(sceneId);
+      const inTeamA = selectionMap.team_a.has(sceneId);
+      const inTeamB = selectionMap.team_b.has(sceneId);
+      if (!inCommon && !inTeamA && !inTeamB) return counts;
       counts.total += 1;
-      if (rehearsal.rehearsalTeam === "Aチーム") counts.a += 1;
-      if (rehearsal.rehearsalTeam === "Bチーム") counts.b += 1;
+      if (inCommon || inTeamA) counts.a += 1;
+      if (inCommon || inTeamB) counts.b += 1;
       return counts;
     },
     { total: 0, a: 0, b: 0 },
@@ -2866,9 +2981,10 @@ function DashboardCalendar({ rehearsals, selectedRehearsalId, onSelect }) {
   );
 }
 
-function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visibleMembers, scenes }) {
+function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visibleMembers, scenes, teamFilter }) {
   const rehearsal = rehearsals.find((item) => item.id === rehearsalId) ?? rehearsals[0];
   const nextRehearsal = getNextRehearsal(rehearsals);
+  const nextMeeting = getNextMeeting(rehearsals);
   const isNextRehearsalToday = nextRehearsal ? isTodayDate(nextRehearsal.date) : false;
   const ticketSymbol = useMemo(() => ticketSymbols[Math.floor(Math.random() * ticketSymbols.length)], []);
   const grouped = groupAttendance(rehearsalId, attendances, visibleMembers);
@@ -2905,6 +3021,20 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
           </div>
         </section>
       )}
+      {nextMeeting && (
+        <section className="nextMeetingCard" aria-label="次回ミーティングのお知らせ">
+          <div className="nextMeetingIntro">
+            <span aria-hidden="true">📢</span>
+            <strong>次回ミーティングのお知らせ</strong>
+          </div>
+          <div className="nextMeetingMeta">
+            <span><b aria-hidden="true">📢</b>制作MTG</span>
+            <span><b aria-hidden="true">📅</b>{formatShortDateWithWeekday(nextMeeting.date)}</span>
+            <span><b aria-hidden="true">🕒</b>{formatTime(nextMeeting.startTime)}-{formatTime(nextMeeting.endTime)}</span>
+          </div>
+          <em>{getDaysUntil(nextMeeting.date)}</em>
+        </section>
+      )}
       <div className="dashboardDateSwitch">
         <div className="dateSwitchSide">
           <DashboardCalendar rehearsals={rehearsals} selectedRehearsalId={rehearsalId} onSelect={setRehearsalId} />
@@ -2924,7 +3054,7 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
         <section className="selectedDayInfoList">
           <h2 className="panelTitle"><span>✦</span>{formatDateWithWeekday(rehearsal.date)}の情報一覧</h2>
           <ContactNotesPanel grouped={grouped} />
-          <TodayScenesPanel rehearsal={rehearsal} scenes={scenes} />
+          <TodayScenesPanel rehearsal={rehearsal} scenes={scenes} teamFilter={teamFilter} />
           {absenceRows.length > 0 && <PeoplePanel title="欠席・遅刻" rows={absenceRows} tone="warn" />}
           <div className="grid two">
             <PeoplePanel
@@ -3375,16 +3505,17 @@ function ContactNotesPanel({ grouped }) {
   return <PeoplePanel title="連絡事項" rows={rows} tone={rows.length ? "warn" : undefined} />;
 }
 
-function getSelectedSceneTitles(rehearsal, scenes) {
-  if (!rehearsal?.selectedSceneIds?.length) return [];
+function getSelectedSceneTitles(rehearsal, scenes, teamFilter = "全員") {
+  const selectedSceneIds = getEffectiveSceneIdsForTeam(rehearsal, teamFilter);
+  if (!selectedSceneIds.length) return [];
   const sceneById = new Map(scenes.map((scene) => [scene.id, scene.title]));
-  return rehearsal.selectedSceneIds.map((id) => sceneById.get(id)).filter(Boolean);
+  return selectedSceneIds.map((id) => sceneById.get(id)).filter(Boolean);
 }
 
-function TodayScenesPanel({ rehearsal, scenes }) {
-  const titles = getSelectedSceneTitles(rehearsal, scenes);
+function TodayScenesPanel({ rehearsal, scenes, teamFilter = "全員" }) {
+  const titles = getSelectedSceneTitles(rehearsal, scenes, teamFilter);
   if (!titles.length) return null;
-  const selectedSceneIds = rehearsal?.selectedSceneIds ?? [];
+  const selectedSceneIds = getEffectiveSceneIdsForTeam(rehearsal, teamFilter);
   const allScenesSelected = scenes.length > 0 && scenes.every((scene) => selectedSceneIds.includes(scene.id));
   return (
     <section className="panel todayScenesPanel">
@@ -3396,37 +3527,88 @@ function TodayScenesPanel({ rehearsal, scenes }) {
 
 function SceneSelectionEditor({ rehearsal, scenes, onUpdate }) {
   if (!rehearsal) return null;
-  const selectedSceneIds = rehearsal.selectedSceneIds ?? [];
+  const [activeScope, setActiveScope] = useState("common");
+  const activeScopeOption = sceneScopeOptions.find((option) => option.id === activeScope) ?? sceneScopeOptions[0];
+  const selectionMap = getSceneSelectionMap(rehearsal);
+  const selectedSceneIds = Array.from(selectionMap[activeScope]);
   const sortedScenes = sortSceneResults(scenes.map((scene) => ({ scene, canRehearse: true, missingCharacters: [] }))).map(({ scene }) => scene);
   const allSceneIds = sortedScenes.map((scene) => scene.id);
   const allSelected = allSceneIds.length > 0 && allSceneIds.every((sceneId) => selectedSceneIds.includes(sceneId));
+  const saveSelectionMap = (nextMap) => {
+    onUpdate({ ...rehearsal, selectedSceneIds: serializeSceneSelectionMap(nextMap) });
+  };
   const toggleScene = (sceneId) => {
-    const nextSceneIds = selectedSceneIds.includes(sceneId)
-      ? selectedSceneIds.filter((id) => id !== sceneId)
-      : [...selectedSceneIds, sceneId];
-    onUpdate({ ...rehearsal, selectedSceneIds: nextSceneIds });
+    const nextMap = getSceneSelectionMap(rehearsal);
+    if (nextMap[activeScope].has(sceneId)) {
+      nextMap[activeScope].delete(sceneId);
+    } else {
+      nextMap[activeScope].add(sceneId);
+    }
+    saveSelectionMap(nextMap);
   };
   const toggleAllScenes = () => {
-    const nextSceneIds = allSelected
-      ? selectedSceneIds.filter((sceneId) => !allSceneIds.includes(sceneId))
-      : Array.from(new Set([...selectedSceneIds, ...allSceneIds]));
-    onUpdate({ ...rehearsal, selectedSceneIds: nextSceneIds });
+    const nextMap = getSceneSelectionMap(rehearsal);
+    if (allSelected) {
+      allSceneIds.forEach((sceneId) => nextMap[activeScope].delete(sceneId));
+    } else {
+      allSceneIds.forEach((sceneId) => nextMap[activeScope].add(sceneId));
+    }
+    saveSelectionMap(nextMap);
   };
+  const hasAnySceneSetting = sceneScopeOptions.some((option) => selectionMap[option.id].size > 0);
 
   return (
-    <fieldset className="checkboxGroup adminSceneSelector">
-      <legend>この日にやるシーン</legend>
-      <label className="checkboxPill sceneSelectPill selectAllPill">
-        <input type="checkbox" checked={allSelected} onChange={toggleAllScenes} />
-        <span>全て選択する</span>
-      </label>
-      {sortedScenes.map((scene) => (
-        <label key={scene.id} className="checkboxPill sceneSelectPill">
-          <input type="checkbox" checked={selectedSceneIds.includes(scene.id)} onChange={() => toggleScene(scene.id)} />
-          <span>{scene.title}</span>
+    <div className="adminSceneEditor">
+      <div className="sceneScopeBlock">
+        <span className="sceneScopeLabel">適用先</span>
+        <div className="sceneScopeTabs" role="tablist" aria-label="シーンの適用先">
+          {sceneScopeOptions.map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              className={`sceneScopeTab ${option.className} ${activeScope === option.id ? "active" : ""}`}
+              onClick={() => setActiveScope(option.id)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <p className={`sceneScopeDescription ${activeScopeOption.className}`}>{activeScopeOption.description}</p>
+      </div>
+
+      <fieldset className="checkboxGroup adminSceneSelector">
+        <legend>この日にやるシーン</legend>
+        <label className="checkboxPill sceneSelectPill selectAllPill">
+          <input type="checkbox" checked={allSelected} onChange={toggleAllScenes} />
+          <span>全て選択する</span>
         </label>
-      ))}
-    </fieldset>
+        {sortedScenes.map((scene) => (
+          <label key={scene.id} className="checkboxPill sceneSelectPill">
+            <input type="checkbox" checked={selectedSceneIds.includes(scene.id)} onChange={() => toggleScene(scene.id)} />
+            <span>{scene.title}</span>
+          </label>
+        ))}
+      </fieldset>
+
+      <div className="sceneScopeSummary">
+        <strong>この日のシーン設定</strong>
+        {hasAnySceneSetting ? (
+          <div className="sceneScopeSummaryRows">
+            {sceneScopeOptions.map((option) => {
+              const titles = getSceneTitlesForScope(rehearsal, scenes, option.id);
+              return (
+                <p key={option.id} className={`sceneScopeSummaryRow ${option.className}`}>
+                  <span>{sceneScopeLabels[option.id]}</span>
+                  <b>{titles.length ? titles.map(sceneShortName).join("・") : "未設定"}</b>
+                </p>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="sceneScopeEmpty">この日にできるシーンはありません</p>
+        )}
+      </div>
+    </div>
   );
 }
 
