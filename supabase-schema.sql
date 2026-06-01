@@ -209,6 +209,7 @@ drop policy if exists "schedule poll participants can be updated by shared users
 drop policy if exists "schedule poll responses can be updated by shared users" on public.schedule_poll_responses;
 drop policy if exists "schedule polls can be deleted by shared users" on public.schedule_polls;
 drop policy if exists "schedule poll options can be deleted by shared users" on public.schedule_poll_options;
+drop policy if exists "schedule poll participants can be deleted by shared users" on public.schedule_poll_participants;
 drop policy if exists "schedule poll responses can be deleted by shared users" on public.schedule_poll_responses;
 
 create policy "rooms can be read by shared users" on public.rooms
@@ -313,6 +314,9 @@ create policy "schedule polls can be deleted by shared users" on public.schedule
 create policy "schedule poll options can be deleted by shared users" on public.schedule_poll_options
   for delete to anon using (true);
 
+create policy "schedule poll participants can be deleted by shared users" on public.schedule_poll_participants
+  for delete to anon using (true);
+
 create policy "schedule poll responses can be deleted by shared users" on public.schedule_poll_responses
   for delete to anon using (true);
 
@@ -324,7 +328,7 @@ grant select, insert, update on public.scenes to anon;
 grant select, insert, update on public.attendances to anon;
 grant select, insert, update, delete on public.schedule_polls to anon;
 grant select, insert, update, delete on public.schedule_poll_options to anon;
-grant select, insert, update on public.schedule_poll_participants to anon;
+grant select, insert, update, delete on public.schedule_poll_participants to anon;
 grant select, insert, update, delete on public.schedule_poll_responses to anon;
 grant delete on public.members to anon;
 grant delete on public.rehearsals to anon;

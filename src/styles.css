@@ -948,14 +948,21 @@ h3 {
 
 .calendarDay.today::after {
   content: "今日";
-  bottom: -18px;
+  bottom: 3px;
   color: #b27c2e;
-  font-size: 9px;
+  font-size: 7px;
   font-weight: 900;
   left: 50%;
+  line-height: 1;
+  pointer-events: none;
   position: absolute;
   transform: translateX(-50%);
   white-space: nowrap;
+  z-index: 2;
+}
+
+.calendarDay.today > span {
+  transform: translateY(-6px);
 }
 
 .calendarDay.today.hasMtg {
@@ -992,6 +999,12 @@ h3 {
   border-color: #568426;
   box-shadow: 0 0 0 4px rgba(217, 170, 80, 0.24), 0 0 0 8px rgba(130, 185, 63, 0.16), 0 10px 22px rgba(86, 132, 38, 0.24);
   color: #fff;
+}
+
+.calendarDay.today.selected::after,
+.calendarDay.today.hasMtg.selected::after {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(95, 73, 66, 0.24);
 }
 
 .calendarDay.selected i {
