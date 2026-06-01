@@ -2213,6 +2213,18 @@ h3 {
   gap: 12px;
 }
 
+.voterNameHeading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.voterNameHeading small {
+  color: #8b695c;
+  font-weight: 800;
+}
+
 .voterNameCard label,
 .commentBox {
   display: grid;
@@ -2246,6 +2258,75 @@ h3 {
   color: #4b342e;
   font: inherit;
   padding: 13px 14px;
+}
+
+.voterNameScroller {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 2px 10px;
+  scroll-snap-type: x proximity;
+}
+
+.voterNameButton {
+  flex: 0 0 auto;
+  min-width: 132px;
+  border: 1px solid #ead7ca;
+  border-radius: 999px;
+  background: #fffdfb;
+  color: #6d554d;
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  padding: 10px 14px;
+  scroll-snap-align: start;
+  box-shadow: 0 8px 18px rgba(93, 59, 45, 0.06);
+}
+
+.voterNameButton span {
+  color: inherit;
+  font-weight: 900;
+}
+
+.voterNameButton small {
+  color: #ec6b93;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.voterNameButton.selected {
+  border-color: #ec6b93;
+  background: linear-gradient(135deg, #ee6a98, #f47ea8);
+  color: #fff;
+  box-shadow: 0 12px 22px rgba(236, 107, 147, 0.2);
+}
+
+.voterNameButton.selected small {
+  color: #fff7fb;
+}
+
+.voterNameButton.answered:not(.selected) {
+  background: #fff7fb;
+  border-color: #f7bfd1;
+}
+
+.schedulePickNameNotice {
+  border: 1px dashed #f0b4c7;
+  border-radius: 16px;
+  background: #fff7fb;
+  color: #6d554d;
+  padding: 18px;
+  text-align: center;
+}
+
+.schedulePickNameNotice strong {
+  color: #ec6b93;
+  display: block;
+  font-size: 1.05rem;
+}
+
+.schedulePickNameNotice p {
+  margin: 8px 0 0;
 }
 
 .commentBox {
@@ -2770,6 +2851,40 @@ h3 {
   grid-column: 2;
   color: #8b766c;
   font-weight: 800;
+}
+
+.scheduleResetAnswers {
+  display: grid;
+  gap: 10px;
+  border: 1px dashed #f0b4c7;
+  border-radius: 14px;
+  background: #fffaf7;
+  padding: 14px;
+}
+
+.scheduleResetAnswers p {
+  margin: 0;
+  color: #6d554d;
+  font-weight: 900;
+}
+
+.scheduleResetAnswers small {
+  color: #8b766c;
+}
+
+.scheduleResetAnswerList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ghostDangerButton {
+  border: 1px solid #f0b4c7;
+  border-radius: 999px;
+  background: #fff;
+  color: #c75e7d;
+  font-weight: 900;
+  padding: 9px 13px;
 }
 
 .scheduleOptionManager {

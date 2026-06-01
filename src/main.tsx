@@ -1053,7 +1053,7 @@ function App() {
   const [realtimeStatus, setRealtimeStatus] = useState("未接続です。");
   const applyingRemoteRef = useRef(false);
   const initialOnlineLoadRef = useRef(false);
-  const [selectedRehearsalId, setSelectedRehearsalId] = useState(rehearsalList[0]?.id ?? "");
+  const [selectedRehearsalId, setSelectedRehearsalId] = useState(getNextScheduledEvent(rehearsalList)?.id ?? "");
   const [tab, setTab] = useState("dashboard");
   const [teamFilter, setTeamFilter] = useState<TeamFilter>("全員");
   const [toast, setToast] = useState<{ message: string; tone: "ok" | "error" } | null>(null);
@@ -1065,9 +1065,17 @@ function App() {
   const sceneResults = useMemo(() => evaluateScenes(selectedRehearsalId, attendances, visibleMembers, sceneList), [selectedRehearsalId, attendances, visibleMembers, sceneList]);
 
   useEffect(() => {
+    if (tab !== "dashboard") return;
+    const next = getNextScheduledEvent(rehearsalList);
+    if (next && selectedRehearsalId !== next.id) {
+      setSelectedRehearsalId(next.id);
+    }
+  }, [tab]);
+
+  useEffect(() => {
     localStorage.setItem("keiko.rehearsals", JSON.stringify(rehearsalList));
     if (!rehearsalList.some((rehearsal) => rehearsal.id === selectedRehearsalId)) {
-      setSelectedRehearsalId(rehearsalList[0]?.id ?? "");
+      setSelectedRehearsalId(getNextScheduledEvent(rehearsalList)?.id ?? "");
     }
   }, [rehearsalList, selectedRehearsalId]);
 
@@ -1130,7 +1138,7 @@ function App() {
     setScheduleOptionList(data.schedulePollOptions ?? []);
     setScheduleParticipantList(data.schedulePollParticipants ?? []);
     setScheduleResponseList(data.schedulePollResponses ?? []);
-    setSelectedRehearsalId(data.rehearsals[0]?.id ?? "");
+    setSelectedRehearsalId(getNextScheduledEvent(data.rehearsals)?.id ?? "");
   }
 
   function getCurrentState() {
@@ -1638,6 +1646,45 @@ function App() {
     showToast("投票を削除しました。");
   }
 
+  async function resetScheduleParticipantAnswer(pollId, participantId) {
+    if (!guardOnlineWrite()) return;
+    const participant = scheduleParticipantList.find((item) => item.id === participantId && item.pollId === pollId);
+    if (!participant) return;
+    const confirmation = prompt(`${participant.memberName}さんの回答をリセットします。実行する場合は「削除」と入力してください。`);
+    if (confirmation !== "削除") return;
+    const relatedResponses = scheduleResponseList.filter((response) => response.pollId === pollId && response.participantId === participantId);
+    if (onlineReady) {
+      try {
+        const client = getSupabaseClient(supabaseConfig);
+        if (client) {
+          await logEdit(client, supabaseConfig, actorName, "schedule_poll_participants", participantId, "delete", {
+            participant,
+            responses: relatedResponses,
+          }, null);
+          const { error: responseError } = await client
+            .from("schedule_poll_responses")
+            .delete()
+            .eq("room_id", supabaseConfig.roomId)
+            .eq("poll_id", pollId)
+            .eq("participant_id", participantId);
+          if (responseError) throw responseError;
+          const { error: participantError } = await client
+            .from("schedule_poll_participants")
+            .delete()
+            .eq("room_id", supabaseConfig.roomId)
+            .eq("id", participantId);
+          if (participantError) throw participantError;
+        }
+      } catch (error) {
+        reportOnlineError(error);
+        return;
+      }
+    }
+    setScheduleParticipantList((current) => current.filter((item) => item.id !== participantId));
+    setScheduleResponseList((current) => current.filter((response) => response.participantId !== participantId));
+    showToast(`${participant.memberName}さんの回答をリセットしました。`);
+  }
+
   function addScheduleOption(pollId, input) {
     if (!guardOnlineWrite()) return;
     const next: SchedulePollOption = {
@@ -1836,6 +1883,7 @@ function App() {
           onAddOption={addScheduleOption}
           onUpdateOption={updateScheduleOption}
           onDeleteOption={deleteScheduleOption}
+          onResetParticipant={resetScheduleParticipantAnswer}
         />
       )}
       {tab === "admin" && (
@@ -1878,7 +1926,7 @@ function App() {
   );
 }
 
-function ScheduleAdjustmentPage({ polls, options, participants, responses, members, onCreatePoll, onSaveAnswer, onClosePoll, onUpdatePoll, onDeletePoll, onConfirmOption, onConfirmOptions, onAddOption, onUpdateOption, onDeleteOption }) {
+function ScheduleAdjustmentPage({ polls, options, participants, responses, members, onCreatePoll, onSaveAnswer, onClosePoll, onUpdatePoll, onDeletePoll, onConfirmOption, onConfirmOptions, onAddOption, onUpdateOption, onDeleteOption, onResetParticipant }) {
   const [view, setView] = useState("open");
   const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
@@ -1915,6 +1963,7 @@ function ScheduleAdjustmentPage({ polls, options, participants, responses, membe
             onAddOption={onAddOption}
             onUpdateOption={onUpdateOption}
             onDeleteOption={onDeleteOption}
+            onResetParticipant={onResetParticipant}
           />
         )) : (
           <section className="panel emptyPanel">
@@ -2128,8 +2177,8 @@ function SchedulePollCreator({ onCreatePoll }) {
   );
 }
 
-function SchedulePollCard({ poll, options, participants, responses, members, adminUnlocked, onSaveAnswer, onClosePoll, onUpdatePoll, onDeletePoll, onConfirmOption, onConfirmOptions, onAddOption, onUpdateOption, onDeleteOption }) {
-  const [memberName, setMemberName] = useState(members[0]?.name ?? "");
+function SchedulePollCard({ poll, options, participants, responses, members, adminUnlocked, onSaveAnswer, onClosePoll, onUpdatePoll, onDeletePoll, onConfirmOption, onConfirmOptions, onAddOption, onUpdateOption, onDeleteOption, onResetParticipant }) {
+  const [memberName, setMemberName] = useState("");
   const [comment, setComment] = useState("");
   const [draft, setDraft] = useState({});
   const [pollDraft, setPollDraft] = useState({ title: poll.title, description: poll.description ?? "" });
@@ -2219,12 +2268,28 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
 
       {!poll.isClosed && (
         <section className="voterNameCard">
-          <label>
-            <span>投票者のお名前 <em>必須</em></span>
-            <select value={memberName} onChange={(event) => setMemberName(event.target.value)}>
-              {members.map((member) => <option key={member.id} value={member.name}>{member.name}</option>)}
-            </select>
-          </label>
+          <div className="voterNameHeading">
+            <span>投票者のお名前<em>必須</em></span>
+            {!memberName && <small>まず名前を選ぶと、回答欄が開きます。</small>}
+          </div>
+          <div className="voterNameScroller" role="list" aria-label="投票者の名前を選択">
+            {members.map((member) => {
+              const answered = answeredMemberNames.has(member.name.trim());
+              const selected = memberName === member.name;
+              return (
+                <button
+                  key={member.id}
+                  type="button"
+                  className={`voterNameButton ${selected ? "selected" : ""} ${answered ? "answered" : ""}`}
+                  aria-pressed={selected}
+                  onClick={() => setMemberName(member.name)}
+                >
+                  <span>{member.name}</span>
+                  {answered && <small>回答済み</small>}
+                </button>
+              );
+            })}
+          </div>
           {existingAnswer && <p className="scheduleAnswerHint">この名前は回答済みです。内容を変更して保存すると、前回の回答が更新されます。</p>}
         </section>
       )}
@@ -2238,6 +2303,11 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
         {activeVoteTab === "answer" ? (
           poll.isClosed ? (
             <p className="closedPollMessage">この投票は回答受付を終了しています。回答状況のみ確認できます。</p>
+          ) : !memberName ? (
+            <div className="schedulePickNameNotice">
+              <strong>投票者のお名前を選んでください</strong>
+              <p>上の名前ボタンを押すと、回答欄が表示されます。</p>
+            </div>
           ) : (
             <form className="simpleVoteForm" onSubmit={submitAnswer}>
               <div className="simpleVoteIntro">
@@ -2354,6 +2424,25 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
             <button type="button" className="primary" onClick={submitConfirmOptions}>
               選択した日を稽古日に確定
             </button>
+          </div>
+          <div className="scheduleResetAnswers">
+            <p>間違えて投稿された回答をリセット</p>
+            {participants.length ? (
+              <div className="scheduleResetAnswerList">
+                {participants.map((participant) => (
+                  <button
+                    key={participant.id}
+                    type="button"
+                    className="ghostDangerButton"
+                    onClick={() => onResetParticipant(poll.id, participant.id)}
+                  >
+                    {participant.memberName}さんの回答をリセット
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <small>リセットできる回答はまだありません。</small>
+            )}
           </div>
         </div>
       )}
@@ -2893,6 +2982,15 @@ function getNextMeeting(rehearsals) {
   return rehearsals
     .filter((rehearsal) => rehearsal.eventType === "MTG・打ち合わせ" && rehearsal.date >= today)
     .sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`))[0];
+}
+
+function getNextScheduledEvent(rehearsals) {
+  const sorted = [...rehearsals].sort((a, b) => `${a.date}${a.startTime}`.localeCompare(`${b.date}${b.startTime}`));
+  const now = new Date();
+  return sorted.find((rehearsal) => {
+    const end = getRehearsalEndDateTime(rehearsal);
+    return !Number.isNaN(end.getTime()) && end > now;
+  }) ?? sorted[0];
 }
 
 function formatShortDateWithWeekday(date) {
