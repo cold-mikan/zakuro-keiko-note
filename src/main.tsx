@@ -3137,7 +3137,7 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
             <strong>次回ミーティングのお知らせ</strong>
           </div>
           <div className="nextMeetingMeta">
-            <span><b aria-hidden="true">📢</b>制作MTG</span>
+            <span><b aria-hidden="true">📢</b>{nextMeeting.memo?.trim() || "MTG・打ち合わせ"}</span>
             <span><b aria-hidden="true">📅</b>{formatShortDateWithWeekday(nextMeeting.date)}</span>
             <span><b aria-hidden="true">🕒</b>{formatTime(nextMeeting.startTime)}-{formatTime(nextMeeting.endTime)}</span>
           </div>
