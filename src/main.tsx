@@ -1072,6 +1072,7 @@ function App() {
     }
   }, [tab]);
 
+
   useEffect(() => {
     localStorage.setItem("keiko.rehearsals", JSON.stringify(rehearsalList));
     if (!rehearsalList.some((rehearsal) => rehearsal.id === selectedRehearsalId)) {
@@ -3105,8 +3106,9 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
   });
   const memberPersonRow = (member) => ({ key: member.id, label: member.name, role: member.role, team: member.team });
   const absenceRows = [
-    ...grouped.absent.map((row) => attendancePersonRow(row)),
+    ...grouped.absent.map((row) => attendancePersonRow(row, "欠席：")),
     ...grouped.late.map((row) => attendancePersonRow(row, "遅刻：")),
+    ...grouped.early.map((row) => attendancePersonRow(row, "早退：")),
   ];
   const attendanceRows = [...grouped.present, ...grouped.late, ...grouped.early].map((row) => attendancePersonRow(row));
   const isMeetingDay = rehearsal?.eventType === "MTG・打ち合わせ";
@@ -3164,7 +3166,7 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
           <h2 className="panelTitle"><span>✦</span>{formatDateWithWeekday(rehearsal.date)}の情報一覧</h2>
           <ContactNotesPanel grouped={grouped} />
           <TodayScenesPanel rehearsal={rehearsal} scenes={scenes} teamFilter={teamFilter} />
-          {absenceRows.length > 0 && <PeoplePanel title="欠席・遅刻" rows={absenceRows} tone="warn" />}
+          {absenceRows.length > 0 && <PeoplePanel title="欠席・遅刻・早退" rows={absenceRows} tone="warn" />}
           <div className="grid two">
             <PeoplePanel
               key={`attendance-${rehearsal.id}`}
@@ -3623,7 +3625,7 @@ function formatAttendanceLine(row) {
 }
 
 function ContactNotesPanel({ grouped }) {
-  const rows = [...grouped.present, ...grouped.absent, ...grouped.late, ...grouped.early, ...grouped.undecided]
+  const rows = [...grouped.present, ...grouped.undecided]
     .filter((row) => row.attendance.note || row.attendance.arrivalTime || row.attendance.leaveTime)
     .map((row) => {
       const time = row.attendance.arrivalTime || row.attendance.leaveTime;
@@ -4172,7 +4174,7 @@ function panelTitleIcon(title, tone) {
   if (title === "まだ回答していない人") {
     return <img className="panelTitleImageIcon noReplyIcon" src="./assets/no-reply-icon.png" alt="" />;
   }
-  if (title === "欠席・遅刻") {
+  if (title === "欠席・遅刻" || title === "欠席・遅刻・早退") {
     return <img className="panelTitleImageIcon absenceLateIcon" src="./assets/absence-late-icon.png" alt="" />;
   }
   return tone === "warn" ? "?" : "♙";
