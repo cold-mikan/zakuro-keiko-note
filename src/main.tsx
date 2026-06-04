@@ -3632,6 +3632,7 @@ function ContactNotesPanel({ grouped }) {
       return `${row.member.name}（${row.attendance.status}${time ? ` ${time}` : ""}）${row.attendance.note ? `：${row.attendance.note}` : ""}`;
     });
 
+  if (!rows.length) return null;
   return <PeoplePanel title="連絡事項" rows={rows} tone={rows.length ? "warn" : undefined} />;
 }
 
