@@ -4183,11 +4183,12 @@ function panelTitleIcon(title, tone) {
 
 function PeoplePanel({ title, rows, tone, collapsible = false, initialCollapsed = false, collapsedMessage = "" }) {
   const [collapsed, setCollapsed] = useState(initialCollapsed);
+  const isReasonList = title === "欠席・遅刻・早退";
   useEffect(() => {
     setCollapsed(initialCollapsed);
   }, [initialCollapsed, title]);
   return (
-    <section className={`panel people ${tone ?? ""}`}>
+    <section className={`panel people ${tone ?? ""} ${isReasonList ? "reasonList" : ""}`}>
       <div className="panelTitleRow">
         <h2 className="panelTitle"><span>{panelTitleIcon(title, tone)}</span>{title}</h2>
         {collapsible && (

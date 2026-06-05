@@ -3319,6 +3319,26 @@ textarea {
   padding: 8px 13px;
 }
 
+.people.reasonList li {
+  align-items: flex-start;
+  border-radius: 18px;
+  line-height: 1.55;
+  padding: 10px 14px;
+}
+
+.people.reasonList li::before {
+  flex: 0 0 auto;
+  margin-top: 7px;
+}
+
+.people.reasonList .personName {
+  background: transparent;
+  border-radius: 0;
+  display: inline;
+  overflow-wrap: anywhere;
+  padding: 0;
+}
+
 .people li::before,
 .rateRow::before {
   content: "";
@@ -3978,6 +3998,7 @@ textarea {
     padding: 9px 4px 14px;
     line-height: 1.25;
   }
+
 
   .tabs button.active::after {
     right: 8px;
