@@ -3110,7 +3110,15 @@ function Dashboard({ rehearsalId, rehearsals, setRehearsalId, attendances, visib
     ...grouped.late.map((row) => attendancePersonRow(row, "遅刻：")),
     ...grouped.early.map((row) => attendancePersonRow(row, "早退：")),
   ];
-  const attendanceRows = [...grouped.present, ...grouped.late, ...grouped.early].map((row) => attendancePersonRow(row));
+  const attendanceRows = [...grouped.present, ...grouped.late, ...grouped.early].map((row) => {
+    const statusSuffix = row.attendance.status === "遅刻" || row.attendance.status === "早退" ? ` /（${row.attendance.status}）` : "";
+    return {
+      key: `attendance-${row.member.id}-${row.attendance.status}`,
+      label: `${row.member.name}${statusSuffix}`,
+      role: row.member.role,
+      team: row.member.team,
+    };
+  });
   const isMeetingDay = rehearsal?.eventType === "MTG・打ち合わせ";
   if (!rehearsal) return <section className="panel emptyState">稽古日を追加してください。</section>;
   return (
