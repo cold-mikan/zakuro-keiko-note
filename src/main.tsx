@@ -162,6 +162,15 @@ const removedMemberNames = ["春野 いろは"];
 const deletedMemberMemo = "__deleted_member__";
 type TeamFilter = "全員" | "Aチーム" | "Bチーム";
 const teamFilters: TeamFilter[] = ["全員", "Aチーム", "Bチーム"];
+const teamDisplayLabels = {
+  全員: "全員",
+  共通: "共通",
+  Aチーム: "チーム ねこあんみつ",
+  Bチーム: "チーム うさぎパフェ",
+};
+function formatTeamLabel(team = "") {
+  return teamDisplayLabels[team] ?? team;
+}
 const tabs = [
   { id: "dashboard", label: "ホーム", Icon: Home },
   { id: "form", label: "参加予定の入力", Icon: ClipboardList },
@@ -243,26 +252,26 @@ const sceneScopeOptions = [
     id: "common",
     label: "共通",
     className: "common",
-    description: "共通に設定中：選択したシーンは Aチーム・Bチーム両方に反映されます。",
+    description: "共通に設定中：選択したシーンは チーム ねこあんみつ・チーム うさぎパフェ両方に反映されます。",
   },
   {
     id: "team_a",
-    label: "Aチーム",
+    label: "チーム ねこあんみつ",
     className: "teamA",
-    description: "Aチームに設定中：選択したシーンは Aチームだけに反映されます。",
+    description: "チーム ねこあんみつに設定中：選択したシーンは チーム ねこあんみつだけに反映されます。",
   },
   {
     id: "team_b",
-    label: "Bチーム",
+    label: "チーム うさぎパフェ",
     className: "teamB",
-    description: "Bチームに設定中：選択したシーンは Bチームだけに反映されます。",
+    description: "チーム うさぎパフェに設定中：選択したシーンは チーム うさぎパフェだけに反映されます。",
   },
 ] as const;
 
 const sceneScopeLabels = {
   common: "共通",
-  team_a: "Aチーム",
-  team_b: "Bチーム",
+  team_a: "チーム ねこあんみつ",
+  team_b: "チーム うさぎパフェ",
 };
 
 const validSceneScopes = new Set(sceneScopeOptions.map((option) => option.id));
@@ -2829,7 +2838,7 @@ function TeamSwitch({ value, onChange }) {
     <div className="teamSwitch" aria-label="チーム表示切り替え">
       {teamFilters.map((filter) => (
         <button key={filter} className={value === filter ? "active" : ""} onClick={() => onChange(filter)}>
-          {filter}
+          {formatTeamLabel(filter)}
         </button>
       ))}
     </div>
@@ -3373,7 +3382,7 @@ function RehearsalEditor({ rehearsals = [], editingRehearsal, onAdd, onUpdate, o
           <label className="field">予定の種類<select value={eventType} onChange={(event) => setEventType(event.target.value)}>{eventTypeOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
           <label className="field">開始<input type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} /></label>
           <label className="field">終了<input type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} /></label>
-          <label className="field">対象チーム<select value={rehearsalTeam} onChange={(event) => setRehearsalTeam(event.target.value)}>{rehearsalTeamOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+          <label className="field">対象チーム<select value={rehearsalTeam} onChange={(event) => setRehearsalTeam(event.target.value)}>{rehearsalTeamOptions.map((option) => <option key={option} value={option}>{formatTeamLabel(option)}</option>)}</select></label>
         </div>
       </div>
       <label className="field">メモ<input value={memo} onChange={(event) => setMemo(event.target.value)} placeholder="例：1場、2場中心" /></label>
@@ -3935,7 +3944,7 @@ function ScenePanel({ sceneResults, rehearsals = [], onAdd, onUpdate, onDelete, 
               <h3>{scene.title}</h3>
               <p>必要：{scene.requiredCharacters.join("、")}</p>
               <p className="note">{scene.memo}</p>
-              <p className="sceneCountLine">選択 {sceneCounts.total}回 / Aチーム {sceneCounts.a}回 / Bチーム {sceneCounts.b}回</p>
+              <p className="sceneCountLine">選択 {sceneCounts.total}回 / チーム ねこあんみつ {sceneCounts.a}回 / チーム うさぎパフェ {sceneCounts.b}回</p>
             </div>
             <strong>{canRehearse ? "✓ 稽古できます" : `不足：${missingCharacters.join("、")}`}</strong>
             {editable && (
@@ -4279,7 +4288,7 @@ function MemberEditor({ editingMember, onAdd, onUpdate, onCancel }) {
       </div>
       <div className="grid two">
         <label className="field">役職<select value={role} onChange={(event) => setRole(event.target.value)}>{roleOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
-        <label className="field">所属チーム<select value={team} onChange={(event) => setTeam(event.target.value)}>{memberTeamOptions.map((option) => <option key={option}>{option}</option>)}</select></label>
+        <label className="field">所属チーム<select value={team} onChange={(event) => setTeam(event.target.value)}>{memberTeamOptions.map((option) => <option key={option} value={option}>{formatTeamLabel(option)}</option>)}</select></label>
       </div>
       <label className="field">メモ<input value={memo} onChange={(event) => setMemo(event.target.value)} placeholder="例：6月後半から参加" /></label>
       <div className="formActions">
@@ -4306,7 +4315,7 @@ function MemberView({ rehearsals, attendances, visibleMembers, onAdd, onUpdate, 
         <article key={member.id} className={`panel memberCard ${memberClass(member)}`}>
           <div>
             <h2>{member.name}</h2>
-            <p><span className={`roleBadge ${memberClass(member)}`}>{member.role}</span> {member.team}{member.character ? ` / 役：${member.character}` : ""}</p>
+            <p><span className={`roleBadge ${memberClass(member)}`}>{member.role}</span> {formatTeamLabel(member.team)}{member.character ? ` / 役：${member.character}` : ""}</p>
             <p className="note">{member.memo}</p>
           </div>
           <div className="cardActions">

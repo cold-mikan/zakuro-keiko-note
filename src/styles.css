@@ -363,9 +363,11 @@ h3 {
   background: transparent;
   color: #8b695c;
   font-family: "Yu Gothic UI", Meiryo, sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
+  line-height: 1.25;
   padding: 8px 10px;
+  white-space: normal;
 }
 
 .teamSwitch button.active {
