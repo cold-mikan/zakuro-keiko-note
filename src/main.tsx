@@ -2364,7 +2364,25 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
             </p>
             <div className="summaryCards">
               {optionStats.map((item) => (
-                <div key={item.option.id} className="summaryCard">
+                <div
+                  key={item.option.id}
+                  className={`summaryCard ${adminUnlocked && !poll.isClosed ? "confirmable" : ""} ${selectedConfirmOptionIds.includes(item.option.id) ? "selectedForConfirm" : ""}`}
+                  role={adminUnlocked && !poll.isClosed ? "checkbox" : undefined}
+                  aria-checked={adminUnlocked && !poll.isClosed ? selectedConfirmOptionIds.includes(item.option.id) : undefined}
+                  tabIndex={adminUnlocked && !poll.isClosed ? 0 : undefined}
+                  onClick={adminUnlocked && !poll.isClosed ? () => toggleConfirmOption(item.option.id) : undefined}
+                  onKeyDown={adminUnlocked && !poll.isClosed ? (event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      toggleConfirmOption(item.option.id);
+                    }
+                  } : undefined}
+                >
+                  {adminUnlocked && !poll.isClosed && (
+                    <span className="summaryConfirmMark" aria-hidden="true">
+                      {selectedConfirmOptionIds.includes(item.option.id) ? "✓" : ""}
+                    </span>
+                  )}
                   <strong>{formatChipDate(item.option.candidateDate)}</strong>
                   <span>{formatTime(item.option.startTime)}〜{formatTime(item.option.endTime)}</span>
                   {item.option.memo && <small>{item.option.memo}</small>}
@@ -2376,6 +2394,14 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
                 </div>
               ))}
             </div>
+            {adminUnlocked && !poll.isClosed && (
+              <div className="summaryConfirmPanel">
+                <p>稽古日に確定する候補日を選択してください。複数選択できます。</p>
+                <button type="button" className="primary" onClick={submitConfirmOptions}>
+                  選択した{selectedConfirmOptionIds.length || ""}日を稽古日に確定
+                </button>
+              </div>
+            )}
             <button type="button" className="detailToggleButton" onClick={() => setShowDetailTable((current) => !current)}>
               {showDetailTable ? "詳細一覧を閉じる" : "詳細一覧を見る"}
             </button>
@@ -2416,25 +2442,6 @@ function SchedulePollCard({ poll, options, participants, responses, members, adm
       {adminUnlocked && (
         <div className="scheduleAdminActions">
           {!poll.isClosed && <button type="button" onClick={() => onClosePoll(poll.id)}>回答受付終了</button>}
-          <div className="scheduleConfirmOptions">
-            <p>稽古日に確定する候補日を選択してください。</p>
-            <div className="scheduleConfirmOptionList">
-              {options.map((option) => (
-                <label key={option.id} className={selectedConfirmOptionIds.includes(option.id) ? "selected" : ""}>
-                  <input
-                    type="checkbox"
-                    checked={selectedConfirmOptionIds.includes(option.id)}
-                    onChange={() => toggleConfirmOption(option.id)}
-                  />
-                  <span>{formatChipDate(option.candidateDate)}</span>
-                  <small>{formatTime(option.startTime)}-{formatTime(option.endTime)}</small>
-                </label>
-              ))}
-            </div>
-            <button type="button" className="primary" onClick={submitConfirmOptions}>
-              選択した日を稽古日に確定
-            </button>
-          </div>
           <div className="scheduleResetAnswers">
             <p>間違えて投稿された回答をリセット</p>
             {participants.length ? (

@@ -2533,12 +2533,55 @@ h3 {
 }
 
 .summaryCard {
+  position: relative;
   display: grid;
   gap: 6px;
   border: 1px solid #ead7ca;
   border-radius: 14px;
   background: linear-gradient(180deg, #fffdfb, #fff8fb);
   padding: 14px;
+}
+
+.summaryCard.confirmable {
+  cursor: pointer;
+  padding-right: 46px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease, background 0.16s ease;
+}
+
+.summaryCard.confirmable:hover,
+.summaryCard.confirmable:focus-visible {
+  border-color: #ec6b93;
+  box-shadow: 0 10px 20px rgba(236, 107, 147, 0.13);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.summaryCard.selectedForConfirm {
+  border-color: #ec6b93;
+  background: linear-gradient(180deg, #fff0f6, #fff8fb);
+  box-shadow: 0 12px 24px rgba(236, 107, 147, 0.16);
+}
+
+.summaryConfirmMark {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #f0b4c7;
+  border-radius: 999px;
+  background: #fff;
+  color: #ec6b93 !important;
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+
+.summaryCard.selectedForConfirm .summaryConfirmMark {
+  border-color: #ec6b93;
+  background: #ec6b93;
+  color: #fff !important;
 }
 
 .summaryCard strong {
@@ -2575,6 +2618,28 @@ h3 {
 
 .summaryCounts .no {
   color: #8b766c;
+}
+
+.summaryConfirmPanel {
+  display: grid;
+  gap: 10px;
+  border: 1px dashed #f0b4c7;
+  border-radius: 16px;
+  background: rgba(255, 247, 251, 0.84);
+  padding: 12px;
+}
+
+.summaryConfirmPanel p {
+  margin: 0;
+  color: #7b655d;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.7;
+}
+
+.summaryConfirmPanel button {
+  justify-self: start;
+  min-width: min(100%, 260px);
 }
 
 .detailToggleButton {
